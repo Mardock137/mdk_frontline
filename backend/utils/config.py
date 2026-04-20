@@ -1,0 +1,37 @@
+"""Application configuration loaded from environment variables."""
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BACKEND_DIR / ".env"
+
+
+class Settings(BaseSettings):
+    """Typed settings loaded from the backend/.env file."""
+
+    model_config = SettingsConfigDict(
+        env_file=ENV_FILE,
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+    ANTHROPIC_API_KEY: str = Field(default="")
+
+    SUPABASE_URL: str = Field(default="")
+    SUPABASE_ANON_KEY: str = Field(default="")
+    SUPABASE_SERVICE_ROLE_KEY: str = Field(default="")
+
+    DEV_COMPANY_ID: str = Field(default="")
+
+    LOG_LEVEL: str = Field(default="INFO")
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Return a cached Settings instance."""
+    return Settings()

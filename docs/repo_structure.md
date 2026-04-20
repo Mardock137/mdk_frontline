@@ -2,9 +2,8 @@
 
 📁 mdk_frontline/
  │
- ├── 📁 .venv/                                               # Ambiente virtuale con tutte le dipendenze installate.
- │
  ├── 📁 backend/                                             # Codice sorgente del backend (Python + FastAPI).
+ │    ├── 📁 .venv/                                          # Ambiente virtuale con tutte le dipendenze installate.
  │    ├── 📁 agents/                                         # Agenti AI e relativa logica.
  │    │    └── 📄 base_agent.py                              # Base class comune per tutti gli agenti.
  │    ├── 📁 api/                                            # Endpoint HTTP esposti dal backend verso il frontend.
@@ -40,6 +39,7 @@
  │    ├── 📄 .env                                            # Contiene le chiavi API e variabili d'ambiente riservate.
  │    ├── 📄 .env.example                                    # Contiene un esempio delle variabili d’ambiente in uso.
  │    ├── 📄 main.py                                         # Punto di ingresso del backend: inizializza FastAPI, registra endpoint e middleware.
+ │    ├── 📄 pytest.ini                                      #
  │    └── 📄 requirements.txt                                # Elenco delle dipendenze Python e relative versioni.
  │
  ├── 📁 dev_support/                                         # Materiale di supporto.
@@ -51,6 +51,9 @@
  │    ├── 📄 api_endpoints.md                                # Contiene l'elenco degli endpoint API utilizzati.
  │    ├── 📄 architecture.md                                 # Architettura sistema e tech stack.
  │    ├── 📄 config.md                                       # Guida alla configurazione
+ │    ├── 📄 decison_logic.md                                #
+ │    ├── 📄 deploy.md                                       #
+ │    ├── 📄 hierarchy_and_roles.md                          #
  │    ├── 📄 observability.md                                # Sistema di logging
  │    ├── 📄 repo_structure.md                               # Struttura e spiegazione della repo.
  │    └── 📄 TEMPLATE.md                                     # Template standard per la documentazione del progetto.

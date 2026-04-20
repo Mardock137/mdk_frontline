@@ -1,1 +1,95 @@
-# Configurazione (`config/`)
+# Configurazione
+
+Documento di riferimento per il sistema di configurazione del backend: variabili d'ambiente, file `.env`, classe `Settings` e cartella `config/` per configurazioni statiche.
+
+---
+
+## 📋 Indice
+
+- [📄 Panoramica](#-panoramica)
+- [⚙️ Come funziona](#️-come-funziona)
+- [🔧 Variabili d'ambiente](#-variabili-dambiente)
+- [🚀 Setup iniziale](#-setup-iniziale)
+- [📚 Riferimenti](#-riferimenti)
+
+---
+
+## 📄 Panoramica
+
+La configurazione del backend è divisa in due categorie:
+
+- **Segreta / per ambiente** (chiavi API, URL di servizi, identità di sviluppo): gestita tramite variabili d'ambiente caricate dal file `.env`, mai committata su git.
+- **Statica / non sensibile** (configurazione dei modelli LLM, prompt di sistema, ecc.): gestita tramite file dentro la cartella `backend/config/`, versionata insieme al codice.
+
+---
+
+## ⚙️ Come funziona
+
+### Variabili d'ambiente
+
+Le variabili d'ambiente sono caricate dal file `backend/.env` tramite [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). La classe `Settings` definita in [backend/utils/config.py](../backend/utils/config.py) espone ogni variabile come attributo tipizzato.
+
+Per accedere alla configurazione dal codice si usa la funzione `get_settings()`, che restituisce un'istanza singleton (cacheata con `lru_cache`):
+
+```python
+from utils.config import get_settings
+
+settings = get_settings()
+api_key = settings.ANTHROPIC_API_KEY
+```
+
+### Cartella `config/`
+
+La cartella [backend/config/](../backend/config/) ospita configurazioni statiche non sensibili, organizzate in sottocartelle per area:
+
+- `llm_models/` — parametri dei modelli LLM (nome modello, temperature, max tokens, ecc.)
+- `prompts/` — prompt di sistema per l'agente AI e i suoi tool
+
+Al momento le sottocartelle sono vuote: verranno popolate nelle fasi successive dello sviluppo.
+
+---
+
+## 🔧 Variabili d'ambiente
+
+L'elenco completo delle variabili è visibile nel file [backend/.env.example](../backend/.env.example), che va copiato in `.env` e compilato con i valori reali.
+
+| Variabile                   | Descrizione                                                                   | Obbligatoria        |
+|-----------------------------|-------------------------------------------------------------------------------|---------------------|
+| `ANTHROPIC_API_KEY`         | Chiave API per il provider LLM (Anthropic Claude).                            | Sì                  |
+| `SUPABASE_URL`              | URL del progetto Supabase.                                                    | Sì                  |
+| `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                       | Sì                  |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.    | Sì                  |
+| `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP). | Solo in dev         |
+| `LOG_LEVEL`                 | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).      | No (default `INFO`) |
+
+> **Attenzione**: il file `.env` contiene dati sensibili e non deve mai essere committato. È escluso dal controllo versione tramite `.gitignore`.
+
+---
+
+## 🚀 Setup iniziale
+
+1. Dalla cartella `backend/`, copiare il template:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Aprire `.env` con un editor e sostituire i valori placeholder con le chiavi reali.
+
+3. Verificare il caricamento avviando l'applicazione (i valori vengono validati all'avvio):
+
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+Se una variabile obbligatoria è assente o malformata, l'avvio fallisce con un messaggio d'errore esplicito.
+
+---
+
+## 📚 Riferimenti
+
+- **Codice**: [backend/utils/config.py](../backend/utils/config.py)
+- **Test**: [backend/tests/utils/test_config.py](../backend/tests/utils/test_config.py)
+- **Template `.env`**: [backend/.env.example](../backend/.env.example)
+- **Doc correlati**: [Sistema di logging](observability.md), [Struttura della repo](repo_structure.md)
+- **Risorse esterne**: [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
