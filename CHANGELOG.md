@@ -1,6 +1,19 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.3.0 — 2026-04-21
+
+### Added
+
+- Schema del database come migration SQL versionate in [backend/database/migrations/](backend/database/migrations/): `companies`, `users`, `agent_configs`, `documents` (con colonna `embedding` per il futuro RAG), `conversations`, `messages`, `tickets`.
+- Abilitazione delle estensioni PostgreSQL `vector` (pgvector) e `pgcrypto`.
+- Bucket Supabase Storage privato `documents` per la knowledge base.
+- Row Level Security attivata su tutte le tabelle applicative (il backend usa la service role key e bypassa RLS).
+- Factory cached del client Supabase ([backend/database/supabase_client.py](backend/database/supabase_client.py)).
+- Modelli Pydantic per tutte le tabelle con enum tipizzati ([backend/database/models.py](backend/database/models.py)).
+- Test dei modelli e del client Supabase ([backend/tests/database/](backend/tests/database/)).
+- Nuova documentazione: [docs/architecture.md](docs/architecture.md) (schema e scelte architetturali) e [docs/database.md](docs/database.md) (guida operativa alle migration).
+
 ## 0.2.0 — 2026-04-20
 
 ### Added

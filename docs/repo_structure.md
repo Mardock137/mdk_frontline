@@ -12,6 +12,18 @@
  │    │    └── 📁 prompts/                                   # Configurazione dei prompt.
  │    ├── 📁 core/                                           # Logica di business trasversale e orchestrazione degli agenti.
  │    ├── 📁 database/                                       # Modelli dati (Pydantic), client Supabase e migration SQL delle tabelle.
+ │    │    ├── 📁 migrations/                                # Migration SQL da eseguire manualmente nel SQL Editor di Supabase (in ordine numerico).
+ │    │    │    ├── 📄 001_enable_extensions.sql             # Abilita le estensioni PostgreSQL (pgvector, pgcrypto).
+ │    │    │    ├── 📄 002_companies.sql                     # Tabella companies (tenant).
+ │    │    │    ├── 📄 003_users.sql                         # Tabella users (utenti dashboard, predisposta per il futuro).
+ │    │    │    ├── 📄 004_agent_configs.sql                 # Tabella agent_configs (configurazione agente per azienda).
+ │    │    │    ├── 📄 005_documents.sql                     # Tabella documents (knowledge base) con colonna embedding per il RAG.
+ │    │    │    ├── 📄 006_conversations.sql                 # Tabella conversations (live chat).
+ │    │    │    ├── 📄 007_messages.sql                      # Tabella messages (messaggi dentro le conversazioni).
+ │    │    │    ├── 📄 008_tickets.sql                       # Tabella tickets (casi non risolvibili / escalation).
+ │    │    │    └── 📄 009_storage.sql                       # Bucket Supabase Storage "documents" privato.
+ │    │    ├── 📄 models.py                                  # Modelli Pydantic che rappresentano le tabelle del database.
+ │    │    └── 📄 supabase_client.py                         # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                   # Integrazione delle API esterne.
  │    │    └── 📁 llm_interfaces/                            # Interfaccia verso i modelli LLM.
  │    │         └── 📄 base_llm_interface.py                 # Interfaccia astratta (classe base) per garantire che tutti i modelli LLM abbiano gli stessi metodi standard.
@@ -23,6 +35,8 @@
  │    │    ├── 📁 api/                                       # Test degli endpoint HTTP.
  │    │    ├── 📁 core/                                      # Test della logica di business e orchestrazione.
  │    │    ├── 📁 database/                                  # Test dei modelli dati e del client Supabase.
+ │    │    │    ├── 📄 test_models.py                        # Test dei modelli Pydantic del database.
+ │    │    │    └── 📄 test_supabase_client.py               # Test del client Supabase.
  │    │    ├── 📁 integrations/                              # Test delle integrazioni.
  │    │    │    └── 📁 llm_interfaces/
  │    │    │         └── 📄 test_base_llm_interface.py
@@ -49,7 +63,8 @@
  │
  ├── 📁 docs/                                                # Documentazione operativa e tecnica.
  │    ├── 📄 api_endpoints.md                                # Contiene l'elenco degli endpoint API utilizzati.
- │    ├── 📄 architecture.md                                 # Architettura sistema e tech stack.
+ │    ├── 📄 architecture.md                                 # Architettura sistema, stack e schema del database.
+ │    ├── 📄 database.md                                     # Guida operativa alle migration Supabase e allo schema.
  │    ├── 📄 config.md                                       # Guida alla configurazione
  │    ├── 📄 decison_logic.md                                #
  │    ├── 📄 deploy.md                                       #

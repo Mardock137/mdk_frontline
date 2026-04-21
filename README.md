@@ -1,7 +1,7 @@
 # MDK Frontline
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.2.0`
+- **Versione progetto**: `0.3.0`
 
 ## 📋 Indice
 
