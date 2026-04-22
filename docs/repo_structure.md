@@ -7,6 +7,7 @@
  │    ├── 📁 agents/                                         # Agenti AI e relativa logica.
  │    │    └── 📄 base_agent.py                              # Base class comune per tutti gli agenti.
  │    ├── 📁 api/                                            # Endpoint HTTP esposti dal backend verso il frontend.
+ │    │    └── 📄 documents.py                               # Endpoint /documents/* e /rag/search.
  │    ├── 📁 config/                                         # Configurazioni.
  │    │    ├── 📁 llm_models/                                # Configurazione dei modelli IA (model, temperature, max token, ecc.).
  │    │    └── 📁 prompts/                                   # Configurazione dei prompt.
@@ -21,14 +22,25 @@
  │    │    │    ├── 📄 006_conversations.sql                 # Tabella conversations (live chat).
  │    │    │    ├── 📄 007_messages.sql                      # Tabella messages (messaggi dentro le conversazioni).
  │    │    │    ├── 📄 008_tickets.sql                       # Tabella tickets (casi non risolvibili / escalation).
- │    │    │    └── 📄 009_storage.sql                       # Bucket Supabase Storage "documents" privato.
+ │    │    │    ├── 📄 009_storage.sql                       # Bucket Supabase Storage "documents" privato.
+ │    │    │    ├── 📄 010_document_chunks.sql               # Tabella document_chunks con embedding vector(1024) per il RAG.
+ │    │    │    ├── 📄 011_drop_documents_embedding.sql      # Rimuove la colonna embedding da documents (ora vive su document_chunks).
+ │    │    │    ├── 📄 012_search_function.sql               # Funzione SQL match_document_chunks per la ricerca semantica multi-tenant.
+ │    │    │    └── 📄 013_documents_with_counts_view.sql    # Vista documents_with_counts che espone il numero di chunk per documento.
  │    │    ├── 📄 models.py                                  # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                         # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                   # Integrazione delle API esterne.
+ │    │    ├── 📁 embedding_interfaces/                      # Interfaccia verso i provider di embedding.
+ │    │    │    ├── 📄 base_embedding_interface.py           # Interfaccia astratta per i provider di embedding.
+ │    │    │    └── 📄 voyage_embedding.py                   # Implementazione Voyage AI via REST (httpx).
  │    │    └── 📁 llm_interfaces/                            # Interfaccia verso i modelli LLM.
  │    │         └── 📄 base_llm_interface.py                 # Interfaccia astratta (classe base) per garantire che tutti i modelli LLM abbiano gli stessi metodi standard.
  │    ├── 📁 logs/                                           # File di log generati a runtime.
  │    ├── 📁 rag/                                            # Sistema RAG: processing dei documenti, embeddings e ricerca semantica.
+ │    │    ├── 📄 text_extraction.py                         # Estrazione del testo da PDF, DOCX, TXT, Markdown.
+ │    │    ├── 📄 chunking.py                                # Suddivisione del testo in chunk con overlap.
+ │    │    ├── 📄 ingestion.py                               # Pipeline end-to-end: upload -> estrai -> chunka -> embedda -> salva.
+ │    │    └── 📄 search.py                                  # Ricerca semantica sui chunk tramite match_document_chunks.
  │    ├── 📁 tests/                                          # Test automatici per tutte le funzioni e i moduli.
  │    │    ├── 📁 agents/                                    # Test degli agenti.
  │    │    │    └── 📄 test_base_agent.py
@@ -41,6 +53,10 @@
  │    │    │    └── 📁 llm_interfaces/
  │    │    │         └── 📄 test_base_llm_interface.py
  │    │    ├── 📁 rag/                                       # Test del sistema RAG.
+ │    │    │    ├── 📄 test_chunking.py
+ │    │    │    ├── 📄 test_text_extraction.py
+ │    │    │    ├── 📄 test_ingestion.py
+ │    │    │    └── 📄 test_search.py
  │    │    ├── 📁 tools/                                     # Test dei tool dell'agente.
  │    │    ├── 📁 utils/                                     # Test delle utility.
  │    │    │    ├── 📄 test_config.py
@@ -65,10 +81,10 @@
  │    ├── 📄 api_endpoints.md                                # Contiene l'elenco degli endpoint API utilizzati.
  │    ├── 📄 architecture.md                                 # Architettura sistema, stack e schema del database.
  │    ├── 📄 database.md                                     # Guida operativa alle migration Supabase e allo schema.
+ │    ├── 📄 rag.md                                          # Guida al sistema RAG (upload, chunking, embedding, ricerca).
  │    ├── 📄 config.md                                       # Guida alla configurazione
  │    ├── 📄 decison_logic.md                                #
  │    ├── 📄 deploy.md                                       #
- │    ├── 📄 hierarchy_and_roles.md                          #
  │    ├── 📄 observability.md                                # Sistema di logging
  │    ├── 📄 repo_structure.md                               # Struttura e spiegazione della repo.
  │    └── 📄 TEMPLATE.md                                     # Template standard per la documentazione del progetto.

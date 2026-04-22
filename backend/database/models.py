@@ -118,7 +118,22 @@ class DocumentCreate(_DbModel):
 
 class Document(DocumentCreate):
     id: UUID
-    embedding: list[float] | None = None
+    created_at: datetime
+
+
+# --- document_chunks --------------------------------------------------------
+
+
+class DocumentChunkCreate(_DbModel):
+    document_id: UUID
+    company_id: UUID
+    chunk_index: int = Field(ge=0)
+    content: str = Field(min_length=1)
+    embedding: list[float]
+
+
+class DocumentChunk(DocumentChunkCreate):
+    id: UUID
     created_at: datetime
 
 
@@ -180,6 +195,8 @@ __all__ = [
     "AgentConfig",
     "DocumentCreate",
     "Document",
+    "DocumentChunkCreate",
+    "DocumentChunk",
     "ConversationCreate",
     "Conversation",
     "MessageCreate",

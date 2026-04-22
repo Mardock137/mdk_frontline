@@ -55,7 +55,8 @@ Lo schema è definito da migration SQL in [backend/database/migrations/](../back
 | `companies`      | Aziende clienti (tenant). Ogni azienda ha uno `slug` usato nell'URL chat.   |
 | `users`          | Utenti della dashboard (MVP: minimale, predisposta per il futuro).          |
 | `agent_configs`  | Configurazione dell'agente per ogni azienda (nome, logo, tono, ecc.).       |
-| `documents`      | Documenti della knowledge base. Colonna `embedding` pronta per la fase 3.   |
+| `documents`      | Documenti della knowledge base (metadata + riferimento allo Storage).       |
+| `document_chunks`| Pezzi di documento con embedding (vector 1024) per la ricerca semantica.    |
 | `conversations`  | Conversazioni della live chat.                                              |
 | `messages`       | Singoli messaggi dentro ogni conversazione.                                 |
 | `tickets`        | Ticket aperti dall'agente (casi non risolvibili o escalation).              |
@@ -67,6 +68,8 @@ erDiagram
     companies ||--o{ users : has
     companies ||--|| agent_configs : has
     companies ||--o{ documents : has
+    documents ||--o{ document_chunks : has
+    companies ||--o{ document_chunks : has
     companies ||--o{ conversations : has
     companies ||--o{ tickets : has
     conversations ||--o{ messages : has
@@ -75,7 +78,7 @@ erDiagram
 
 ### Estensioni PostgreSQL
 
-- `vector` (pgvector) — abilitata per il futuro supporto RAG (fase 3). Colonna `documents.embedding` già presente ma vuota.
+- `vector` (pgvector) — usata per la ricerca semantica (colonna `document_chunks.embedding`, vettori da 1024 dimensioni, indice HNSW con cosine distance).
 - `pgcrypto` — usata per `gen_random_uuid()` nelle primary key.
 
 ### Storage

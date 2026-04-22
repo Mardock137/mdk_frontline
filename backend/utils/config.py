@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     )
 
     ANTHROPIC_API_KEY: str = Field(default="")
+    VOYAGE_API_KEY: str = Field(default="")
 
     SUPABASE_URL: str = Field(default="")
     SUPABASE_ANON_KEY: str = Field(default="")

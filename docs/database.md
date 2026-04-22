@@ -44,20 +44,25 @@ Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor**.
 
 ### Tabelle
 
-| Tabella         | Descrizione                                                                 |
-|-----------------|-----------------------------------------------------------------------------|
-| `companies`     | Aziende clienti (tenant). `slug` unico per l'URL della chat pubblica.       |
-| `users`         | Utenti della dashboard (MVP: minimale, usata in futuro).                    |
-| `agent_configs` | Configurazione agente per azienda (nome, logo, colore, tono, lingua).       |
-| `documents`     | Documenti della knowledge base. `embedding` (vector) popolato in fase 3.    |
-| `conversations` | Conversazioni della live chat.                                              |
-| `messages`      | Messaggi delle conversazioni (`customer` / `agent` / `system`).             |
-| `tickets`       | Ticket aperti dall'agente per casi non risolvibili o escalation.            |
+| Tabella           | Descrizione                                                                 |
+|-------------------|-----------------------------------------------------------------------------|
+| `companies`       | Aziende clienti (tenant). `slug` unico per l'URL della chat pubblica.       |
+| `users`           | Utenti della dashboard (MVP: minimale, usata in futuro).                    |
+| `agent_configs`   | Configurazione agente per azienda (nome, logo, colore, tono, lingua).       |
+| `documents`       | Metadata dei documenti + riferimento allo Storage.                          |
+| `document_chunks` | Chunk di testo con embedding `vector(1024)` per la ricerca semantica (RAG). |
+| `conversations`   | Conversazioni della live chat.                                              |
+| `messages`        | Messaggi delle conversazioni (`customer` / `agent` / `system`).             |
+| `tickets`         | Ticket aperti dall'agente per casi non risolvibili o escalation.            |
 
 ### Estensioni
 
-- `vector` (pgvector) — per il RAG della fase 3.
+- `vector` (pgvector) — usato dalla tabella `document_chunks` per la ricerca semantica (indice HNSW, cosine distance).
 - `pgcrypto` — per `gen_random_uuid()` usato nelle primary key.
+
+### Funzioni SQL
+
+- `match_document_chunks(query_embedding, match_company_id, match_count)` — restituisce i top-K chunk più simili alla query per la company specificata (cosine similarity). Definita in [012_search_function.sql](../backend/database/migrations/012_search_function.sql).
 
 ### Storage
 

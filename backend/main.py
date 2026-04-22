@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from api.documents import router as documents_router
 from utils.config import get_settings
 from utils.logging_config import setup_logging
 
@@ -20,6 +21,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="MDK Frontline Backend", version="0.1.0", lifespan=lifespan)
+
+app.include_router(documents_router)
 
 
 @app.get("/health")
