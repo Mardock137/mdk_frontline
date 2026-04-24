@@ -173,6 +173,7 @@ class TicketCreate(_DbModel):
     subject: str = Field(min_length=1)
     description: str = Field(min_length=1)
     status: TicketStatus = TicketStatus.OPEN
+    is_escalation: bool = False
 
 
 class Ticket(TicketCreate):

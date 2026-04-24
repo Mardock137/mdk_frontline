@@ -85,10 +85,36 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 
 - `similarity` è in `[0, 1]` (cosine similarity, più alto = più rilevante).
 
+### `POST /chat/{company_slug}/message`
+
+Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se `conversation_id` è null viene creata una nuova conversazione. L'agente usa la knowledge base, può aprire ticket e scalare a operatori umani autonomamente.
+
+- **Path param**: `company_slug` — lo slug dell'azienda (es. `acme`).
+- **Body**:
+
+```json
+{
+    "conversation_id": "uuid-opzionale-o-null",
+    "content": "Come resetto la password?"
+}
+```
+
+- **Risposta `200`**:
+
+```json
+{
+    "conversation_id": "uuid",
+    "reply": "Per resettare la password segui questi passi..."
+}
+```
+
+- **Errori**: `404` company o agent_config non trovata, `422` contenuto vuoto, `500` API key Anthropic non configurata.
+
 ---
 
 ## 📚 Riferimenti
 
-- **Router**: [backend/api/documents.py](../backend/api/documents.py)
+- **Router documenti**: [backend/api/documents.py](../backend/api/documents.py)
+- **Router agente**: [backend/api/agent.py](../backend/api/agent.py)
 - **Registrazione**: [backend/main.py](../backend/main.py)
-- **Doc correlati**: [rag.md](rag.md), [database.md](database.md)
+- **Doc correlati**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md)

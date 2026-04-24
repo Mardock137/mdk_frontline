@@ -32,15 +32,31 @@ Componenti principali:
 ```txt
 [Cliente finale]
       │
-      ▼
-[Live chat] ──► [Backend FastAPI] ──► [Agente AI + Tool (Knowledge / Ticket / Escalation)]
-                        │                        │
-                        ▼                        ▼
-                   [Supabase]               [Anthropic Claude]
-                 (DB + Storage + pgvector)
+      ▼  POST /chat/{slug}/message
+[Live chat] ──► [Backend FastAPI]
+                        │
+                        ▼
+               [SupportAgent loop]
+                /       |        \
+               ▼        ▼         ▼
+        [search_    [create_   [escalate]
+         knowledge]  ticket]
+               \       |        /
+                ▼       ▼       ▼
+           [Supabase]       [Anthropic Claude]
+        (DB + Storage       (tool calling,
+          + pgvector)        claude-opus-4-5)
 ```
 
 Il backend si connette a Supabase tramite **service role key** (chiave privata). Il service role **bypassa la Row Level Security**: l'isolamento tra tenant è garantito a livello applicativo, filtrando sempre per `company_id` nelle query.
+
+### Loop dell'agente
+
+1. Carica lo storico della conversazione dal DB.
+2. Costruisce il system prompt da `agent_config` (nome agente, azienda, tono, lingua).
+3. Chiama Claude con i tre tool definiti (`search_knowledge`, `create_ticket`, `escalate`).
+4. Se Claude invoca un tool → lo esegue, invia il risultato a Claude, ripete.
+5. Quando Claude produce una risposta finale (`stop_reason = "end_turn"`) → salva i messaggi nel DB e ritorna la risposta al client.
 
 ---
 
@@ -50,16 +66,16 @@ Lo schema è definito da migration SQL in [backend/database/migrations/](../back
 
 ### Tabelle
 
-| Tabella          | Scopo                                                                       |
-|------------------|-----------------------------------------------------------------------------|
-| `companies`      | Aziende clienti (tenant). Ogni azienda ha uno `slug` usato nell'URL chat.   |
-| `users`          | Utenti della dashboard (MVP: minimale, predisposta per il futuro).          |
-| `agent_configs`  | Configurazione dell'agente per ogni azienda (nome, logo, tono, ecc.).       |
-| `documents`      | Documenti della knowledge base (metadata + riferimento allo Storage).       |
-| `document_chunks`| Pezzi di documento con embedding (vector 1024) per la ricerca semantica.    |
-| `conversations`  | Conversazioni della live chat.                                              |
-| `messages`       | Singoli messaggi dentro ogni conversazione.                                 |
-| `tickets`        | Ticket aperti dall'agente (casi non risolvibili o escalation).              |
+| Tabella           | Scopo                                                                                           |
+|-------------------|-------------------------------------------------------------------------------------------------|
+| `companies`       | Aziende clienti (tenant). Ogni azienda ha uno `slug` usato nell'URL chat.                       |
+| `users`           | Utenti della dashboard (MVP: minimale, predisposta per il futuro).                              |
+| `agent_configs`   | Configurazione dell'agente per ogni azienda (nome, logo, tono, ecc.).                           |
+| `documents`       | Documenti della knowledge base (metadata + riferimento allo Storage).                           |
+| `document_chunks` | Pezzi di documento con embedding (vector 1024) per la ricerca semantica.                        |
+| `conversations`   | Conversazioni della live chat. Status: `active`, `closed`, `escalated`.                         |
+| `messages`        | Singoli messaggi dentro ogni conversazione (ruoli: `customer`, `agent`, `system`).              |
+| `tickets`         | Ticket aperti dall'agente. `is_escalation=false` → supporto normale; `true` → escalation umana. |
 
 ### Diagramma ER
 

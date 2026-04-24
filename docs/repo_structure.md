@@ -5,12 +5,17 @@
  ├── 📁 backend/                                             # Codice sorgente del backend (Python + FastAPI).
  │    ├── 📁 .venv/                                          # Ambiente virtuale con tutte le dipendenze installate.
  │    ├── 📁 agents/                                         # Agenti AI e relativa logica.
- │    │    └── 📄 base_agent.py                              # Base class comune per tutti gli agenti.
+ │    │    ├── 📄 base_agent.py                              # Base class comune per tutti gli agenti.
+ │    │    └── 📄 support_agent.py                           # Agente AI di supporto: loop autonomo con tool calling, salva messaggi nel DB.
  │    ├── 📁 api/                                            # Endpoint HTTP esposti dal backend verso il frontend.
+ │    │    ├── 📄 agent.py                                   # Endpoint POST /chat/{company_slug}/message.
  │    │    └── 📄 documents.py                               # Endpoint /documents/* e /rag/search.
  │    ├── 📁 config/                                         # Configurazioni.
- │    │    ├── 📁 llm_models/                                # Configurazione dei modelli IA (model, temperature, max token, ecc.).
- │    │    └── 📁 prompts/                                   # Configurazione dei prompt.
+ │    │    ├── 📁 llm_models/                                # Configurazione dei modelli IA per ogni agente.
+ │    │    │    ├── 📄 loader.py                             # Loader YAML: legge e valida LLMModelConfig (model, max_tokens).
+ │    │    │    └── 📄 support_agent.yaml                    # Parametri del modello per l'agente di supporto (model, max_tokens).
+ │    │    └── 📁 prompts/
+ │    │         └── 📄 support_agent.py                      # Template del system prompt: identità agente, tono, istruzioni tool.
  │    ├── 📁 core/                                           # Logica di business trasversale e orchestrazione degli agenti.
  │    ├── 📁 database/                                       # Modelli dati (Pydantic), client Supabase e migration SQL delle tabelle.
  │    │    ├── 📁 migrations/                                # Migration SQL da eseguire manualmente nel SQL Editor di Supabase (in ordine numerico).
@@ -26,7 +31,8 @@
  │    │    │    ├── 📄 010_document_chunks.sql               # Tabella document_chunks con embedding vector(1024) per il RAG.
  │    │    │    ├── 📄 011_drop_documents_embedding.sql      # Rimuove la colonna embedding da documents (ora vive su document_chunks).
  │    │    │    ├── 📄 012_search_function.sql               # Funzione SQL match_document_chunks per la ricerca semantica multi-tenant.
- │    │    │    └── 📄 013_documents_with_counts_view.sql    # Vista documents_with_counts che espone il numero di chunk per documento.
+ │    │    │    ├── 📄 013_documents_with_counts_view.sql    # Vista documents_with_counts che espone il numero di chunk per documento.
+ │    │    │    └── 📄 014_tickets_add_is_escalation.sql     # Aggiunge colonna is_escalation (boolean) alla tabella tickets.
  │    │    ├── 📄 models.py                                  # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                         # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                   # Integrazione delle API esterne.
@@ -34,35 +40,50 @@
  │    │    │    ├── 📄 base_embedding_interface.py           # Interfaccia astratta per i provider di embedding.
  │    │    │    └── 📄 voyage_embedding.py                   # Implementazione Voyage AI via REST (httpx).
  │    │    └── 📁 llm_interfaces/                            # Interfaccia verso i modelli LLM.
- │    │         └── 📄 base_llm_interface.py                 # Interfaccia astratta (classe base) per garantire che tutti i modelli LLM abbiano gli stessi metodi standard.
+ │    │         ├── 📄 base_llm_interface.py                 # Interfaccia astratta con metodo chat(messages, system, tools); dataclass ChatResponse e ToolUse.
+ │    │         └── 📄 anthropic_interface.py                # Adapter concreto per Anthropic Claude con tool calling (usa AsyncAnthropic SDK).
  │    ├── 📁 logs/                                           # File di log generati a runtime.
  │    ├── 📁 rag/                                            # Sistema RAG: processing dei documenti, embeddings e ricerca semantica.
- │    │    ├── 📄 text_extraction.py                         # Estrazione del testo da PDF, DOCX, TXT, Markdown.
  │    │    ├── 📄 chunking.py                                # Suddivisione del testo in chunk con overlap.
  │    │    ├── 📄 ingestion.py                               # Pipeline end-to-end: upload -> estrai -> chunka -> embedda -> salva.
- │    │    └── 📄 search.py                                  # Ricerca semantica sui chunk tramite match_document_chunks.
+ │    │    ├── 📄 search.py                                  # Ricerca semantica sui chunk tramite match_document_chunks.
+ │    │    └── 📄 text_extraction.py                         # Estrazione del testo da PDF, DOCX, TXT, Markdown.
  │    ├── 📁 tests/                                          # Test automatici per tutte le funzioni e i moduli.
  │    │    ├── 📁 agents/                                    # Test degli agenti.
- │    │    │    └── 📄 test_base_agent.py
+ │    │    │    ├── 📄 test_base_agent.py
+ │    │    │    └── 📄 test_support_agent.py                 # Test del loop dell'agente (LLM e tool mockati).
  │    │    ├── 📁 api/                                       # Test degli endpoint HTTP.
+ │    │    │    ├── 📄 test_agent.py                         # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
+ │    │    │    └── 📄 test_documents.py
+ │    │    ├── 📁 config/                                    # Test della configurazione.
+ │    │    │    └── 📄 test_llm_models_loader.py             # Test del loader YAML (happy path, errori, validazione).
  │    │    ├── 📁 core/                                      # Test della logica di business e orchestrazione.
  │    │    ├── 📁 database/                                  # Test dei modelli dati e del client Supabase.
  │    │    │    ├── 📄 test_models.py                        # Test dei modelli Pydantic del database.
  │    │    │    └── 📄 test_supabase_client.py               # Test del client Supabase.
  │    │    ├── 📁 integrations/                              # Test delle integrazioni.
+ │    │    │    ├── 📁 embedding_interfaces/
+ │    │    │    │    └── 📄 test_voyage_embedding.py
  │    │    │    └── 📁 llm_interfaces/
- │    │    │         └── 📄 test_base_llm_interface.py
+ │    │    │         ├── 📄 test_base_llm_interface.py       # Test interfaccia base, ChatResponse e ToolUse.
+ │    │    │         └── 📄 test_anthropic_interface.py      # Test AnthropicInterface con YAML e SDK mockati.
  │    │    ├── 📁 rag/                                       # Test del sistema RAG.
  │    │    │    ├── 📄 test_chunking.py
- │    │    │    ├── 📄 test_text_extraction.py
  │    │    │    ├── 📄 test_ingestion.py
- │    │    │    └── 📄 test_search.py
+ │    │    │    ├── 📄 test_search.py
+ │    │    │    └── 📄 test_text_extraction.py
  │    │    ├── 📁 tools/                                     # Test dei tool dell'agente.
+ │    │    │    ├── 📄 test_escalation.py                    # Test escalate (Supabase mockato).
+ │    │    │    ├── 📄 test_knowledge.py                     # Test search_knowledge (search_chunks mockato).
+ │    │    │    └── 📄 test_ticket.py                        # Test create_ticket (Supabase mockato).
  │    │    ├── 📁 utils/                                     # Test delle utility.
  │    │    │    ├── 📄 test_config.py
  │    │    │    └── 📄 test_logging_config.py
  │    │    └── 📄 test_main.py                               # Test del punto di ingresso dell'applicazione.
- │    ├── 📁 tools/                                          # Tool che l'agente AI puo invocare autonomamente (knowledge, ticket, escalation).
+ │    ├── 📁 tools/                                          # Tool che l'agente AI può invocare autonomamente.
+ │    │    ├── 📄 knowledge.py                               # Tool search_knowledge: ricerca semantica sulla KB.
+ │    │    ├── 📄 ticket.py                                  # Tool create_ticket: crea ticket di supporto nel DB.
+ │    │    └── 📄 escalation.py                              # Tool escalate: crea ticket di escalation e aggiorna stato conversazione.
  │    ├── 📁 utils/                                          # Utility comuni e configurazione.
  │    │    ├── 📄 config.py                                  # Caricamento e gestione delle variabili d'ambiente dal file .env.
  │    │    └── 📄 logging_config.py                          # Configurazione centralizzata del logging (console e file, rotazione, formato).

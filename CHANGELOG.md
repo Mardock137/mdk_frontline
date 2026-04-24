@@ -1,6 +1,40 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.5.0 — 2026-04-24
+
+### Added
+
+- **Agente AI autonomo con tool calling** (`SupportAgent`): loop completo che chiama Claude, esegue i tool richiesti e salva i messaggi nel DB ([backend/agents/support_agent.py](backend/agents/support_agent.py)).
+- **Tre tool invocabili dall'agente** ([backend/tools/](backend/tools/)):
+  - `knowledge.py` — ricerca semantica sulla knowledge base aziendale (`search_knowledge`).
+  - `ticket.py` — crea un ticket di supporto con `is_escalation=False` (`create_ticket`).
+  - `escalation.py` — crea un ticket con `is_escalation=True` e aggiorna lo stato della conversazione a `ESCALATED` (`escalate`).
+- **`AnthropicInterface`**: adapter concreto per Claude con supporto nativo al tool calling ([backend/integrations/llm_interfaces/anthropic_interface.py](backend/integrations/llm_interfaces/anthropic_interface.py)).
+- **`BaseLLMInterface` aggiornata**: metodo `generate(prompt)` sostituito con `chat(messages, system, tools)` più adatto ai modelli moderni; aggiunti dataclass `ChatResponse` e `ToolUse` ([backend/integrations/llm_interfaces/base_llm_interface.py](backend/integrations/llm_interfaces/base_llm_interface.py)).
+- **System prompt template** per l'agente di supporto: nome agente, azienda, tono, lingua, istruzioni sui tool ([backend/config/prompts/support_agent.py](backend/config/prompts/support_agent.py)).
+- **Endpoint `POST /chat/{company_slug}/message`**: crea conversazione se necessario, esegue l'agente e ritorna la risposta ([backend/api/agent.py](backend/api/agent.py)).
+- **Migration SQL 014** ([backend/database/migrations/014_tickets_add_is_escalation.sql](backend/database/migrations/014_tickets_add_is_escalation.sql)): colonna `is_escalation boolean NOT NULL DEFAULT false` nella tabella `tickets`.
+- **Modelli Pydantic aggiornati**: `TicketCreate` e `Ticket` espongono ora il campo `is_escalation: bool = False`.
+- **`config/llm_models/support_agent.yaml`**: file di configurazione del modello per l'agente di supporto (`model`, `max_tokens`). Modificare questo file per cambiare modello o limiti senza toccare il codice.
+- **`config/llm_models/loader.py`**: funzione `load_model_config(name)` e dataclass immutabile `LLMModelConfig`. Il sistema è estensibile: ogni agente avrà il proprio YAML identificato dal nome.
+- **Test completi con mock** (nessuna chiamata reale a servizi esterni):
+  - `backend/tests/tools/test_knowledge.py`
+  - `backend/tests/tools/test_ticket.py`
+  - `backend/tests/tools/test_escalation.py`
+  - `backend/tests/agents/test_support_agent.py`
+  - `backend/tests/api/test_agent.py`
+  - `backend/tests/integrations/llm_interfaces/test_base_llm_interface.py` (riscritto)
+  - `backend/tests/config/test_llm_models_loader.py`
+  - `backend/tests/integrations/llm_interfaces/test_anthropic_interface.py`
+
+### Changed
+
+- `BaseLLMInterface.generate` → `BaseLLMInterface.chat` (breaking change interno; nessun codice esterno ne dipendeva).
+- `backend/main.py`: registrato il nuovo router `/chat`.
+- `AnthropicInterface`: rimosso `DEFAULT_MODEL` hardcodato; model e max_tokens vengono ora caricati da `support_agent.yaml` all'avvio. Entrambi restano sovrascrivibili via argomento per test e usi one-off.
+- `get_llm_client()`: accetta `config_name` invece di `model`.
+
 ## 0.4.0 — 2026-04-21
 
 ### Added
