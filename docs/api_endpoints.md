@@ -85,6 +85,25 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 
 - `similarity` è in `[0, 1]` (cosine similarity, più alto = più rilevante).
 
+### `GET /chat/{company_slug}/config`
+
+Ritorna i dati di branding e il messaggio di benvenuto per la pagina di live chat. Endpoint pubblico: nessuna autenticazione richiesta.
+
+- **Path param**: `company_slug` — lo slug dell'azienda (es. `acme`).
+- **Risposta `200`**:
+
+```json
+{
+    "agent_name": "Sofia",
+    "company_display_name": "Acme Srl",
+    "logo_url": null,
+    "primary_color": "#FF5733",
+    "welcome_message": "Ciao! Come posso aiutarti?"
+}
+```
+
+- **Errori**: `404` company o agent_config non trovata.
+
 ### `POST /chat/{company_slug}/message`
 
 Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se `conversation_id` è null viene creata una nuova conversazione. L'agente usa la knowledge base, può aprire ticket e scalare a operatori umani autonomamente.
@@ -116,5 +135,6 @@ Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se
 
 - **Router documenti**: [backend/api/documents.py](../backend/api/documents.py)
 - **Router agente**: [backend/api/agent.py](../backend/api/agent.py)
+- **Router config**: [backend/api/config.py](../backend/api/config.py)
 - **Registrazione**: [backend/main.py](../backend/main.py)
 - **Doc correlati**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md)

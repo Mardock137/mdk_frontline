@@ -1,7 +1,7 @@
 # MDK Frontline
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.5.0`
+- **Versione progetto**: `0.6.0`
 
 ## 📋 Indice
 
@@ -21,7 +21,9 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 
 ## 🚀 Avvio rapido
 
-Tutti i comandi del backend vanno eseguiti dalla cartella `backend/`.
+### Backend
+
+Tutti i comandi vanno eseguiti dalla cartella `backend/`.
 
 1. Creare l'ambiente virtuale:
 
@@ -56,6 +58,28 @@ Per eseguire la suite di test (sempre dalla cartella `backend/`):
 pytest
 ```
 
+### Frontend
+
+Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
+
+1. Installare le dipendenze (una volta sola):
+
+   ```bash
+   npm install
+   ```
+
+2. Copiare `.env.local.example` in `.env.local` e inserire i valori.
+
+3. Avviare il server di sviluppo:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Aprire la chat nel browser: `http://localhost:3000/chat/[slug]`
+
+> Backend e frontend vanno avviati in parallelo (due terminali separati).
+
 ---
 
 ## 📚 Documentazione
@@ -65,6 +89,8 @@ pytest
 - [Configurazione](docs/config.md)
 - [Sistema di logging](docs/observability.md)
 - [Endpoints API](docs/api_endpoints.md)
+- [Sistema RAG](docs/rag.md)
+- [Frontend](docs/frontend.md)
 - [Gerarchia e ruoli](docs/hierarchy_and_roles.md)
 - [Logica decisionale](docs/decision_logic.md)
 - [Deploy](docs/deploy.md)

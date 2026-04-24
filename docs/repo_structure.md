@@ -9,6 +9,7 @@
  │    │    └── 📄 support_agent.py                           # Agente AI di supporto: loop autonomo con tool calling, salva messaggi nel DB.
  │    ├── 📁 api/                                            # Endpoint HTTP esposti dal backend verso il frontend.
  │    │    ├── 📄 agent.py                                   # Endpoint POST /chat/{company_slug}/message.
+ │    │    ├── 📄 config.py                                  # Endpoint pubblico GET /chat/{company_slug}/config (branding + welcome).
  │    │    └── 📄 documents.py                               # Endpoint /documents/* e /rag/search.
  │    ├── 📁 config/                                         # Configurazioni.
  │    │    ├── 📁 llm_models/                                # Configurazione dei modelli IA per ogni agente.
@@ -54,6 +55,7 @@
  │    │    │    └── 📄 test_support_agent.py                 # Test del loop dell'agente (LLM e tool mockati).
  │    │    ├── 📁 api/                                       # Test degli endpoint HTTP.
  │    │    │    ├── 📄 test_agent.py                         # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
+ │    │    │    ├── 📄 test_config.py                        # Test endpoint /chat/{slug}/config (Supabase mockato).
  │    │    │    └── 📄 test_documents.py
  │    │    ├── 📁 config/                                    # Test della configurazione.
  │    │    │    └── 📄 test_llm_models_loader.py             # Test del loader YAML (happy path, errori, validazione).
@@ -93,7 +95,7 @@
  │    ├── 📄 pytest.ini                                      #
  │    └── 📄 requirements.txt                                # Elenco delle dipendenze Python e relative versioni.
  │
- ├── 📁 dev_support/                                         # Materiale di supporto.
+ ├── 📁 dev_support/                                         # Materiale di supporto (Non è documentazione).
  │    ├── 📄 notes.md
  │    ├── 📄 to_do_list.md
  │    └── 📄 whiteboard.md
@@ -104,13 +106,35 @@
  │    ├── 📄 database.md                                     # Guida operativa alle migration Supabase e allo schema.
  │    ├── 📄 rag.md                                          # Guida al sistema RAG (upload, chunking, embedding, ricerca).
  │    ├── 📄 config.md                                       # Guida alla configurazione
- │    ├── 📄 decison_logic.md                                #
  │    ├── 📄 deploy.md                                       #
+ │    ├── 📄 frontend.md                                     #
  │    ├── 📄 observability.md                                # Sistema di logging
  │    ├── 📄 repo_structure.md                               # Struttura e spiegazione della repo.
  │    └── 📄 TEMPLATE.md                                     # Template standard per la documentazione del progetto.
  │
- ├── 📁 frontend/                                            # Codice sorgente del frontend (Next.js + shadcn/ui): dashboard aziendale e pagina di live chat.
+ ├── 📁 frontend/                                            # Codice sorgente del frontend (Next.js 15 + Tailwind CSS v4).
+ │    ├── 📁 app/                                            # App Router di Next.js.
+ │    │    ├── 📁 chat/
+ │    │    │    └── 📁 [slug]/
+ │    │    │         └── 📄 page.tsx                         # Pagina pubblica di live chat: carica config, mostra welcome, gestisce conversazione.
+ │    │    ├── 📄 globals.css                                # Stili globali (Tailwind v4).
+ │    │    ├── 📄 layout.tsx                                 # Root layout dell'app.
+ │    │    └── 📄 page.tsx                                   # Home page placeholder.
+ │    ├── 📁 components/
+ │    │    └── 📁 chat/
+ │    │         ├── 📄 ChatWindow.tsx                        # Contenitore messaggi con scroll automatico.
+ │    │         ├── 📄 MessageBubble.tsx                     # Bolla singolo messaggio (agente / cliente).
+ │    │         ├── 📄 MessageInput.tsx                      # Textarea + pulsante invia.
+ │    │         └── 📄 TypingIndicator.tsx                   # Animazione "sta scrivendo...".
+ │    ├── 📁 lib/
+ │    │    ├── 📄 api.ts                                     # Chiamate al backend: getConfig() e sendMessage().
+ │    │    └── 📄 utils.ts                                   # Utility cn() per classi Tailwind condizionali.
+ │    ├── 📄 .env.local                                      # Variabili d'ambiente locali (NEXT_PUBLIC_API_URL).
+ │    ├── 📄 .env.local.example                              # Esempio di variabili d'ambiente frontend.
+ │    ├── 📄 next.config.ts                                  # Configurazione Next.js.
+ │    ├── 📄 package.json                                    # Dipendenze e script npm.
+ │    ├── 📄 postcss.config.mjs                              # Configurazione PostCSS per Tailwind v4.
+ │    └── 📄 tsconfig.json                                   # Configurazione TypeScript.
  │
  ├── 📄 .gitignore                                           # Elenco dei file e delle cartelle esclusi dal controllo di versione.
  ├── 📄 CHANGELOG.md                                         # Storico versioni e modifiche del progetto.

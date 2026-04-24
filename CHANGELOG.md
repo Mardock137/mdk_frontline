@@ -1,6 +1,28 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.6.0 — 2026-04-24
+
+### Added
+
+- **Pagina Live Chat pubblica** (`/chat/[slug]`): i clienti finali di un'azienda possono aprire la chat direttamente nel browser senza login. Al caricamento vengono mostrati il branding aziendale e il messaggio di benvenuto; i messaggi successivi vengono gestiti con l'agente AI.
+- **Endpoint `GET /chat/{company_slug}/config`**: ritorna nome agente, nome azienda, logo, colore principale e messaggio di benvenuto. Nessuna autenticazione richiesta ([backend/api/config.py](backend/api/config.py)).
+- **`CORSMiddleware`** (FastAPI built-in): il backend ora accetta richieste cross-origin. In sviluppo tutte le origini sono permesse (`*`); in produzione si limita a `FRONTEND_URL` ([backend/main.py](backend/main.py)).
+- **Variabile `FRONTEND_URL`** nelle `Settings` e in `.env.example` ([backend/utils/config.py](backend/utils/config.py)).
+- **Test `tests/api/test_config.py`**: 4 test con Supabase mockato (happy path, 404 company, 404 agent_config, logo_url presente).
+- **Progetto Next.js 15** in `frontend/` con App Router, TypeScript, Tailwind CSS v4.
+- **`frontend/lib/api.ts`**: funzioni `getConfig(slug)` e `sendMessage(slug, payload)` verso il backend FastAPI.
+- **Componenti React** ([frontend/components/chat/](frontend/components/chat/)):
+  - `ChatWindow.tsx` — contenitore messaggi con scroll automatico.
+  - `MessageBubble.tsx` — bolla messaggio con colore primario per il cliente e stile neutro per l'agente.
+  - `MessageInput.tsx` — textarea con invio tramite Enter o pulsante; colore pulsante dinamico.
+  - `TypingIndicator.tsx` — tre pallini animati mostrati durante l'attesa della risposta.
+- **`frontend/.env.local.example`** con `NEXT_PUBLIC_API_URL`.
+
+### Changed
+
+- `backend/main.py`: registrato il nuovo router `/chat/{slug}/config` e aggiunto `CORSMiddleware`.
+
 ## 0.5.0 — 2026-04-24
 
 ### Added

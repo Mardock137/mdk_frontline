@@ -29,6 +29,8 @@ class Settings(BaseSettings):
 
     DEV_COMPANY_ID: str = Field(default="")
 
+    FRONTEND_URL: str = Field(default="*")
+
     LOG_LEVEL: str = Field(default="INFO")
 
 
