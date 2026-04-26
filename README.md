@@ -6,6 +6,8 @@
 ## 📋 Indice
 
 - [📄 Descrizione](#-descrizione)
+- [🛠️ Stack](#️-stack)
+- [🔐 Variabili d'ambiente](#-variabili-dambiente)
 - [🚀 Avvio rapido](#-avvio-rapido)
 - [📚 Documentazione](#-documentazione)
 
@@ -16,6 +18,45 @@
 MDK Frontline è un prodotto SaaS multi-tenant di customer support AI sviluppato da [MDK-137 OÜ](https://mdk137.com). Sostituisce il team umano di customer support di un'azienda, gestendo in autonomia le richieste dei clienti finali tramite una live chat dedicata.
 
 L'azienda acquirente configura il sistema da una dashboard aziendale caricando i propri documenti (FAQ, policy, manuali, listini), che vengono usati come base di conoscenza dall'agente AI. La vendita e l'accesso iniziale avvengono esclusivamente tramite il sito MDK-137.
+
+> **MDK Frontline non gestisce registrazione, pagamenti o checkout.** L'accesso alla dashboard avviene tramite redirect dal sito MDK-137, dove il cliente ha già acquistato il prodotto. Autenticazione e gestione abbonamenti sono responsabilità del sito MDK-137, non di questo progetto.
+
+---
+
+## 🛠️ Stack
+
+| Componente    | Tecnologia                              |
+|---------------|-----------------------------------------|
+| Backend       | Python 3.14 · FastAPI · Pydantic        |
+| Database      | Supabase (PostgreSQL + pgvector)        |
+| File storage  | Supabase Storage                        |
+| LLM           | Anthropic Claude (`claude-sonnet-4-6`)  |
+| Embedding     | Voyage AI (`voyage-3`)                  |
+| Frontend      | Next.js 16 · React 19 · Tailwind CSS v4 |
+| UI components | shadcn/ui                               |
+
+---
+
+## 🔐 Variabili d'ambiente
+
+### Backend (`backend/.env`)
+
+| Variabile                   | Descrizione                                                       |
+|-----------------------------|-------------------------------------------------------------------|
+| `ANTHROPIC_API_KEY`         | Chiave API Anthropic (Claude)                                     |
+| `VOYAGE_API_KEY`            | Chiave API Voyage AI (embedding)                                  |
+| `SUPABASE_URL`              | URL del progetto Supabase                                         |
+| `SUPABASE_ANON_KEY`         | Chiave pubblica Supabase                                          |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata Supabase (bypassa RLS)                             |
+| `DEV_COMPANY_ID`            | UUID dell'azienda usata in sviluppo (temporanea, MVP only)        |
+| `FRONTEND_URL`              | Origine CORS permessa (`*` in sviluppo, URL esatto in produzione) |
+| `LOG_LEVEL`                 | Livello di logging (default: `INFO`)                              |
+
+### Frontend (`frontend/.env.local`)
+
+| Variabile             | Descrizione                                                     |
+|-----------------------|-----------------------------------------------------------------|
+| `NEXT_PUBLIC_API_URL` | URL base del backend FastAPI (default: `http://localhost:8000`) |
 
 ---
 
@@ -77,8 +118,8 @@ Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
    ```
 
 4. Aprire nel browser:
-   - **Dashboard aziendale**: `http://localhost:3000/dashboard`
-   - **Live chat** (cliente finale): `http://localhost:3000/chat/[slug]`
+   - **Dashboard** (`http://localhost:3000/dashboard`) — area admin per l'azienda cliente (gestione documenti, ticket, configurazione agente)
+   - **Live chat** (`http://localhost:3000/chat/[slug]`) — pagina pubblica usata dagli utenti finali dell'azienda cliente per chattare con l'agente AI
 
 > Backend e frontend vanno avviati in parallelo (due terminali separati).
 
