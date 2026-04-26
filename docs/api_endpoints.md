@@ -131,10 +131,78 @@ Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se
 
 ---
 
+## 🖥️ Dashboard endpoints (`/dashboard`)
+
+Tutti gli endpoint `/dashboard` usano `DEV_COMPANY_ID` dal settings (stesso pattern degli endpoint documenti). Nessuna autenticazione richiesta nell'MVP.
+
+### `GET /dashboard/tickets`
+
+Lista tutti i ticket della company corrente, ordinati dal più recente.
+
+- **Risposta `200`**: array di `{ id, conversation_id, subject, description, status, is_escalation, created_at, updated_at }`.
+- `status`: `"open"` | `"in_progress"` | `"closed"`.
+- `is_escalation`: `true` se l'agente ha aperto il ticket come escalation.
+
+### `PATCH /dashboard/tickets/{ticket_id}`
+
+Aggiorna lo stato di un ticket.
+
+- **Body**: `{ "status": "open" | "in_progress" | "closed" }`
+- **Risposta `200`**: oggetto ticket aggiornato.
+- **Errori**: `404` se il ticket non esiste o non appartiene alla company.
+
+### `GET /dashboard/agent-config`
+
+Legge la configurazione dell'agente per la company corrente.
+
+- **Risposta `200`**:
+
+```json
+{
+    "agent_name": "Sofia",
+    "company_display_name": "Acme Srl",
+    "primary_color": "#FF5733",
+    "tone": "formal",
+    "default_language": "it",
+    "welcome_message": "Ciao! Come posso aiutarti?"
+}
+```
+
+- **Errori**: `404` se la configurazione non esiste.
+
+### `PATCH /dashboard/agent-config`
+
+Aggiorna parzialmente la configurazione dell'agente. Solo i campi presenti nel body vengono modificati.
+
+- **Campi aggiornabili**: `agent_name`, `company_display_name`, `primary_color` (hex `#RRGGBB`), `tone` (`formal`|`informal`), `default_language`, `welcome_message`.
+- **Risposta `200`**: configurazione aggiornata.
+- **Errori**: `422` se il body è vuoto, `404` se la configurazione non esiste.
+
+### `GET /dashboard/stats`
+
+Ritorna statistiche aggregate per la company corrente.
+
+- **Risposta `200`**:
+
+```json
+{
+    "total_conversations": 142,
+    "tickets_by_status": {
+        "open": 5,
+        "in_progress": 2,
+        "closed": 18
+    },
+    "escalation_open_count": 3
+}
+```
+
+---
+
 ## 📚 Riferimenti
 
 - **Router documenti**: [backend/api/documents.py](../backend/api/documents.py)
 - **Router agente**: [backend/api/agent.py](../backend/api/agent.py)
 - **Router config**: [backend/api/config.py](../backend/api/config.py)
+- **Router dashboard**: [backend/api/dashboard.py](../backend/api/dashboard.py)
 - **Registrazione**: [backend/main.py](../backend/main.py)
-- **Doc correlati**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md)
+- **Doc correlati**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md), [frontend.md](frontend.md)

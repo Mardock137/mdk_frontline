@@ -1,7 +1,7 @@
 # MDK Frontline
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.6.0`
+- **Versione progetto**: `0.7.0`
 
 ## 📋 Indice
 
@@ -76,7 +76,9 @@ Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
    npm run dev
    ```
 
-4. Aprire la chat nel browser: `http://localhost:3000/chat/[slug]`
+4. Aprire nel browser:
+   - **Dashboard aziendale**: `http://localhost:3000/dashboard`
+   - **Live chat** (cliente finale): `http://localhost:3000/chat/[slug]`
 
 > Backend e frontend vanno avviati in parallelo (due terminali separati).
 
@@ -91,6 +93,4 @@ Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
 - [Endpoints API](docs/api_endpoints.md)
 - [Sistema RAG](docs/rag.md)
 - [Frontend](docs/frontend.md)
-- [Gerarchia e ruoli](docs/hierarchy_and_roles.md)
-- [Logica decisionale](docs/decision_logic.md)
 - [Deploy](docs/deploy.md)

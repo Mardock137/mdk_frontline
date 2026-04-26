@@ -1,7 +1,19 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 // ---------------------------------------------------------------------------
-// Types
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function handleResponse<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error((error as { detail?: string })?.detail ?? `Request failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+// ---------------------------------------------------------------------------
+// Chat types
 // ---------------------------------------------------------------------------
 
 export interface ChatConfig {
@@ -23,29 +35,80 @@ export interface SendMessageResponse {
 }
 
 // ---------------------------------------------------------------------------
-// API calls
+// Dashboard types
 // ---------------------------------------------------------------------------
 
-/**
- * Fetches branding and welcome message for the given company slug.
- * Throws if the company is not found (404) or on network errors.
- */
-export async function getConfig(slug: string): Promise<ChatConfig> {
-  const res = await fetch(`${API_URL}/chat/${slug}/config`);
+export type TicketStatus = "open" | "in_progress" | "closed";
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error?.detail ?? `Failed to load config (${res.status})`);
-  }
-
-  return res.json() as Promise<ChatConfig>;
+export interface Ticket {
+  id: string;
+  conversation_id: string;
+  subject: string;
+  description: string;
+  status: TicketStatus;
+  is_escalation: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
-/**
- * Sends a customer message to the AI agent.
- * Pass `conversation_id: null` to start a new conversation.
- * Returns the agent reply and the conversation_id to reuse for subsequent messages.
- */
+export interface AgentConfig {
+  agent_name: string;
+  company_display_name: string;
+  primary_color: string;
+  tone: "formal" | "informal";
+  default_language: string;
+  welcome_message: string;
+}
+
+export interface AgentConfigUpdate {
+  agent_name?: string;
+  company_display_name?: string;
+  primary_color?: string;
+  tone?: "formal" | "informal";
+  default_language?: string;
+  welcome_message?: string;
+}
+
+export interface TicketsByStatus {
+  open: number;
+  in_progress: number;
+  closed: number;
+}
+
+export interface Stats {
+  total_conversations: number;
+  tickets_by_status: TicketsByStatus;
+  escalation_open_count: number;
+}
+
+// ---------------------------------------------------------------------------
+// Documents types (re-exported from backend shape)
+// ---------------------------------------------------------------------------
+
+export interface Document {
+  id: string;
+  filename: string;
+  content_type: string;
+  status: string;
+  created_at: string;
+  chunk_count: number;
+}
+
+export interface UploadResponse {
+  document_id: string;
+  chunk_count: number;
+  status: string;
+}
+
+// ---------------------------------------------------------------------------
+// Chat API
+// ---------------------------------------------------------------------------
+
+export async function getConfig(slug: string): Promise<ChatConfig> {
+  const res = await fetch(`${API_URL}/chat/${slug}/config`);
+  return handleResponse<ChatConfig>(res);
+}
+
 export async function sendMessage(
   slug: string,
   payload: SendMessageRequest,
@@ -55,11 +118,77 @@ export async function sendMessage(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+  return handleResponse<SendMessageResponse>(res);
+}
 
-  if (!res.ok) {
+// ---------------------------------------------------------------------------
+// Documents API
+// ---------------------------------------------------------------------------
+
+export async function getDocuments(): Promise<Document[]> {
+  const res = await fetch(`${API_URL}/documents`);
+  return handleResponse<Document[]>(res);
+}
+
+export async function uploadDocument(file: File): Promise<UploadResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_URL}/documents/upload`, {
+    method: "POST",
+    body: form,
+  });
+  return handleResponse<UploadResponse>(res);
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  const res = await fetch(`${API_URL}/documents/${id}`, { method: "DELETE" });
+  if (!res.ok && res.status !== 204) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(error?.detail ?? `Request failed (${res.status})`);
+    throw new Error((error as { detail?: string })?.detail ?? `Delete failed (${res.status})`);
   }
+}
 
-  return res.json() as Promise<SendMessageResponse>;
+// ---------------------------------------------------------------------------
+// Dashboard — Tickets API
+// ---------------------------------------------------------------------------
+
+export async function getTickets(): Promise<Ticket[]> {
+  const res = await fetch(`${API_URL}/dashboard/tickets`);
+  return handleResponse<Ticket[]>(res);
+}
+
+export async function updateTicketStatus(id: string, status: TicketStatus): Promise<Ticket> {
+  const res = await fetch(`${API_URL}/dashboard/tickets/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  return handleResponse<Ticket>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard — Agent Config API
+// ---------------------------------------------------------------------------
+
+export async function getAgentConfig(): Promise<AgentConfig> {
+  const res = await fetch(`${API_URL}/dashboard/agent-config`);
+  return handleResponse<AgentConfig>(res);
+}
+
+export async function updateAgentConfig(data: AgentConfigUpdate): Promise<AgentConfig> {
+  const res = await fetch(`${API_URL}/dashboard/agent-config`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<AgentConfig>(res);
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard — Stats API
+// ---------------------------------------------------------------------------
+
+export async function getStats(): Promise<Stats> {
+  const res = await fetch(`${API_URL}/dashboard/stats`);
+  return handleResponse<Stats>(res);
 }

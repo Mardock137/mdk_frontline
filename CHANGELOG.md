@@ -1,6 +1,33 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.0 — 2026-04-26
+
+### Added
+
+- **Dashboard aziendale** (`/dashboard`): area admin per la gestione di documenti, ticket, configurazione agente e statistiche. Accessibile senza login (usa `DEV_COMPANY_ID` come il resto del progetto MVP).
+- **Backend `backend/api/dashboard.py`**: 5 nuovi endpoint REST registrati su `/dashboard`:
+  - `GET /dashboard/tickets` — lista ticket della company (tutti, ordinati per data, con campo `is_escalation`).
+  - `PATCH /dashboard/tickets/{ticket_id}` — aggiorna lo stato del ticket (`open` → `in_progress` → `closed`).
+  - `GET /dashboard/agent-config` — legge la configurazione attuale dell'agente.
+  - `PATCH /dashboard/agent-config` — aggiorna parzialmente: `agent_name`, `company_display_name`, `primary_color`, `tone`, `default_language`, `welcome_message`.
+  - `GET /dashboard/stats` — ritorna conversazioni totali, ticket per stato e conteggio escalation aperti.
+- **Test `backend/tests/api/test_dashboard.py`**: 11 test con Supabase completamente mockato (tutti gli endpoint, happy path + errori 404/422/wrong company).
+- **Componenti UI** in `frontend/components/ui/`: `button`, `card`, `badge`, `table`, `input`, `label`, `select`, `textarea`, `dialog`, `toast` — implementati con Tailwind CSS v4 e `class-variance-authority`.
+- **`ToastProvider`** + hook `useToast`: sistema di notifiche contestuali (success/error/info) con auto-dismiss dopo 4 secondi.
+- **Funzioni API** aggiunte a `frontend/lib/api.ts`: `getDocuments`, `uploadDocument`, `deleteDocument`, `getTickets`, `updateTicketStatus`, `getAgentConfig`, `updateAgentConfig`, `getStats`.
+- **Layout dashboard** `frontend/app/dashboard/layout.tsx`: sidebar di navigazione con link a Documenti, Ticket, Configurazione, Statistiche.
+- **Pagina Documenti** `frontend/app/dashboard/documents/page.tsx`: upload tramite bottone, lista file con stato e conteggio chunk, eliminazione con confirm.
+- **Pagina Ticket** `frontend/app/dashboard/tickets/page.tsx`: lista ticket con badge stato/escalation, pulsanti cambio stato, banner escalation alert.
+- **Pagina Configurazione** `frontend/app/dashboard/config/page.tsx`: form completo per `agent_name`, `company_display_name`, `primary_color` (color picker + hex), `tone`, `default_language`, `welcome_message`.
+- **Pagina Statistiche** `frontend/app/dashboard/stats/page.tsx`: 4 stat card (conversazioni, ticket, escalation aperti, ticket chiusi) + barre di progressione per stato ticket.
+- **Redirect** `frontend/app/dashboard/page.tsx` → `/dashboard/documents`.
+
+### Changed
+
+- `backend/main.py`: registrato il nuovo `dashboard_router` con prefisso `/dashboard`.
+- `frontend/lib/api.ts`: refactoring interno con helper `handleResponse<T>` per evitare duplicazione della gestione errori.
+
 ## 0.6.0 — 2026-04-24
 
 ### Added

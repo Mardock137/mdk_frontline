@@ -10,6 +10,7 @@
  │    ├── 📁 api/                                            # Endpoint HTTP esposti dal backend verso il frontend.
  │    │    ├── 📄 agent.py                                   # Endpoint POST /chat/{company_slug}/message.
  │    │    ├── 📄 config.py                                  # Endpoint pubblico GET /chat/{company_slug}/config (branding + welcome).
+ │    │    ├── 📄 dashboard.py                               # Endpoint /dashboard/*: ticket, agent-config, stats.
  │    │    └── 📄 documents.py                               # Endpoint /documents/* e /rag/search.
  │    ├── 📁 config/                                         # Configurazioni.
  │    │    ├── 📁 llm_models/                                # Configurazione dei modelli IA per ogni agente.
@@ -56,6 +57,7 @@
  │    │    ├── 📁 api/                                       # Test degli endpoint HTTP.
  │    │    │    ├── 📄 test_agent.py                         # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
  │    │    │    ├── 📄 test_config.py                        # Test endpoint /chat/{slug}/config (Supabase mockato).
+ │    │    │    ├── 📄 test_dashboard.py                     # Test endpoint /dashboard/* (11 test, Supabase mockato).
  │    │    │    └── 📄 test_documents.py
  │    │    ├── 📁 config/                                    # Test della configurazione.
  │    │    │    └── 📄 test_llm_models_loader.py             # Test del loader YAML (happy path, errori, validazione).
@@ -112,22 +114,44 @@
  │    ├── 📄 repo_structure.md                               # Struttura e spiegazione della repo.
  │    └── 📄 TEMPLATE.md                                     # Template standard per la documentazione del progetto.
  │
- ├── 📁 frontend/                                            # Codice sorgente del frontend (Next.js 15 + Tailwind CSS v4).
+ ├── 📁 frontend/                                            # Codice sorgente del frontend (Next.js 16 + Tailwind CSS v4).
  │    ├── 📁 app/                                            # App Router di Next.js.
  │    │    ├── 📁 chat/
  │    │    │    └── 📁 [slug]/
  │    │    │         └── 📄 page.tsx                         # Pagina pubblica di live chat: carica config, mostra welcome, gestisce conversazione.
+ │    │    ├── 📁 dashboard/                                 # Dashboard aziendale (admin area, usa DEV_COMPANY_ID).
+ │    │    │    ├── 📁 config/
+ │    │    │    │    └── 📄 page.tsx                         # Form modifica agent_name, colore, tono, lingua, welcome message.
+ │    │    │    ├── 📁 documents/
+ │    │    │    │    └── 📄 page.tsx                         # Upload, lista e cancellazione documenti.
+ │    │    │    ├── 📁 stats/
+ │    │    │    │    └── 📄 page.tsx                         # Stat card: conversazioni, ticket per stato, escalation aperti.
+ │    │    │    ├── 📁 tickets/
+ │    │    │    │    └── 📄 page.tsx                         # Lista ticket con badge stato/escalation e cambio stato.
+ │    │    │    ├── 📄 layout.tsx                            # Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats).
+ │    │    │    └── 📄 page.tsx                              # Redirect automatico a /dashboard/documents.
  │    │    ├── 📄 globals.css                                # Stili globali (Tailwind v4).
  │    │    ├── 📄 layout.tsx                                 # Root layout dell'app.
  │    │    └── 📄 page.tsx                                   # Home page placeholder.
  │    ├── 📁 components/
- │    │    └── 📁 chat/
- │    │         ├── 📄 ChatWindow.tsx                        # Contenitore messaggi con scroll automatico.
- │    │         ├── 📄 MessageBubble.tsx                     # Bolla singolo messaggio (agente / cliente).
- │    │         ├── 📄 MessageInput.tsx                      # Textarea + pulsante invia.
- │    │         └── 📄 TypingIndicator.tsx                   # Animazione "sta scrivendo...".
+ │    │    ├── 📁 chat/
+ │    │    │    ├── 📄 ChatWindow.tsx                        # Contenitore messaggi con scroll automatico.
+ │    │    │    ├── 📄 MessageBubble.tsx                     # Bolla singolo messaggio (agente / cliente).
+ │    │    │    ├── 📄 MessageInput.tsx                      # Textarea + pulsante invia.
+ │    │    │    └── 📄 TypingIndicator.tsx                   # Animazione "sta scrivendo...".
+ │    │    └── 📁 ui/                                        # Componenti UI riutilizzabili (stile shadcn/ui, Tailwind v4).
+ │    │         ├── 📄 badge.tsx                             # Badge colorato per stati (success/warning/error/info).
+ │    │         ├── 📄 button.tsx                            # Button con varianti (default/outline/ghost/destructive/link).
+ │    │         ├── 📄 card.tsx                              # Card con Header, Title, Description, Content, Footer.
+ │    │         ├── 📄 dialog.tsx                            # Modal dialog con overlay e chiusura via ESC.
+ │    │         ├── 📄 input.tsx                             # Input testuale stilizzato.
+ │    │         ├── 📄 label.tsx                             # Label per form.
+ │    │         ├── 📄 select.tsx                            # Select dropdown con icona chevron.
+ │    │         ├── 📄 table.tsx                             # Table semantica con stile Tailwind.
+ │    │         ├── 📄 textarea.tsx                          # Textarea stilizzata.
+ │    │         └── 📄 toast.tsx                             # Toast notification: ToastProvider + hook useToast().
  │    ├── 📁 lib/
- │    │    ├── 📄 api.ts                                     # Chiamate al backend: getConfig() e sendMessage().
+ │    │    ├── 📄 api.ts                                     # Tutte le chiamate al backend (chat, documenti, dashboard).
  │    │    └── 📄 utils.ts                                   # Utility cn() per classi Tailwind condizionali.
  │    ├── 📄 .env.local                                      # Variabili d'ambiente locali (NEXT_PUBLIC_API_URL).
  │    ├── 📄 .env.local.example                              # Esempio di variabili d'ambiente frontend.

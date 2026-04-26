@@ -19,11 +19,10 @@ Guida operativa al frontend di MDK Frontline: pagina di live chat pubblica e set
 
 ## 📄 Panoramica
 
-Il frontend è un'applicazione **Next.js 16** con TypeScript e Tailwind CSS. Nella Fase 5 (MVP) espone una sola pagina pubblica:
+Il frontend è un'applicazione **Next.js 16** con TypeScript e Tailwind CSS. Espone due aree principali:
 
-- **`/chat/[slug]`** — Live chat dedicata per ogni azienda cliente. Il cliente finale di un'azienda apre questa pagina e chatta con l'agente AI. Non richiede login.
-
-La **dashboard aziendale** (gestione documenti, ticket, configurazione) è prevista nella Fase 6.
+- **`/chat/[slug]`** — Live chat pubblica dedicata per ogni azienda cliente. Non richiede login.
+- **`/dashboard`** — Dashboard aziendale per la gestione di documenti, ticket, configurazione agente e statistiche. Usa `DEV_COMPANY_ID` dal backend (nessun login nell'MVP).
 
 ---
 
@@ -53,7 +52,7 @@ Backend esegue agente AI ──► risposta testuale
 Mostra risposta agente, salva conversation_id per i messaggi successivi
 ```
 
-### Componenti
+### Componenti — Chat
 
 | File                                  | Ruolo                                                                           |
 |---------------------------------------|---------------------------------------------------------------------------------|
@@ -62,7 +61,28 @@ Mostra risposta agente, salva conversation_id per i messaggi successivi
 | `components/chat/MessageBubble.tsx`   | Singola bolla (cliente a destra, agente a sinistra)                             |
 | `components/chat/MessageInput.tsx`    | Input testo + pulsante invia (Enter per inviare, Shift+Enter per andare a capo) |
 | `components/chat/TypingIndicator.tsx` | Tre pallini animati mentre l'agente elabora                                     |
-| `lib/api.ts`                          | Chiamate al backend: `getConfig()` e `sendMessage()`                            |
+| `lib/api.ts`                          | Tutte le chiamate al backend (chat, documenti, dashboard)                       |
+
+### Componenti — Dashboard
+
+| File                                    | Ruolo                                                          |
+|-----------------------------------------|----------------------------------------------------------------|
+| `app/dashboard/layout.tsx`              | Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats) |
+| `app/dashboard/page.tsx`                | Redirect automatico a `/dashboard/documents`                   |
+| `app/dashboard/documents/page.tsx`      | Upload, lista e cancellazione documenti                        |
+| `app/dashboard/tickets/page.tsx`        | Lista ticket con badge stato/escalation e cambio stato         |
+| `app/dashboard/config/page.tsx`         | Form configurazione agente (nome, colore, tono, lingua, welcome) |
+| `app/dashboard/stats/page.tsx`          | Stat card + barre stato ticket                                 |
+| `components/ui/button.tsx`              | Componente Button con varianti (default/outline/ghost/etc.)    |
+| `components/ui/card.tsx`                | Card con Header, Title, Description, Content, Footer           |
+| `components/ui/badge.tsx`               | Badge colorato per stati (success/warning/error/info)          |
+| `components/ui/table.tsx`               | Table semantica con stile Tailwind                             |
+| `components/ui/input.tsx`               | Input testuale stilizzato                                      |
+| `components/ui/label.tsx`               | Label per form                                                 |
+| `components/ui/select.tsx`              | Select dropdown stilizzato con icona chevron                   |
+| `components/ui/textarea.tsx`            | Textarea stilizzata                                            |
+| `components/ui/dialog.tsx`              | Modal dialog con overlay, chiusura via ESC e click esterno     |
+| `components/ui/toast.tsx`               | Toast notification con `ToastProvider` e hook `useToast()`     |
 
 ### Branding dinamico
 
@@ -97,14 +117,15 @@ Copiare `frontend/.env.local.example` in `frontend/.env.local` e inserire i valo
 
 ### Stack
 
-| Tecnologia            | Versione | Ruolo                           |
-|-----------------------|----------|---------------------------------|
-| Next.js               | 16.x     | Framework React (App Router)    |
-| React                 | 19.x     | UI                              |
-| TypeScript            | 5.x      | Tipizzazione                    |
-| Tailwind CSS          | 4.x      | Styling                         |
-| lucide-react          | 1.x      | Icone                           |
-| clsx + tailwind-merge | —        | Utility composizione classi CSS |
+| Tecnologia              | Versione | Ruolo                              |
+|-------------------------|----------|------------------------------------|
+| Next.js                 | 16.x     | Framework React (App Router)       |
+| React                   | 19.x     | UI                                 |
+| TypeScript              | 5.x      | Tipizzazione                       |
+| Tailwind CSS            | 4.x      | Styling                            |
+| class-variance-authority| 0.7.x    | Varianti CSS per componenti UI     |
+| lucide-react            | 1.x      | Icone                              |
+| clsx + tailwind-merge   | —        | Utility composizione classi CSS    |
 
 ---
 
@@ -131,8 +152,9 @@ npm run dev
 ```
 
 4. **Apri la chat** nel browser: `http://localhost:3000/chat/[slug]`
+5. **Apri la dashboard** nel browser: `http://localhost:3000/dashboard`
 
-> Il backend deve essere avviato in parallelo dalla cartella `backend/` con `uvicorn main:app --reload`. Senza backend il frontend non può caricare la configurazione né inviare messaggi.
+> Il backend deve essere avviato in parallelo dalla cartella `backend/` con `uvicorn main:app --reload`. Senza backend il frontend non può caricare la configurazione né inviare messaggi. La dashboard richiede `DEV_COMPANY_ID` configurato nel file `backend/.env`.
 
 ---
 
@@ -157,20 +179,26 @@ npm run dev
 
 ## ⚠️ Note MVP
 
-- **Nessun login**: la pagina `/chat/[slug]` è pubblica e accessibile a chiunque abbia il link.
+- **Nessun login**: la pagina `/chat/[slug]` è pubblica; la dashboard usa `DEV_COMPANY_ID` dal backend.
 - **Conversazione in memoria**: il `conversation_id` vive nello stato React. Ricaricare la pagina azzera la conversazione.
-- **Nessun test automatico**: il frontend non ha test nella Fase 5. I test UI sono rimandati a post-MVP.
-- **Home page (`/`) vuota**: la root del sito mostra solo un placeholder. Verrà gestita nella Fase 6 o nella dashboard.
+- **Nessun test automatico**: il frontend non ha test automatici nell'MVP. I test UI sono rimandati a post-MVP.
+- **Home page (`/`) vuota**: la root del sito mostra un placeholder. Non è ancora una landing page.
 
 ---
 
 ## 📚 Riferimenti
 
-- **Codice**:
+- **Chat**:
   - [frontend/app/chat/[slug]/page.tsx](../frontend/app/chat/%5Bslug%5D/page.tsx)
   - [frontend/components/chat/](../frontend/components/chat/)
+- **Dashboard**:
+  - [frontend/app/dashboard/](../frontend/app/dashboard/)
+  - [frontend/components/ui/](../frontend/components/ui/)
+- **API client**:
   - [frontend/lib/api.ts](../frontend/lib/api.ts)
 - **Backend correlato**:
-  - [backend/api/config.py](../backend/api/config.py) — endpoint `GET /chat/{slug}/config`
-  - [backend/api/agent.py](../backend/api/agent.py) — endpoint `POST /chat/{slug}/message`
+  - [backend/api/config.py](../backend/api/config.py) — `GET /chat/{slug}/config`
+  - [backend/api/agent.py](../backend/api/agent.py) — `POST /chat/{slug}/message`
+  - [backend/api/documents.py](../backend/api/documents.py) — documenti e RAG
+  - [backend/api/dashboard.py](../backend/api/dashboard.py) — ticket, config agente, stats
 - **Doc correlati**: [architecture.md](architecture.md), [api_endpoints.md](api_endpoints.md)

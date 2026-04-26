@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.agent import router as agent_router
 from api.config import router as config_router
+from api.dashboard import router as dashboard_router
 from api.documents import router as documents_router
 from utils.config import get_settings
 from utils.logging_config import setup_logging
@@ -39,6 +40,7 @@ app.add_middleware(
 app.include_router(documents_router)
 app.include_router(agent_router)
 app.include_router(config_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/health")
