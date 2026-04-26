@@ -7,9 +7,12 @@ Exposes:
 
 from __future__ import annotations
 
+import logging
 from uuid import UUID
 
 from supabase import Client
+
+logger = logging.getLogger(__name__)
 
 TOOL_DEFINITION: dict = {
     "name": "escalate",
@@ -66,10 +69,31 @@ def escalate(
         "status": "open",
         "is_escalation": True,
     }
-    supabase.table("tickets").insert(row).execute()
-    supabase.table("conversations").update({"status": "escalated"}).eq(
-        "id", str(conversation_id)
-    ).execute()
+    try:
+        result = supabase.table("tickets").insert(row).execute()
+        if not result.data:
+            logger.error(
+                "escalate: ticket insert returned no data for conversation %s",
+                conversation_id,
+            )
+            return "Errore interno durante l'escalation. Riprova o contatta il supporto."
+        ticket_id = result.data[0]["id"]
+    except Exception:
+        logger.exception(
+            "escalate: failed to insert ticket for conversation %s", conversation_id
+        )
+        return "Errore interno durante l'escalation. Riprova o contatta il supporto."
+
+    try:
+        supabase.table("conversations").update({"status": "escalated"}).eq(
+            "id", str(conversation_id)
+        ).execute()
+    except Exception:
+        logger.error(
+            "escalate: ticket %s created but conversation %s status update failed",
+            ticket_id,
+            conversation_id,
+        )
     return (
         f"Conversazione escalata a un operatore umano. "
         f"Motivo: {subject}. Il team ti contatterà al più presto."

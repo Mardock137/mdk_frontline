@@ -1,6 +1,15 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.3 — 2026-04-26
+
+### Fixed
+
+- **Pipeline di ingestione documenti** (`backend/rag/ingestion.py`): spostati upload su storage e aggiornamento di `storage_path` dentro il blocco `try/except`, così un errore in queste fasi marca correttamente il documento come `ERROR` invece di lasciarlo bloccato in `PROCESSING`.
+- **Sanitizzazione filename upload** (`backend/rag/ingestion.py`): il path storage ora usa `Path(filename).name`, così vengono rimossi eventuali componenti di directory dal nome file inviato dall'utente.
+- **Escalation piu' robusta** (`backend/tools/escalation.py`): inserimento ticket e update della conversazione sono gestiti separatamente. Se l'insert fallisce viene restituito un errore controllato; se fallisce solo l'update della conversazione, il problema viene loggato ma il ticket creato non va perso.
+- **Test aggiornati**: aggiunti casi mirati in `backend/tests/rag/test_ingestion.py` e `backend/tests/tools/test_escalation.py` per coprire storage failure, sanitizzazione filename, ticket insert failure e conversation update failure.
+
 ## 0.7.2 — 2026-04-26
 
 ### Fixed

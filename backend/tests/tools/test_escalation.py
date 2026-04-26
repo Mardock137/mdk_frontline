@@ -1,6 +1,6 @@
 """Tests for tools/escalation.py (Supabase client mocked)."""
 
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 from tools.escalation import TOOL_DEFINITION, escalate
@@ -8,12 +8,25 @@ from tools.escalation import TOOL_DEFINITION, escalate
 
 def _make_supabase() -> MagicMock:
     supabase = MagicMock()
-    supabase.table.return_value.insert.return_value.execute.return_value = MagicMock(
+
+    tickets_table = MagicMock()
+    tickets_table.insert.return_value.execute.return_value = MagicMock(
         data=[{"id": str(uuid4())}]
     )
-    supabase.table.return_value.update.return_value.eq.return_value.execute.return_value = MagicMock(
+
+    conversations_table = MagicMock()
+    conversations_table.update.return_value.eq.return_value.execute.return_value = MagicMock(
         data=[]
     )
+
+    def table_side_effect(name):
+        if name == "tickets":
+            return tickets_table
+        if name == "conversations":
+            return conversations_table
+        return MagicMock()
+
+    supabase.table.side_effect = table_side_effect
     return supabase
 
 
@@ -30,7 +43,7 @@ def test_escalate_inserts_ticket_with_is_escalation_true():
         supabase=supabase,
     )
 
-    insert_call_args = supabase.table.return_value.insert.call_args[0][0]
+    insert_call_args = supabase.table("tickets").insert.call_args[0][0]
     assert insert_call_args["is_escalation"] is True
     assert insert_call_args["company_id"] == str(company_id)
     assert insert_call_args["conversation_id"] == str(conversation_id)
@@ -48,8 +61,8 @@ def test_escalate_updates_conversation_status():
         supabase=supabase,
     )
 
-    supabase.table.return_value.update.assert_called_with({"status": "escalated"})
-    supabase.table.return_value.update.return_value.eq.assert_called_with(
+    supabase.table("conversations").update.assert_called_with({"status": "escalated"})
+    supabase.table("conversations").update.return_value.eq.assert_called_with(
         "id", str(conversation_id)
     )
 
@@ -66,6 +79,40 @@ def test_escalate_returns_confirmation_message():
     )
 
     assert "escalata" in result.lower() or "operatore" in result.lower()
+
+
+def test_escalate_returns_error_string_when_ticket_insert_fails():
+    supabase = _make_supabase()
+    supabase.table("tickets").insert.return_value.execute.side_effect = RuntimeError(
+        "db insert failed"
+    )
+
+    result = escalate(
+        subject="Broken feature",
+        description="Details.",
+        company_id=uuid4(),
+        conversation_id=uuid4(),
+        supabase=supabase,
+    )
+
+    assert "errore" in result.lower()
+
+
+def test_escalate_returns_confirmation_when_only_conversation_update_fails():
+    supabase = _make_supabase()
+    supabase.table("conversations").update.return_value.eq.return_value.execute.side_effect = RuntimeError(
+        "db update failed"
+    )
+
+    result = escalate(
+        subject="Broken feature",
+        description="Details.",
+        company_id=uuid4(),
+        conversation_id=uuid4(),
+        supabase=supabase,
+    )
+
+    assert "escalata" in result.lower()
 
 
 def test_tool_definition_schema():

@@ -83,3 +83,38 @@ async def test_ingest_sets_error_when_no_text(patched_clients):
     assert result.status is DocumentStatus.ERROR
     assert result.chunk_count == 0
     assert embedder.calls == []
+
+
+async def test_ingest_sets_error_when_storage_upload_fails(patched_clients):
+    supabase, embedder, doc_id = patched_clients
+    supabase.storage.from_.return_value.upload.side_effect = RuntimeError("upload failed")
+
+    with pytest.raises(RuntimeError, match="upload failed"):
+        await ingestion.ingest_document(
+            company_id=uuid4(),
+            filename="faq.txt",
+            content_type="text/plain",
+            data=b"This is a short FAQ content for testing.",
+            embedding_client=embedder,
+        )
+
+    update_calls = supabase.table.return_value.update.call_args_list
+    assert any(call.args[0] == {"status": DocumentStatus.ERROR.value} for call in update_calls)
+    assert embedder.calls == []
+
+
+async def test_ingest_sanitizes_filename_in_storage_path(patched_clients):
+    supabase, embedder, _ = patched_clients
+    company_id = uuid4()
+
+    await ingestion.ingest_document(
+        company_id=company_id,
+        filename="../../../secret.txt",
+        content_type="text/plain",
+        data=b"This is a short FAQ content for testing.",
+        embedding_client=embedder,
+    )
+
+    upload_call = supabase.storage.from_.return_value.upload.call_args.kwargs
+    assert ".." not in upload_call["path"]
+    assert upload_call["path"].endswith("/secret.txt")

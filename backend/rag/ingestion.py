@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from uuid import UUID
 
 from database.models import DocumentStatus
@@ -69,19 +70,20 @@ async def ingest_document(
     # Unique path per document avoids collisions when two uploads share the
     # same filename (previous behaviour would overwrite the object in Storage
     # and leave one of the rows pointing to someone else's bytes).
-    storage_path = f"{company_id}/{document_id}/{filename}"
-
-    supabase.storage.from_(STORAGE_BUCKET).upload(
-        path=storage_path,
-        file=data,
-        file_options={"content-type": content_type},
-    )
-
-    supabase.table("documents").update({"storage_path": storage_path}).eq(
-        "id", str(document_id)
-    ).execute()
+    safe_filename = Path(filename).name
+    storage_path = f"{company_id}/{document_id}/{safe_filename}"
 
     try:
+        supabase.storage.from_(STORAGE_BUCKET).upload(
+            path=storage_path,
+            file=data,
+            file_options={"content-type": content_type},
+        )
+
+        supabase.table("documents").update({"storage_path": storage_path}).eq(
+            "id", str(document_id)
+        ).execute()
+
         text = extract_text(data, content_type=content_type, filename=filename)
         chunks = chunk_text(text)
 
