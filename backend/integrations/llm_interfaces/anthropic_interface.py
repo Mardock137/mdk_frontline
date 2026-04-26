@@ -95,13 +95,13 @@ class AnthropicInterface(BaseLLMInterface):
 
         response = await self._client.messages.create(**kwargs)
 
-        text: str | None = None
+        texts: list[str] = []
         tool_uses: list[ToolUse] = []
         raw_content: list[dict] = []
 
         for block in response.content:
             if block.type == "text":
-                text = block.text
+                texts.append(block.text)
                 raw_content.append({"type": "text", "text": block.text})
             elif block.type == "tool_use":
                 tool_uses.append(
@@ -118,7 +118,7 @@ class AnthropicInterface(BaseLLMInterface):
 
         return ChatResponse(
             stop_reason=response.stop_reason or "end_turn",
-            text=text,
+            text="\n".join(texts) if texts else None,
             tool_uses=tool_uses,
             raw_content=raw_content,
         )

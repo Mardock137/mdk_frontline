@@ -101,6 +101,19 @@ async def send_message(
         conversation_id = UUID(conv_row.data[0]["id"])
         logger.info("New conversation %s for company %s", conversation_id, company_slug)
     else:
+        conv_check = (
+            supabase.table("conversations")
+            .select("id")
+            .eq("id", str(body.conversation_id))
+            .eq("company_id", str(company_id))
+            .limit(1)
+            .execute()
+        )
+        if not conv_check.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
         conversation_id = body.conversation_id
 
     # 4. Run the agent ---------------------------------------------------------

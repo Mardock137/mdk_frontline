@@ -1,6 +1,16 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.1 — 2026-04-26
+
+### Fixed
+
+- **Sicurezza endpoint chat** (`backend/api/agent.py`): aggiunta verifica cross-tenant su `conversation_id` per impedire il riuso di conversazioni appartenenti a un'altra company. Se la conversazione non appartiene al tenant corrente, l'endpoint ritorna `404`.
+- **`AnthropicInterface`** (`backend/integrations/llm_interfaces/anthropic_interface.py`): corretta la gestione delle risposte con piu' blocchi `text`, che prima sovrascrivevano i segmenti precedenti. Ora tutti i blocchi vengono concatenati nell'ordine corretto.
+- **Test aggiornati**: aggiunti casi mirati in `backend/tests/api/test_agent.py` e `backend/tests/integrations/llm_interfaces/test_anthropic_interface.py` per coprire sia il controllo cross-tenant sia le risposte testuali multi-blocco.
+
+---
+
 ## 0.7.0 — 2026-04-26
 
 ### Added
@@ -28,6 +38,8 @@
 - `backend/main.py`: registrato il nuovo `dashboard_router` con prefisso `/dashboard`.
 - `frontend/lib/api.ts`: refactoring interno con helper `handleResponse<T>` per evitare duplicazione della gestione errori.
 
+---
+
 ## 0.6.0 — 2026-04-24
 
 ### Added
@@ -49,6 +61,8 @@
 ### Changed
 
 - `backend/main.py`: registrato il nuovo router `/chat/{slug}/config` e aggiunto `CORSMiddleware`.
+
+---
 
 ## 0.5.0 — 2026-04-24
 
@@ -84,6 +98,8 @@
 - `AnthropicInterface`: rimosso `DEFAULT_MODEL` hardcodato; model e max_tokens vengono ora caricati da `support_agent.yaml` all'avvio. Entrambi restano sovrascrivibili via argomento per test e usi one-off.
 - `get_llm_client()`: accetta `config_name` invece di `model`.
 
+---
+
 ## 0.4.0 — 2026-04-21
 
 ### Added
@@ -112,6 +128,8 @@
 
 - Il pacchetto ufficiale `voyageai` non supporta Python 3.14: usiamo la REST API direttamente, zero SDK aggiuntivo.
 
+---
+
 ## 0.3.0 — 2026-04-21
 
 ### Added
@@ -125,6 +143,8 @@
 - Test dei modelli e del client Supabase ([backend/tests/database/](backend/tests/database/)).
 - Nuova documentazione: [docs/architecture.md](docs/architecture.md) (schema e scelte architetturali) e [docs/database.md](docs/database.md) (guida operativa alle migration).
 
+---
+
 ## 0.2.0 — 2026-04-20
 
 ### Added
@@ -137,6 +157,8 @@
 - Configurazione `pytest` ([backend/pytest.ini](backend/pytest.ini)) e suite di test iniziale (health endpoint, settings, logging).
 - Dipendenze Python di partenza ([backend/requirements.txt](backend/requirements.txt)).
 - Documentazione iniziale: struttura repo, configurazione, sistema di logging.
+
+---
 
 ## 0.1.0 — 2026-04-17
 

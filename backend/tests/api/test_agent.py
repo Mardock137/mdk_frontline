@@ -57,8 +57,12 @@ def client(monkeypatch):
 def _make_supabase(company_id, conversation_id, agent_config_row):
     """Build a minimal Supabase mock covering all queries the endpoint makes."""
     supabase = MagicMock()
+    tables: dict[str, MagicMock] = {}
 
     def table_side_effect(name):
+        if name in tables:
+            return tables[name]
+
         tbl = MagicMock()
         if name == "companies":
             tbl.select.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
@@ -72,11 +76,16 @@ def _make_supabase(company_id, conversation_id, agent_config_row):
             tbl.insert.return_value.execute.return_value = MagicMock(
                 data=[{"id": str(conversation_id)}]
             )
+            conversation_query = tbl.select.return_value.eq.return_value.eq.return_value
+            conversation_query.limit.return_value.execute.return_value = MagicMock(
+                data=[{"id": str(conversation_id)}]
+            )
         elif name == "messages":
             tbl.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
                 data=[]
             )
             tbl.insert.return_value.execute.return_value = MagicMock(data=[])
+        tables[name] = tbl
         return tbl
 
     supabase.table.side_effect = table_side_effect
@@ -134,6 +143,31 @@ def test_send_message_reuses_existing_conversation(
 
     assert response.status_code == 200
     assert response.json()["conversation_id"] == str(conversation_id)
+
+
+def test_send_message_404_when_conversation_belongs_to_other_company(
+    client, monkeypatch, company_id, conversation_id, agent_config_row
+):
+    supabase = _make_supabase(company_id, conversation_id, agent_config_row)
+    supabase.table("conversations").select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value = MagicMock(
+        data=[]
+    )
+    monkeypatch.setattr(agent_module, "get_supabase_client", lambda: supabase)
+    monkeypatch.setattr(
+        agent_module, "get_llm_client", lambda **kw: MagicMock()
+    )
+
+    fake_run = AsyncMock(return_value={"reply": "Should not run"})
+    monkeypatch.setattr(agent_module.SupportAgent, "run", fake_run)
+
+    response = client.post(
+        "/chat/acme/message",
+        json={"conversation_id": str(conversation_id), "content": "Altra domanda"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Conversation not found"
+    fake_run.assert_not_awaited()
 
 
 def test_send_message_404_when_company_not_found(

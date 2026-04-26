@@ -134,6 +134,29 @@ async def test_chat_returns_text_response(mock_config, mock_anthropic_client):
 
 
 @pytest.mark.asyncio
+async def test_chat_concatenates_multiple_text_blocks(
+    mock_config, mock_anthropic_client
+):
+    first_text_block = MagicMock(type="text", text="Prima parte")
+    second_text_block = MagicMock(type="text", text="Seconda parte")
+    mock_anthropic_client.messages.create = AsyncMock(
+        return_value=MagicMock(
+            stop_reason="end_turn",
+            content=[first_text_block, second_text_block],
+        )
+    )
+
+    iface = AnthropicInterface(api_key="fake-key")
+    response = await iface.chat([{"role": "user", "content": "Ciao"}])
+
+    assert response.text == "Prima parte\nSeconda parte"
+    assert response.raw_content == [
+        {"type": "text", "text": "Prima parte"},
+        {"type": "text", "text": "Seconda parte"},
+    ]
+
+
+@pytest.mark.asyncio
 async def test_chat_returns_tool_use_response(mock_config, mock_anthropic_client):
     # `name` è riservato in MagicMock (imposta il repr interno), va impostato
     # come attributo separato dopo la creazione.
