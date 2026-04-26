@@ -228,6 +228,37 @@ async def test_run_unknown_tool_returns_error_string(
 
 
 @pytest.mark.asyncio
+async def test_execute_tool_returns_error_when_search_knowledge_query_missing(
+    support_agent, conversation_id
+):
+    result = await support_agent._execute_tool(
+        "search_knowledge", {}, conversation_id
+    )
+
+    assert "mancante" in result
+
+
+@pytest.mark.asyncio
+async def test_execute_tool_returns_error_when_create_ticket_params_missing(
+    support_agent, conversation_id
+):
+    result = await support_agent._execute_tool(
+        "create_ticket", {}, conversation_id
+    )
+
+    assert "mancanti" in result
+
+
+@pytest.mark.asyncio
+async def test_execute_tool_returns_error_when_escalate_params_missing(
+    support_agent, conversation_id
+):
+    result = await support_agent._execute_tool("escalate", {}, conversation_id)
+
+    assert "mancanti" in result
+
+
+@pytest.mark.asyncio
 async def test_load_history_converts_roles(support_agent, supabase, conversation_id):
     supabase.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value = MagicMock(
         data=[

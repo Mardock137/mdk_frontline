@@ -27,12 +27,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="MDK Frontline Backend", version="0.1.0", lifespan=lifespan)
 
 settings = get_settings()
-origins = ["*"] if settings.FRONTEND_URL == "*" else [settings.FRONTEND_URL]
+if settings.FRONTEND_URL == "*":
+    origins = ["*"]
+    allow_credentials = False
+else:
+    origins = [settings.FRONTEND_URL]
+    allow_credentials = True
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

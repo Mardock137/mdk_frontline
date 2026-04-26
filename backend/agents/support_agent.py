@@ -146,22 +146,40 @@ class SupportAgent(BaseAgent):
     ) -> str:
         """Dispatch a tool call by name and return its string result."""
         if tool_name == "search_knowledge":
+            query = tool_input.get("query", "")
+            if not query:
+                logger.warning("search_knowledge called with missing 'query'")
+                return "Errore: parametro 'query' mancante."
             return await knowledge.search_knowledge(
-                query=tool_input["query"],
+                query=query,
                 company_id=self._company_id,
             )
         if tool_name == "create_ticket":
+            subject = tool_input.get("subject", "")
+            description = tool_input.get("description", "")
+            if not subject or not description:
+                logger.warning(
+                    "create_ticket called with missing parameters: %s", tool_input
+                )
+                return "Errore: parametri mancanti nel tool create_ticket."
             return ticket.create_ticket(
-                subject=tool_input["subject"],
-                description=tool_input["description"],
+                subject=subject,
+                description=description,
                 company_id=self._company_id,
                 conversation_id=conversation_id,
                 supabase=self._supabase,
             )
         if tool_name == "escalate":
+            subject = tool_input.get("subject", "")
+            description = tool_input.get("description", "")
+            if not subject or not description:
+                logger.warning(
+                    "escalate called with missing parameters: %s", tool_input
+                )
+                return "Errore: parametri mancanti nel tool escalate."
             return escalation.escalate(
-                subject=tool_input["subject"],
-                description=tool_input["description"],
+                subject=subject,
+                description=description,
                 company_id=self._company_id,
                 conversation_id=conversation_id,
                 supabase=self._supabase,

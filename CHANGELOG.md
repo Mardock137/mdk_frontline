@@ -1,12 +1,21 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.2 — 2026-04-26
+
+### Fixed
+
+- **CORS backend** (`backend/main.py`): corretta la configurazione di `allow_credentials` quando `FRONTEND_URL` vale `*`. Prima il backend inviava una combinazione CORS non valida (`*` + credentials abilitate), che poteva far rifiutare le risposte dal browser.
+- **Loghi esterni nella chat** (`frontend/next.config.ts`): aggiunti `remotePatterns` per permettere il caricamento di immagini remote via `next/image`, necessario per supportare loghi aziendali ospitati su domini esterni.
+- **Crash nei tool dell'agente** (`backend/agents/support_agent.py`): i parametri dei tool ora vengono letti in modo sicuro con `.get()` invece di causare un crash se Claude omette un campo richiesto. Nei casi incompleti viene restituito un messaggio d'errore controllato invece di un `500`.
+- **Test aggiornati** (`backend/tests/agents/test_support_agent.py`): aggiunti 3 test per verificare che `search_knowledge`, `create_ticket` ed `escalate` non vadano in crash quando ricevono input incompleto.
+
 ## 0.7.1 — 2026-04-26
 
 ### Fixed
 
 - **Sicurezza endpoint chat** (`backend/api/agent.py`): aggiunta verifica cross-tenant su `conversation_id` per impedire il riuso di conversazioni appartenenti a un'altra company. Se la conversazione non appartiene al tenant corrente, l'endpoint ritorna `404`.
-- **`AnthropicInterface`** (`backend/integrations/llm_interfaces/anthropic_interface.py`): corretta la gestione delle risposte con piu' blocchi `text`, che prima sovrascrivevano i segmenti precedenti. Ora tutti i blocchi vengono concatenati nell'ordine corretto.
+- **`AnthropicInterface`** (`backend/integrations/llm_interfaces/anthropic_interface.py`): corretta la gestione delle risposte con più blocchi `text`, che prima sovrascrivevano i segmenti precedenti. Ora tutti i blocchi vengono concatenati nell'ordine corretto.
 - **Test aggiornati**: aggiunti casi mirati in `backend/tests/api/test_agent.py` e `backend/tests/integrations/llm_interfaces/test_anthropic_interface.py` per coprire sia il controllo cross-tenant sia le risposte testuali multi-blocco.
 
 ---
@@ -122,7 +131,7 @@
 ### Changed
 
 - Rimossa la colonna `documents.embedding` ([migration 011](backend/database/migrations/011_drop_documents_embedding.sql)): gli embedding vivono ora su `document_chunks`.
-- Timeout HTTP di `VoyageEmbedding` alzato da 30s a 60s (default) per supportare batch di chunk piu' grossi.
+- Timeout HTTP di `VoyageEmbedding` alzato da 30s a 60s (default) per supportare batch di chunk più grossi.
 
 ### Notes
 
