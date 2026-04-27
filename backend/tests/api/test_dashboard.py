@@ -302,14 +302,17 @@ def test_get_stats_success(client, monkeypatch):
     conv_response = MagicMock()
     conv_response.count = 42
 
-    ticket_response = MagicMock()
-    ticket_response.data = [
-        {"status": "open", "is_escalation": False},
-        {"status": "open", "is_escalation": True},
-        {"status": "in_progress", "is_escalation": True},
-        {"status": "closed", "is_escalation": False},
-        {"status": "closed", "is_escalation": True},
-    ]
+    open_response = MagicMock()
+    open_response.count = 2
+
+    in_progress_response = MagicMock()
+    in_progress_response.count = 1
+
+    closed_response = MagicMock()
+    closed_response.count = 2
+
+    escalation_open_response = MagicMock()
+    escalation_open_response.count = 2
 
     conv_mock = MagicMock()
     (
@@ -319,16 +322,51 @@ def test_get_stats_success(client, monkeypatch):
         .execute.return_value
     ) = conv_response
 
-    ticket_mock = MagicMock()
+    open_mock = MagicMock()
     (
-        ticket_mock
+        open_mock
         .select.return_value
         .eq.return_value
+        .eq.return_value
         .execute.return_value
-    ) = ticket_response
+    ) = open_response
+
+    in_progress_mock = MagicMock()
+    (
+        in_progress_mock
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .execute.return_value
+    ) = in_progress_response
+
+    closed_mock = MagicMock()
+    (
+        closed_mock
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .execute.return_value
+    ) = closed_response
+
+    escalation_open_mock = MagicMock()
+    (
+        escalation_open_mock
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .neq.return_value
+        .execute.return_value
+    ) = escalation_open_response
 
     mock_sb = MagicMock()
-    mock_sb.table.side_effect = [conv_mock, ticket_mock]
+    mock_sb.table.side_effect = [
+        conv_mock,
+        open_mock,
+        in_progress_mock,
+        closed_mock,
+        escalation_open_mock,
+    ]
 
     monkeypatch.setattr(dashboard_module, "get_supabase_client", lambda: mock_sb)
 
@@ -347,8 +385,17 @@ def test_get_stats_no_data(client, monkeypatch):
     conv_response = MagicMock()
     conv_response.count = 0
 
-    ticket_response = MagicMock()
-    ticket_response.data = []
+    open_response = MagicMock()
+    open_response.count = 0
+
+    in_progress_response = MagicMock()
+    in_progress_response.count = 0
+
+    closed_response = MagicMock()
+    closed_response.count = 0
+
+    escalation_open_response = MagicMock()
+    escalation_open_response.count = 0
 
     conv_mock = MagicMock()
     (
@@ -358,16 +405,51 @@ def test_get_stats_no_data(client, monkeypatch):
         .execute.return_value
     ) = conv_response
 
-    ticket_mock = MagicMock()
+    open_mock = MagicMock()
     (
-        ticket_mock
+        open_mock
         .select.return_value
         .eq.return_value
+        .eq.return_value
         .execute.return_value
-    ) = ticket_response
+    ) = open_response
+
+    in_progress_mock = MagicMock()
+    (
+        in_progress_mock
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .execute.return_value
+    ) = in_progress_response
+
+    closed_mock = MagicMock()
+    (
+        closed_mock
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .execute.return_value
+    ) = closed_response
+
+    escalation_open_mock = MagicMock()
+    (
+        escalation_open_mock
+        .select.return_value
+        .eq.return_value
+        .eq.return_value
+        .neq.return_value
+        .execute.return_value
+    ) = escalation_open_response
 
     mock_sb = MagicMock()
-    mock_sb.table.side_effect = [conv_mock, ticket_mock]
+    mock_sb.table.side_effect = [
+        conv_mock,
+        open_mock,
+        in_progress_mock,
+        closed_mock,
+        escalation_open_mock,
+    ]
 
     monkeypatch.setattr(dashboard_module, "get_supabase_client", lambda: mock_sb)
 

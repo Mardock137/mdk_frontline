@@ -3,6 +3,8 @@
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+import pytest
+
 from tools.escalation import TOOL_DEFINITION, escalate
 
 
@@ -30,12 +32,13 @@ def _make_supabase() -> MagicMock:
     return supabase
 
 
-def test_escalate_inserts_ticket_with_is_escalation_true():
+@pytest.mark.asyncio
+async def test_escalate_inserts_ticket_with_is_escalation_true():
     company_id = uuid4()
     conversation_id = uuid4()
     supabase = _make_supabase()
 
-    escalate(
+    await escalate(
         subject="Critical issue",
         description="The system is down.",
         company_id=company_id,
@@ -49,11 +52,12 @@ def test_escalate_inserts_ticket_with_is_escalation_true():
     assert insert_call_args["conversation_id"] == str(conversation_id)
 
 
-def test_escalate_updates_conversation_status():
+@pytest.mark.asyncio
+async def test_escalate_updates_conversation_status():
     conversation_id = uuid4()
     supabase = _make_supabase()
 
-    escalate(
+    await escalate(
         subject="Urgent",
         description="Details.",
         company_id=uuid4(),
@@ -67,10 +71,11 @@ def test_escalate_updates_conversation_status():
     )
 
 
-def test_escalate_returns_confirmation_message():
+@pytest.mark.asyncio
+async def test_escalate_returns_confirmation_message():
     supabase = _make_supabase()
 
-    result = escalate(
+    result = await escalate(
         subject="Broken feature",
         description="Details.",
         company_id=uuid4(),
@@ -81,13 +86,14 @@ def test_escalate_returns_confirmation_message():
     assert "escalata" in result.lower() or "operatore" in result.lower()
 
 
-def test_escalate_returns_error_string_when_ticket_insert_fails():
+@pytest.mark.asyncio
+async def test_escalate_returns_error_string_when_ticket_insert_fails():
     supabase = _make_supabase()
     supabase.table("tickets").insert.return_value.execute.side_effect = RuntimeError(
         "db insert failed"
     )
 
-    result = escalate(
+    result = await escalate(
         subject="Broken feature",
         description="Details.",
         company_id=uuid4(),
@@ -98,13 +104,14 @@ def test_escalate_returns_error_string_when_ticket_insert_fails():
     assert "errore" in result.lower()
 
 
-def test_escalate_returns_confirmation_when_only_conversation_update_fails():
+@pytest.mark.asyncio
+async def test_escalate_returns_confirmation_when_only_conversation_update_fails():
     supabase = _make_supabase()
     supabase.table("conversations").update.return_value.eq.return_value.execute.side_effect = RuntimeError(
         "db update failed"
     )
 
-    result = escalate(
+    result = await escalate(
         subject="Broken feature",
         description="Details.",
         company_id=uuid4(),

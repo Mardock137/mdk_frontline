@@ -7,6 +7,7 @@ Exposes:
 
 from __future__ import annotations
 
+import asyncio
 from uuid import UUID
 
 from supabase import Client
@@ -36,7 +37,7 @@ TOOL_DEFINITION: dict = {
 }
 
 
-def create_ticket(
+async def create_ticket(
     subject: str,
     description: str,
     company_id: UUID,
@@ -63,6 +64,8 @@ def create_ticket(
         "status": "open",
         "is_escalation": False,
     }
-    result = supabase.table("tickets").insert(row).execute()
+    result = await asyncio.to_thread(
+        lambda: supabase.table("tickets").insert(row).execute()
+    )
     ticket_id = result.data[0]["id"] if result.data else "unknown"
     return f"Ticket di supporto creato con ID: {ticket_id}"

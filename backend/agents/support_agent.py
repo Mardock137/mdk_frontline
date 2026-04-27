@@ -162,7 +162,7 @@ class SupportAgent(BaseAgent):
                     "create_ticket called with missing parameters: %s", tool_input
                 )
                 return "Errore: parametri mancanti nel tool create_ticket."
-            return ticket.create_ticket(
+            return await ticket.create_ticket(
                 subject=subject,
                 description=description,
                 company_id=self._company_id,
@@ -177,7 +177,7 @@ class SupportAgent(BaseAgent):
                     "escalate called with missing parameters: %s", tool_input
                 )
                 return "Errore: parametri mancanti nel tool escalate."
-            return escalation.escalate(
+            return await escalation.escalate(
                 subject=subject,
                 description=description,
                 company_id=self._company_id,

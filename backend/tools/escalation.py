@@ -7,6 +7,7 @@ Exposes:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from uuid import UUID
 
@@ -42,7 +43,7 @@ TOOL_DEFINITION: dict = {
 }
 
 
-def escalate(
+async def escalate(
     subject: str,
     description: str,
     company_id: UUID,
@@ -70,7 +71,9 @@ def escalate(
         "is_escalation": True,
     }
     try:
-        result = supabase.table("tickets").insert(row).execute()
+        result = await asyncio.to_thread(
+            lambda: supabase.table("tickets").insert(row).execute()
+        )
         if not result.data:
             logger.error(
                 "escalate: ticket insert returned no data for conversation %s",
@@ -85,9 +88,12 @@ def escalate(
         return "Errore interno durante l'escalation. Riprova o contatta il supporto."
 
     try:
-        supabase.table("conversations").update({"status": "escalated"}).eq(
-            "id", str(conversation_id)
-        ).execute()
+        await asyncio.to_thread(
+            lambda: supabase.table("conversations")
+            .update({"status": "escalated"})
+            .eq("id", str(conversation_id))
+            .execute()
+        )
     except Exception:
         logger.error(
             "escalate: ticket %s created but conversation %s status update failed",

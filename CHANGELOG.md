@@ -1,6 +1,15 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.4 — 2026-04-27
+
+### Fixed
+
+- **Tool agente non bloccanti** (`backend/tools/ticket.py`, `backend/tools/escalation.py`, `backend/agents/support_agent.py`): `create_ticket` ed `escalate` sono stati convertiti in funzioni asincrone e ora eseguono le chiamate Supabase con `asyncio.to_thread`, evitando di bloccare l'event loop durante le richieste FastAPI.
+- **Client Voyage riusabile** (`backend/integrations/embedding_interfaces/voyage_embedding.py`): il client HTTP verso Voyage AI viene ora creato una sola volta nell'istanza `VoyageEmbedding` e riutilizzato per tutte le richieste di embedding, evitando la creazione di una nuova connessione a ogni chiamata.
+- **Stats dashboard ottimizzate** (`backend/api/dashboard.py`): il conteggio ticket non scarica più tutte le righe in memoria. Ora usa query di count direttamente sul database per `open`, `in_progress`, `closed` ed escalation aperte.
+- **Test aggiornati** (`backend/tests/tools/test_ticket.py`, `backend/tests/tools/test_escalation.py`, `backend/tests/agents/test_support_agent.py`, `backend/tests/api/test_dashboard.py`): allineati ai tool asincroni e alla nuova strategia di count lato DB. Suite verificata con test tutti passati.
+
 ## 0.7.3 — 2026-04-26
 
 ### Fixed

@@ -1,5 +1,7 @@
 """Tests for tools/ticket.py (Supabase client mocked)."""
 
+import pytest
+
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -14,11 +16,12 @@ def _make_supabase(ticket_id: str) -> MagicMock:
     return supabase
 
 
-def test_create_ticket_returns_ticket_id():
+@pytest.mark.asyncio
+async def test_create_ticket_returns_ticket_id():
     ticket_id = str(uuid4())
     supabase = _make_supabase(ticket_id)
 
-    result = create_ticket(
+    result = await create_ticket(
         subject="Password reset issue",
         description="The reset link does not work.",
         company_id=uuid4(),
@@ -29,12 +32,13 @@ def test_create_ticket_returns_ticket_id():
     assert ticket_id in result
 
 
-def test_create_ticket_inserts_correct_row():
+@pytest.mark.asyncio
+async def test_create_ticket_inserts_correct_row():
     company_id = uuid4()
     conversation_id = uuid4()
     supabase = _make_supabase(str(uuid4()))
 
-    create_ticket(
+    await create_ticket(
         subject="Sub",
         description="Desc",
         company_id=company_id,
@@ -50,13 +54,14 @@ def test_create_ticket_inserts_correct_row():
     assert call_args["status"] == "open"
 
 
-def test_create_ticket_handles_missing_data():
+@pytest.mark.asyncio
+async def test_create_ticket_handles_missing_data():
     supabase = MagicMock()
     supabase.table.return_value.insert.return_value.execute.return_value = MagicMock(
         data=[]
     )
 
-    result = create_ticket(
+    result = await create_ticket(
         subject="Sub",
         description="Desc",
         company_id=uuid4(),

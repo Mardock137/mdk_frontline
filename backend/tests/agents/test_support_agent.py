@@ -145,7 +145,9 @@ async def test_run_with_knowledge_tool(
 async def test_run_with_ticket_tool(
     support_agent, llm, supabase, monkeypatch, conversation_id
 ):
-    def fake_create_ticket(subject, description, company_id, conversation_id, supabase):
+    async def fake_create_ticket(
+        subject, description, company_id, conversation_id, supabase
+    ):
         return "Ticket creato con ID: abc-123"
 
     monkeypatch.setattr(agent_module.ticket, "create_ticket", fake_create_ticket)
@@ -168,7 +170,9 @@ async def test_run_with_ticket_tool(
 async def test_run_with_escalation_tool(
     support_agent, llm, supabase, monkeypatch, conversation_id
 ):
-    def fake_escalate(subject, description, company_id, conversation_id, supabase):
+    async def fake_escalate(
+        subject, description, company_id, conversation_id, supabase
+    ):
         return "Conversazione escalata."
 
     monkeypatch.setattr(agent_module.escalation, "escalate", fake_escalate)

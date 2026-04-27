@@ -246,23 +246,42 @@ async def get_stats() -> StatsOut:
     )
     total_conversations: int = conv_response.count or 0
 
-    tickets_response = (
+    open_response = (
         supabase.table("tickets")
-        .select("status, is_escalation")
+        .select("id", count="exact")
         .eq("company_id", str(company_id))
+        .eq("status", TicketStatus.OPEN.value)
         .execute()
     )
-    ticket_rows = tickets_response.data or []
+    open_count: int = open_response.count or 0
 
-    open_count = sum(1 for t in ticket_rows if t["status"] == TicketStatus.OPEN)
-    in_progress_count = sum(1 for t in ticket_rows if t["status"] == TicketStatus.IN_PROGRESS)
-    closed_count = sum(1 for t in ticket_rows if t["status"] == TicketStatus.CLOSED)
-
-    escalation_open_count = sum(
-        1
-        for t in ticket_rows
-        if t["is_escalation"] and t["status"] != TicketStatus.CLOSED
+    in_progress_response = (
+        supabase.table("tickets")
+        .select("id", count="exact")
+        .eq("company_id", str(company_id))
+        .eq("status", TicketStatus.IN_PROGRESS.value)
+        .execute()
     )
+    in_progress_count: int = in_progress_response.count or 0
+
+    closed_response = (
+        supabase.table("tickets")
+        .select("id", count="exact")
+        .eq("company_id", str(company_id))
+        .eq("status", TicketStatus.CLOSED.value)
+        .execute()
+    )
+    closed_count: int = closed_response.count or 0
+
+    escalation_open_response = (
+        supabase.table("tickets")
+        .select("id", count="exact")
+        .eq("company_id", str(company_id))
+        .eq("is_escalation", True)
+        .neq("status", TicketStatus.CLOSED.value)
+        .execute()
+    )
+    escalation_open_count: int = escalation_open_response.count or 0
 
     return StatsOut(
         total_conversations=total_conversations,

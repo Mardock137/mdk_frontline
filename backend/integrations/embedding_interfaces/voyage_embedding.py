@@ -44,6 +44,7 @@ class VoyageEmbedding(BaseEmbeddingInterface):
         self._api_key = api_key
         self._timeout = timeout
         self._batch_size = batch_size
+        self._http_client = httpx.AsyncClient(timeout=self._timeout)
 
     async def embed(
         self,
@@ -62,22 +63,21 @@ class VoyageEmbedding(BaseEmbeddingInterface):
         }
 
         all_vectors: list[list[float]] = []
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            for start in range(0, len(texts), self._batch_size):
-                batch = texts[start : start + self._batch_size]
-                payload = {
-                    "model": self.model,
-                    "input": batch,
-                    "input_type": input_type,
-                }
-                response = await client.post(
-                    VOYAGE_API_URL, json=payload, headers=headers
-                )
-                response.raise_for_status()
-                data = response.json()
+        for start in range(0, len(texts), self._batch_size):
+            batch = texts[start : start + self._batch_size]
+            payload = {
+                "model": self.model,
+                "input": batch,
+                "input_type": input_type,
+            }
+            response = await self._http_client.post(
+                VOYAGE_API_URL, json=payload, headers=headers
+            )
+            response.raise_for_status()
+            data = response.json()
 
-                items = sorted(data["data"], key=lambda item: item["index"])
-                all_vectors.extend(item["embedding"] for item in items)
+            items = sorted(data["data"], key=lambda item: item["index"])
+            all_vectors.extend(item["embedding"] for item in items)
 
         return all_vectors
 
