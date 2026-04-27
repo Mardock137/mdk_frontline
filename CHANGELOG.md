@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.5 — 2026-04-27
+
+### Fixed
+
+- **Classi custom dei bottoni** (`frontend/components/ui/button.tsx`): corretto il merge di `className` nei componenti `Button`, così le classi passate dal chiamante non vengono più ignorate o scartate in modo silenzioso.
+- **Toast piu' sicuri** (`frontend/components/ui/toast.tsx`): i timeout di auto-dismiss vengono ora tracciati e cancellati quando `ToastProvider` viene smontato, evitando aggiornamenti di stato dopo l'unmount. In più gli ID dei toast usano `crypto.randomUUID()` al posto di `Math.random()`.
+- **Chat pubblica senza race condition** (`frontend/app/chat/[slug]/page.tsx`, `frontend/lib/api.ts`): il caricamento iniziale della configurazione usa `AbortController` e cleanup nel `useEffect`, così una navigazione rapida non provoca più `setState` su un componente già smontato.
+
 ## 0.7.4 — 2026-04-27
 
 ### Fixed

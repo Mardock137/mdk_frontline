@@ -104,8 +104,11 @@ export interface UploadResponse {
 // Chat API
 // ---------------------------------------------------------------------------
 
-export async function getConfig(slug: string): Promise<ChatConfig> {
-  const res = await fetch(`${API_URL}/chat/${slug}/config`);
+export async function getConfig(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<ChatConfig> {
+  const res = await fetch(`${API_URL}/chat/${slug}/config`, { signal });
   return handleResponse<ChatConfig>(res);
 }
 

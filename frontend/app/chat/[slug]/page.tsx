@@ -43,12 +43,26 @@ export default function ChatPage({ params }: PageProps) {
 
   // Load config on mount -------------------------------------------------
   useEffect(() => {
-    getConfig(slug)
+    let cancelled = false;
+    const controller = new AbortController();
+
+    getConfig(slug, controller.signal)
       .then((cfg) => {
+        if (cancelled) return;
         setConfig(cfg);
         setMessages([agentMessage(cfg.welcome_message)]);
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (err instanceof Error && err.name === "AbortError") return;
+        const msg = err instanceof Error ? err.message : "Errore sconosciuto";
+        setError(msg);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, [slug]);
 
   // Send message handler -------------------------------------------------
