@@ -1,6 +1,15 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.8 — 2026-04-27
+
+### Added
+
+- **Dependabot frontend** (`.github/dependabot.yml`): aggiunto il monitoraggio automatico settimanale delle dipendenze npm nella cartella `frontend/`, con PR di aggiornamento create direttamente su GitHub.
+- **GitHub Actions CI frontend** (`.github/workflows/frontend-ci.yml`): nuovo workflow che si attiva su ogni PR che tocca il frontend, installa le dipendenze con `npm ci`, esegue `npm run lint` e poi `npm run build`.
+
+---
+
 ## 0.7.7 — 2026-04-27
 
 ### Added

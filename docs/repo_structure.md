@@ -163,7 +163,8 @@
  ├── 📁 .github/                                             # Automazioni GitHub per aggiornamenti dipendenze e CI.
  │    ├── 📄 dependabot.yml                                  # Configura Dependabot per proporre update automatici delle dipendenze.
  │    └── 📁 workflows/
- │         └── 📄 backend-ci.yml                             # Workflow GitHub Actions che installa il backend ed esegue pytest sulle PR.
+ │         ├── 📄 backend-ci.yml                             # Workflow GitHub Actions che installa il backend ed esegue pytest sulle PR.
+ │         └── 📄 frontend-ci.yml                            # Workflow GitHub Actions che installa il frontend ed esegue lint + build sulle PR.
  │
  ├── 📄 .gitignore                                           # Elenco dei file e delle cartelle esclusi dal controllo di versione.
  ├── 📄 CHANGELOG.md                                         # Storico versioni e modifiche del progetto.
