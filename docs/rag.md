@@ -26,7 +26,7 @@ Il sistema RAG permette a ogni azienda cliente di:
 2. Averli **indicizzati automaticamente**: estrazione del testo, divisione in pezzi ("chunk"), calcolo degli embedding, salvataggio.
 3. Eseguire **ricerche semantiche** sulla knowledge base: data una domanda, il sistema ritorna i chunk più rilevanti.
 
-In fase 4 questa ricerca diventerà un **tool** dell'agente AI. Per ora esiste l'endpoint `/rag/search` utile per testarla a mano.
+La ricerca semantica è già integrata come **tool** dell'agente AI (`search_knowledge`): quando un cliente fa una domanda, l'agente la usa autonomamente per trovare le risposte nella knowledge base. L'endpoint `/rag/search` rimane disponibile per testare la ricerca direttamente senza passare dall'agente.
 
 ---
 

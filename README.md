@@ -134,4 +134,3 @@ Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
 - [Endpoints API](docs/api_endpoints.md)
 - [Sistema RAG](docs/rag.md)
 - [Frontend](docs/frontend.md)
-- [Deploy](docs/deploy.md)

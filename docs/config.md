@@ -45,7 +45,7 @@ La cartella [backend/config/](../backend/config/) ospita configurazioni statiche
 - `llm_models/` — parametri dei modelli LLM (nome modello, temperature, max tokens, ecc.)
 - `prompts/` — prompt di sistema per l'agente AI e i suoi tool
 
-Al momento le sottocartelle sono vuote: verranno popolate nelle fasi successive dello sviluppo.
+Entrambe le sottocartelle sono già popolate:
 
 ---
 
@@ -53,14 +53,16 @@ Al momento le sottocartelle sono vuote: verranno popolate nelle fasi successive 
 
 L'elenco completo delle variabili è visibile nel file [backend/.env.example](../backend/.env.example), che va copiato in `.env` e compilato con i valori reali.
 
-| Variabile                   | Descrizione                                                                   | Obbligatoria        |
-|-----------------------------|-------------------------------------------------------------------------------|---------------------|
-| `ANTHROPIC_API_KEY`         | Chiave API per il provider LLM (Anthropic Claude).                            | Sì                  |
-| `SUPABASE_URL`              | URL del progetto Supabase.                                                    | Sì                  |
-| `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                       | Sì                  |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.    | Sì                  |
-| `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP). | Solo in dev         |
-| `LOG_LEVEL`                 | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).      | No (default `INFO`) |
+| Variabile                   | Descrizione                                                                                                           | Obbligatoria        |
+|-----------------------------|-----------------------------------------------------------------------------------------------------------------------|---------------------|
+| `ANTHROPIC_API_KEY`         | Chiave API per il provider LLM (Anthropic Claude).                                                                    | Sì                  |
+| `VOYAGE_API_KEY`            | Chiave API per Voyage AI (embedding RAG).                                                                             | Sì                  |
+| `SUPABASE_URL`              | URL del progetto Supabase.                                                                                            | Sì                  |
+| `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                                                               | Sì                  |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                            | Sì                  |
+| `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP).                                         | Solo in dev         |
+| `FRONTEND_URL`              | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.         | No                  |
+| `LOG_LEVEL`                 | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                              | No (default `INFO`) |
 
 > **Attenzione**: il file `.env` contiene dati sensibili e non deve mai essere committato. È escluso dal controllo versione tramite `.gitignore`.
 

@@ -66,7 +66,7 @@ Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor**.
 
 ### Storage
 
-Bucket **privato** `documents` creato da [009_storage.sql](../backend/database/migrations/009_storage.sql). I file vengono salvati in `<company_id>/<filename>` per separare i tenant anche a livello di file system.
+Bucket **privato** `documents` creato da [009_storage.sql](../backend/database/migrations/009_storage.sql). I file vengono salvati in `<company_id>/<document_id>/<filename>` per separare i tenant e prevenire collisioni tra file con lo stesso nome.
 
 ### Diagramma
 

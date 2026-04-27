@@ -51,13 +51,14 @@
  │    │    ├── 📄 search.py                                  # Ricerca semantica sui chunk tramite match_document_chunks.
  │    │    └── 📄 text_extraction.py                         # Estrazione del testo da PDF, DOCX, TXT, Markdown.
  │    ├── 📁 tests/                                          # Test automatici per tutte le funzioni e i moduli.
+ │    │    ├── 📄 conftest.py                                # Fixture condivise tra tutti i test (company_id, conversation_id).
  │    │    ├── 📁 agents/                                    # Test degli agenti.
  │    │    │    ├── 📄 test_base_agent.py
  │    │    │    └── 📄 test_support_agent.py                 # Test del loop dell'agente (LLM e tool mockati).
  │    │    ├── 📁 api/                                       # Test degli endpoint HTTP.
  │    │    │    ├── 📄 test_agent.py                         # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
  │    │    │    ├── 📄 test_config.py                        # Test endpoint /chat/{slug}/config (Supabase mockato).
- │    │    │    ├── 📄 test_dashboard.py                     # Test endpoint /dashboard/* (11 test, Supabase mockato).
+ │    │    │    ├── 📄 test_dashboard.py                     # Test endpoint /dashboard/* (13 test, Supabase mockato).
  │    │    │    └── 📄 test_documents.py
  │    │    ├── 📁 config/                                    # Test della configurazione.
  │    │    │    └── 📄 test_llm_models_loader.py             # Test del loader YAML (happy path, errori, validazione).
@@ -108,7 +109,6 @@
  │    ├── 📄 database.md                                     # Guida operativa alle migration Supabase e allo schema.
  │    ├── 📄 rag.md                                          # Guida al sistema RAG (upload, chunking, embedding, ricerca).
  │    ├── 📄 config.md                                       # Guida alla configurazione
- │    ├── 📄 deploy.md                                       #
  │    ├── 📄 frontend.md                                     #
  │    ├── 📄 observability.md                                # Sistema di logging
  │    ├── 📄 repo_structure.md                               # Struttura e spiegazione della repo.

@@ -127,7 +127,7 @@ Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se
 }
 ```
 
-- **Errori**: `404` company o agent_config non trovata, `422` contenuto vuoto, `500` API key Anthropic non configurata.
+- **Errori**: `404` company o agent_config non trovata, `404` `conversation_id` fornito ma inesistente o appartenente a un'altra company (`"Conversation not found"`), `422` contenuto vuoto, `500` API key Anthropic non configurata.
 
 ---
 

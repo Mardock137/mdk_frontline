@@ -93,11 +93,15 @@ Ogni azienda ha il suo `primary_color` in `agent_configs`. La pagina applica que
 - Pulsante invia (sfondo)
 - Ring di focus sull'input (bordo)
 
-Se l'azienda ha un `logo_url`, viene mostrato nell'header. Altrimenti appare la prima lettera del nome azienda.
+Se l'azienda ha un `logo_url`, viene mostrato nell'header tramite `next/image`. Altrimenti appare la prima lettera del nome azienda.
+
+> `next.config.ts` è configurato con `images.remotePatterns` che consente URL di immagini da qualsiasi dominio esterno (`hostname: "**"`), necessario in un prodotto multi-tenant dove i domini dei loghi sono imprevedibili.
 
 ### Gestione conversazione
 
 Il `conversation_id` vive nello stato React (`useRef`). Al primo messaggio viene passato `null` al backend, che crea una nuova conversazione e ritorna l'id. Tutti i messaggi successivi riutilizzano lo stesso id. Se il cliente ricarica la pagina, la conversazione riparte da zero.
+
+Il caricamento della configurazione usa un `AbortController`: se l'utente naviga via prima che la risposta arrivi, la richiesta viene annullata e lo stato non viene aggiornato su un componente già smontato. La funzione `getConfig` in `lib/api.ts` accetta un `signal?: AbortSignal` opzionale per questo scopo.
 
 ---
 
@@ -174,6 +178,8 @@ npm run dev
 
 **Causa**: il backend non ha il `FRONTEND_URL` configurato o il middleware CORS non copre l'origine del frontend.
 **Soluzione**: verificare che `backend/.env` contenga `FRONTEND_URL=*` (sviluppo) o l'URL esatto del frontend (produzione), e riavviare il backend.
+
+> **Nota**: con `FRONTEND_URL=*` il backend imposta `allow_credentials=False`. Se in futuro si usano cookie o header di autenticazione cross-origin, sarà necessario specificare l'URL esatto del frontend al posto del wildcard.
 
 ---
 

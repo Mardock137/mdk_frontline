@@ -45,7 +45,7 @@ Componenti principali:
                 ▼       ▼       ▼
            [Supabase]       [Anthropic Claude]
         (DB + Storage       (tool calling,
-          + pgvector)        claude-opus-4-5)
+          + pgvector)        claude-sonnet-4-6)
 ```
 
 Il backend si connette a Supabase tramite **service role key** (chiave privata). Il service role **bypassa la Row Level Security**: l'isolamento tra tenant è garantito a livello applicativo, filtrando sempre per `company_id` nelle query.
@@ -99,7 +99,7 @@ erDiagram
 
 ### Storage
 
-Il bucket Supabase `documents` è **privato**: solo il backend (service role) può leggere/scrivere. Gli oggetti sono organizzati come `<company_id>/<filename>` per separare i tenant anche a livello di file system.
+Il bucket Supabase `documents` è **privato**: solo il backend (service role) può leggere/scrivere. Gli oggetti sono organizzati come `<company_id>/<document_id>/<filename>` per separare i tenant e prevenire collisioni tra file con lo stesso nome.
 
 ---
 
