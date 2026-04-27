@@ -1,6 +1,15 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.7 — 2026-04-27
+
+### Added
+
+- **Dependabot** (`.github/dependabot.yml`): controlla automaticamente ogni settimana le dipendenze Python del backend (`/backend`) e apre PR di aggiornamento sul repo GitHub.
+- **GitHub Actions CI** (`.github/workflows/backend-ci.yml`): workflow che si attiva su ogni PR che tocca file in `backend/`. Installa le dipendenze ed esegue `pytest` in autonomia. Nessun secret necessario (i test sono completamente mockati).
+
+---
+
 ## 0.7.6 — 2026-04-27
 
 ### Fixed

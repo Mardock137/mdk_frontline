@@ -160,6 +160,11 @@
  │    ├── 📄 postcss.config.mjs                              # Configurazione PostCSS per Tailwind v4.
  │    └── 📄 tsconfig.json                                   # Configurazione TypeScript.
  │
+ ├── 📁 .github/                                             # Automazioni GitHub per aggiornamenti dipendenze e CI.
+ │    ├── 📄 dependabot.yml                                  # Configura Dependabot per proporre update automatici delle dipendenze.
+ │    └── 📁 workflows/
+ │         └── 📄 backend-ci.yml                             # Workflow GitHub Actions che installa il backend ed esegue pytest sulle PR.
+ │
  ├── 📄 .gitignore                                           # Elenco dei file e delle cartelle esclusi dal controllo di versione.
  ├── 📄 CHANGELOG.md                                         # Storico versioni e modifiche del progetto.
  └── 📄 README.md                                            # Panoramica, istruzioni e info rapide sul progetto.
