@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,11 +14,6 @@ from main import app
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def company_id():
-    return uuid4()
 
 
 @pytest.fixture
@@ -130,3 +124,14 @@ def test_get_config_with_logo_url(client, monkeypatch, company_id):
 
     assert response.status_code == 200
     assert response.json()["logo_url"] == "https://example.com/logo.png"
+
+
+def test_get_config_500_when_supabase_raises(monkeypatch):
+    supabase = MagicMock()
+    supabase.table.side_effect = RuntimeError("DB down")
+    monkeypatch.setattr(config_module, "get_supabase_client", lambda: supabase)
+
+    test_client = TestClient(app, raise_server_exceptions=False)
+    response = test_client.get("/chat/acme/config")
+
+    assert response.status_code == 500

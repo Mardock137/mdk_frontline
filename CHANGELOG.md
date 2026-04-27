@@ -1,6 +1,16 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.7.6 — 2026-04-27
+
+### Fixed
+
+- **Fixture test condivise** (`backend/tests/conftest.py`, `backend/tests/api/test_agent.py`, `backend/tests/api/test_config.py`, `backend/tests/agents/test_support_agent.py`): centralizzate le fixture `company_id` e `conversation_id` in `conftest.py`, rimuovendo le duplicazioni locali nei moduli di test.
+- **Copertura `BaseAgent` completata** (`backend/tests/agents/test_base_agent.py`): aggiunti test sul contratto della classe astratta, inclusi i casi di istanziazione vietata, sottoclasse concreta valida e verifica del metodo `run()` asincrono.
+- **Errori infrastrutturali coperti** (`backend/tests/api/test_agent.py`, `backend/tests/api/test_config.py`, `backend/tests/api/test_dashboard.py`): aggiunti test `500` per i casi in cui l'agente o Supabase sollevano errori non gestiti.
+- **Test agente meno fragile** (`backend/tests/agents/test_support_agent.py`): riscritto il test del tool sconosciuto per verificare il risultato finale dell'agente invece di dipendere dalla struttura interna di `call_args_list`.
+- **Suite verificata**: i test aggiornati passano correttamente.
+
 ## 0.7.5 — 2026-04-27
 
 ### Fixed

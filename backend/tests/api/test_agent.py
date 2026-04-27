@@ -13,21 +13,6 @@ from main import app
 from utils.config import Settings
 
 
-# ---------------------------------------------------------------------------
-# Shared fixtures
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def company_id():
-    return uuid4()
-
-
-@pytest.fixture
-def conversation_id():
-    return uuid4()
-
-
 @pytest.fixture
 def agent_config_row(company_id):
     return {
@@ -233,6 +218,31 @@ def test_send_message_500_when_api_key_missing(
     monkeypatch.setattr(agent_module, "get_supabase_client", lambda: supabase)
 
     test_client = TestClient(app)
+    response = test_client.post("/chat/acme/message", json={"content": "Ciao"})
+
+    assert response.status_code == 500
+
+
+def test_send_message_500_when_agent_raises(
+    monkeypatch, company_id, conversation_id, agent_config_row
+):
+    monkeypatch.setattr(
+        agent_module,
+        "get_settings",
+        lambda: Settings(ANTHROPIC_API_KEY="test-key"),
+    )
+    supabase = _make_supabase(company_id, conversation_id, agent_config_row)
+    monkeypatch.setattr(agent_module, "get_supabase_client", lambda: supabase)
+    monkeypatch.setattr(
+        agent_module, "get_llm_client", lambda **kw: MagicMock()
+    )
+
+    async def failing_run(self, input_data):
+        raise RuntimeError("LLM exploded")
+
+    monkeypatch.setattr(agent_module.SupportAgent, "run", failing_run)
+
+    test_client = TestClient(app, raise_server_exceptions=False)
     response = test_client.post("/chat/acme/message", json={"content": "Ciao"})
 
     assert response.status_code == 500

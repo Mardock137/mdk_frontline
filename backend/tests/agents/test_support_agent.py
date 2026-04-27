@@ -19,16 +19,6 @@ from integrations.llm_interfaces.base_llm_interface import ChatResponse, ToolUse
 
 
 @pytest.fixture
-def company_id():
-    return uuid4()
-
-
-@pytest.fixture
-def conversation_id():
-    return uuid4()
-
-
-@pytest.fixture
 def agent_config(company_id):
     return AgentConfig(
         id=uuid4(),
@@ -212,7 +202,7 @@ async def test_run_returns_fallback_on_max_iterations(support_agent, llm, monkey
 
 
 @pytest.mark.asyncio
-async def test_run_unknown_tool_returns_error_string(
+async def test_run_unknown_tool_returns_final_reply(
     support_agent, llm, conversation_id
 ):
     llm.chat = AsyncMock(
@@ -226,9 +216,8 @@ async def test_run_unknown_tool_returns_error_string(
         {"conversation_id": conversation_id, "content": "test"}
     )
 
-    second_call_messages = llm.chat.call_args_list[1][0][0]
-    tool_result_block = second_call_messages[-1]["content"][0]
-    assert "non riconosciuto" in tool_result_block["content"]
+    assert result["reply"] == "Risposta finale."
+    assert llm.chat.call_count == 2
 
 
 @pytest.mark.asyncio

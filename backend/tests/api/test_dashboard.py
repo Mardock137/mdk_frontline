@@ -108,6 +108,21 @@ def test_list_tickets_empty(client, monkeypatch):
     assert response.json() == []
 
 
+def test_list_tickets_500_when_supabase_raises(monkeypatch):
+    mock_settings = MagicMock()
+    mock_settings.DEV_COMPANY_ID = COMPANY_ID
+    monkeypatch.setattr(dashboard_module, "get_settings", lambda: mock_settings)
+
+    mock_sb = MagicMock()
+    mock_sb.table.side_effect = RuntimeError("DB down")
+    monkeypatch.setattr(dashboard_module, "get_supabase_client", lambda: mock_sb)
+
+    test_client = TestClient(app, raise_server_exceptions=False)
+    response = test_client.get("/dashboard/tickets")
+
+    assert response.status_code == 500
+
+
 # ---------------------------------------------------------------------------
 # PATCH /dashboard/tickets/{ticket_id}
 # ---------------------------------------------------------------------------
