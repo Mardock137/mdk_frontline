@@ -14,8 +14,8 @@
  │    │    └── 📄 documents.py                               # Endpoint /documents/* e /rag/search.
  │    ├── 📁 config/                                         # Configurazioni.
  │    │    ├── 📁 llm_models/                                # Configurazione dei modelli IA per ogni agente.
- │    │    │    ├── 📄 loader.py                             # Loader YAML: legge e valida LLMModelConfig (model, max_tokens).
- │    │    │    └── 📄 support_agent.yaml                    # Parametri del modello per l'agente di supporto (model, max_tokens).
+ │    │    │    ├── 📄 loader.py                             # Loader YAML: legge e valida LLMModelConfig (model, max_tokens, effort).
+ │    │    │    └── 📄 support_agent.yaml                    # Parametri del modello per l'agente di supporto (model, max_tokens, effort).
  │    │    └── 📁 prompts/
  │    │         └── 📄 support_agent.py                      # Template del system prompt: identità agente, tono, istruzioni tool.
  │    ├── 📁 core/                                           # Logica di business trasversale e orchestrazione degli agenti.

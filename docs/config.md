@@ -45,7 +45,29 @@ La cartella [backend/config/](../backend/config/) ospita configurazioni statiche
 - `llm_models/` — parametri dei modelli LLM (nome modello, temperature, max tokens, ecc.)
 - `prompts/` — prompt di sistema per l'agente AI e i suoi tool
 
-Entrambe le sottocartelle sono già popolate:
+Entrambe le sottocartelle sono già popolate.
+
+#### Configurazione modelli LLM (`llm_models/`)
+
+Ogni agente ha il proprio file YAML in `backend/config/llm_models/`. Il loader (`loader.py`) legge il file, valida i campi e restituisce una dataclass immutabile `LLMModelConfig`.
+
+Campi supportati:
+
+| Campo        | Tipo     | Obbligatorio | Default  | Descrizione                                                                                                                                                                                                                                                                    |
+|--------------|----------|--------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `model`      | `str`    | Sì           | —        | Identificatore del modello Claude (es. `claude-sonnet-4-6`).                                                                                                                                                                                                                   |
+| `max_tokens` | `int`    | Sì           | —        | Numero massimo di token che il modello può generare per risposta.                                                                                                                                                                                                              |
+| `effort`     | `str`    | No           | `high`   | Quanti token Claude spende per la risposta (testo, tool call ed eventuale thinking; non richiede il thinking attivo). Valori validi: `low`, `medium`, `high`, `xhigh`, `max`. Valori più bassi riducono latenza e costo; `high` equivale al comportamento di default dell'API. |
+
+Esempio (`support_agent.yaml`):
+
+```yaml
+model: claude-sonnet-4-6
+max_tokens: 2048
+effort: low
+```
+
+Per customer support ad alto volume, `effort: low` è la scelta consigliata: riduce latenza e costo senza impatto significativo sulla qualità delle risposte.
 
 ---
 

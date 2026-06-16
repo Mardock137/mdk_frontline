@@ -24,6 +24,9 @@ _CONFIG_DIR = Path(__file__).resolve().parent
 
 _REQUIRED_FIELDS = ("model", "max_tokens")
 
+_VALID_EFFORT_VALUES = {"low", "medium", "high", "xhigh", "max"}
+_DEFAULT_EFFORT = "high"
+
 
 @dataclass(frozen=True)
 class LLMModelConfig:
@@ -32,10 +35,15 @@ class LLMModelConfig:
     Attributes:
         model: The model identifier string (e.g. ``"claude-opus-4-5"``).
         max_tokens: Maximum number of tokens the model may generate.
+        effort: How many tokens Claude spends on the response, covering text,
+            tool calls and any thinking (it does not require thinking to be
+            enabled). One of ``low``, ``medium``, ``high``, ``xhigh``, ``max``.
+            Defaults to ``"high"`` when not specified in the YAML file.
     """
 
     model: str
     max_tokens: int
+    effort: str = _DEFAULT_EFFORT
 
 
 def load_model_config(name: str) -> LLMModelConfig:
@@ -70,6 +78,7 @@ def load_model_config(name: str) -> LLMModelConfig:
 
     model = data["model"]
     max_tokens = data["max_tokens"]
+    effort = data.get("effort", _DEFAULT_EFFORT)
 
     if not isinstance(model, str) or not model.strip():
         raise ValueError(
@@ -79,5 +88,10 @@ def load_model_config(name: str) -> LLMModelConfig:
         raise ValueError(
             f"Field 'max_tokens' in '{config_path.name}' must be a positive integer."
         )
+    if effort not in _VALID_EFFORT_VALUES:
+        raise ValueError(
+            f"Field 'effort' in '{config_path.name}' must be one of "
+            f"{sorted(_VALID_EFFORT_VALUES)}, got '{effort}'."
+        )
 
-    return LLMModelConfig(model=model, max_tokens=max_tokens)
+    return LLMModelConfig(model=model, max_tokens=max_tokens, effort=effort)

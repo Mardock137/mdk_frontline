@@ -1,6 +1,17 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.8.0 — 2026-06-16
+
+### Added
+
+- **Parametro `effort` su `LLMModelConfig`** (`backend/config/llm_models/loader.py`): nuovo campo opzionale con default `"high"` e validazione sui valori ammessi (`low`, `medium`, `high`, `xhigh`, `max`). I YAML che non lo definiscono continuano a funzionare invariati.
+- **`effort: low` in `support_agent.yaml`** (`backend/config/llm_models/support_agent.yaml`): il livello di effort è ora impostato esplicitamente a `low`, coerente con l'uso ad alto volume del customer support (riduce latenza e costo).
+- **Override `effort` in `AnthropicInterface`** (`backend/integrations/llm_interfaces/anthropic_interface.py`): il costruttore accetta il parametro opzionale `effort`; il metodo `chat()` passa sempre `output_config={"effort": ...}` alla SDK Anthropic.
+- **Test aggiornati**: aggiunti casi in `backend/tests/config/test_llm_models_loader.py` (lettura da YAML, default `high`, errore su valore non valido) e in `backend/tests/integrations/llm_interfaces/test_anthropic_interface.py` (verifica `_effort`, override, presenza di `output_config` nella chiamata SDK).
+
+---
+
 ## 0.7.8 — 2026-04-27
 
 ### Added

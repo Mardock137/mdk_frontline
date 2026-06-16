@@ -26,19 +26,22 @@ _DEFAULT_CONFIG_NAME = "support_agent"
 class AnthropicInterface(BaseLLMInterface):
     """Concrete LLM adapter for Anthropic Claude.
 
-    Model and max_tokens defaults are read from the YAML config identified by
-    ``config_name`` (defaults to ``"support_agent"``). Both can be overridden
-    at instantiation time for testing or one-off calls.
+    Model, max_tokens and effort defaults are read from the YAML config
+    identified by ``config_name`` (defaults to ``"support_agent"``). All three
+    can be overridden at instantiation time for testing or one-off calls.
 
     Args:
         api_key: Anthropic API key. Defaults to ``ANTHROPIC_API_KEY`` from
             Settings if not supplied.
         config_name: Name of the YAML file in ``config/llm_models/`` (without
-            extension) to load model and max_tokens from.
+            extension) to load model, max_tokens and effort from.
         model: Override for the model name. When ``None`` the value from the
             YAML config is used.
         max_tokens: Override for max_tokens. When ``None`` the value from the
             YAML config is used.
+        effort: Override for the Claude effort level (``"low"``, ``"medium"``,
+            ``"high"``, ``"xhigh"``, ``"max"``). When ``None`` the value from
+            the YAML config is used.
     """
 
     def __init__(
@@ -47,10 +50,12 @@ class AnthropicInterface(BaseLLMInterface):
         config_name: str = _DEFAULT_CONFIG_NAME,
         model: str | None = None,
         max_tokens: int | None = None,
+        effort: str | None = None,
     ) -> None:
         cfg: LLMModelConfig = load_model_config(config_name)
         resolved_model = model if model is not None else cfg.model
         self._default_max_tokens = max_tokens if max_tokens is not None else cfg.max_tokens
+        self._effort = effort if effort is not None else cfg.effort
 
         super().__init__(model=resolved_model)
 
@@ -92,6 +97,7 @@ class AnthropicInterface(BaseLLMInterface):
             kwargs["system"] = system
         if tools:
             kwargs["tools"] = tools
+        kwargs["output_config"] = {"effort": self._effort}
 
         response = await self._client.messages.create(**kwargs)
 

@@ -20,7 +20,7 @@ from integrations.llm_interfaces.base_llm_interface import ChatResponse
 @pytest.fixture
 def mock_config(monkeypatch):
     """Replace load_model_config so it never touches the filesystem."""
-    cfg = LLMModelConfig(model="claude-test-model", max_tokens=512)
+    cfg = LLMModelConfig(model="claude-test-model", max_tokens=512, effort="medium")
     monkeypatch.setattr(anthropic_module, "load_model_config", lambda name: cfg)
     return cfg
 
@@ -42,6 +42,12 @@ def test_init_loads_model_from_yaml(mock_config, mock_anthropic_client):
     iface = AnthropicInterface(api_key="fake-key")
     assert iface.model == "claude-test-model"
     assert iface._default_max_tokens == 512
+    assert iface._effort == "medium"
+
+
+def test_init_effort_override_takes_precedence(mock_config, mock_anthropic_client):
+    iface = AnthropicInterface(api_key="fake-key", effort="low")
+    assert iface._effort == "low"
 
 
 def test_init_model_override_takes_precedence(mock_config, mock_anthropic_client):
@@ -98,6 +104,40 @@ async def test_chat_uses_default_max_tokens_from_config(mock_config, mock_anthro
 
     call_kwargs = mock_anthropic_client.messages.create.call_args[1]
     assert call_kwargs["max_tokens"] == 512  # from mock_config
+
+
+@pytest.mark.asyncio
+async def test_chat_passes_output_config_with_effort(mock_config, mock_anthropic_client):
+    text_block = MagicMock(type="text", text="Hello!")
+    mock_anthropic_client.messages.create = AsyncMock(
+        return_value=MagicMock(
+            stop_reason="end_turn",
+            content=[text_block],
+        )
+    )
+
+    iface = AnthropicInterface(api_key="fake-key")
+    await iface.chat([{"role": "user", "content": "Hi"}])
+
+    call_kwargs = mock_anthropic_client.messages.create.call_args[1]
+    assert call_kwargs["output_config"] == {"effort": "medium"}  # from mock_config
+
+
+@pytest.mark.asyncio
+async def test_chat_uses_overridden_effort(mock_config, mock_anthropic_client):
+    text_block = MagicMock(type="text", text="Hello!")
+    mock_anthropic_client.messages.create = AsyncMock(
+        return_value=MagicMock(
+            stop_reason="end_turn",
+            content=[text_block],
+        )
+    )
+
+    iface = AnthropicInterface(api_key="fake-key", effort="low")
+    await iface.chat([{"role": "user", "content": "Hi"}])
+
+    call_kwargs = mock_anthropic_client.messages.create.call_args[1]
+    assert call_kwargs["output_config"] == {"effort": "low"}
 
 
 @pytest.mark.asyncio
