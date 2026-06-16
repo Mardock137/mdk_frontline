@@ -46,6 +46,7 @@ export function MessageInput({ onSend, disabled = false, primaryColor }: Message
           disabled={disabled}
           rows={1}
           placeholder="Type a message…"
+          aria-label="Type a message"
           className={cn(
             "flex-1 resize-none rounded-xl border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm",
             "disabled:cursor-not-allowed disabled:opacity-50",
@@ -56,7 +57,7 @@ export function MessageInput({ onSend, disabled = false, primaryColor }: Message
         <button
           onClick={handleSend}
           disabled={disabled || !text.trim()}
-          aria-label="Invia messaggio"
+          aria-label="Send message"
           className={cn(
             "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-white",
             "transition-opacity disabled:cursor-not-allowed disabled:opacity-40",

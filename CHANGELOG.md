@@ -1,6 +1,19 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.8.3 — 2026-06-16
+
+### Accessibility
+
+- **Live region messaggi** (`frontend/components/chat/ChatWindow.tsx`): il contenitore dei messaggi è ora una live region (`role="log"`, `aria-live="polite"`, `aria-relevant="additions"`, `aria-label="Conversazione"`). Gli screen reader annunciano ogni nuovo messaggio senza interrompere l'utente.
+- **Mittente nelle bolle** (`frontend/components/chat/MessageBubble.tsx`): ogni bolla antepone un'etichetta `sr-only` con il nome del mittente ("Assistant:" / "You:"), invisibile visivamente ma letta dagli screen reader.
+- **Indicatore "sta scrivendo" percepibile** (`frontend/components/chat/TypingIndicator.tsx`): aggiunto un testo `sr-only` "Assistant is typing" (annunciato dalla live region che lo contiene) e i tre pallini animati marcati `aria-hidden="true"` (decorativi).
+- **Campo di input** (`frontend/components/chat/MessageInput.tsx`): aggiunto `aria-label="Type a message"` alla textarea; il `placeholder` da solo non è un'etichetta affidabile per gli screen reader.
+- **Pagina attiva nella sidebar** (`frontend/app/dashboard/layout.tsx`): aggiunto `aria-label="Main navigation"` sul `nav` e `aria-current="page"` sul link attivo; la sezione corrente è ora comunicata agli screen reader oltre che tramite colore.
+- **Lingua coerente per gli screen reader**: tutte le etichette ARIA / `sr-only` sono in inglese, allineate al testo visibile dell'interfaccia.
+
+---
+
 ## 0.8.2 — 2026-06-16
 
 ### Removed

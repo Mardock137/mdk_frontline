@@ -97,6 +97,20 @@ Se l'azienda ha un `logo_url`, viene mostrato nell'header tramite `next/image`. 
 
 > `next.config.ts` è configurato con `images.remotePatterns` che consente URL di immagini da qualsiasi dominio esterno (`hostname: "**"`), necessario in un prodotto multi-tenant dove i domini dei loghi sono imprevedibili.
 
+### Accessibilità
+
+I componenti della chat implementano le seguenti scelte per la compatibilità con screen reader e tecnologie assistive:
+
+| Componente            | Intervento                                                                                    |
+|-----------------------|-----------------------------------------------------------------------------------------------|
+| `ChatWindow.tsx`      | `role="log"`, `aria-live="polite"`, `aria-relevant="additions"` sul contenitore messaggi      |
+| `MessageBubble.tsx`   | Etichetta `sr-only` col mittente ("Assistente:" / "Tu:") prima del testo                      |
+| `TypingIndicator.tsx` | `role="status"` + `aria-live="polite"` + testo `sr-only`; pallini `aria-hidden="true"`        |
+| `MessageInput.tsx`    | `aria-label="Scrivi un messaggio"` sulla textarea                                             |
+| `dashboard/layout.tsx`| `aria-label="Navigazione principale"` sul `nav`; `aria-current="page"` sul link attivo       |
+
+Tutti gli interventi aggiungono solo attributi ARIA (nessun cambiamento di logica o aspetto visivo).
+
 ### Gestione conversazione
 
 Il `conversation_id` vive nello stato React (`useRef`). Al primo messaggio viene passato `null` al backend, che crea una nuova conversazione e ritorna l'id. Tutti i messaggi successivi riutilizzano lo stesso id. Se il cliente ricarica la pagina, la conversazione riparte da zero.

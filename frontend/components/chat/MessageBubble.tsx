@@ -32,6 +32,7 @@ export function MessageBubble({ message, primaryColor }: MessageBubbleProps) {
         )}
         style={!isAgent ? { backgroundColor: primaryColor } : undefined}
       >
+        <span className="sr-only">{isAgent ? "Assistant:" : "You:"}</span>
         {message.content}
       </div>
     </div>

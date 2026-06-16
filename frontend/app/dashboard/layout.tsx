@@ -28,13 +28,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* Navigation */}
-          <nav className="flex flex-col gap-1 p-3">
+          <nav className="flex flex-col gap-1 p-3" aria-label="Main navigation">
             {navItems.map(({ label, href, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               return (
                 <Link
                   key={href}
                   href={href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     active

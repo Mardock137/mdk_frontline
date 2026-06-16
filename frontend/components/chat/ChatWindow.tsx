@@ -19,7 +19,13 @@ export function ChatWindow({ messages, isTyping, primaryColor }: ChatWindowProps
 
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50 px-4 py-6">
-      <div className="mx-auto flex max-w-2xl flex-col gap-3">
+      <div
+        className="mx-auto flex max-w-2xl flex-col gap-3"
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+        aria-label="Conversation"
+      >
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} primaryColor={primaryColor} />
         ))}
