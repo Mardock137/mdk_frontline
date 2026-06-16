@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.8.1 — 2026-06-16
+
+### Fixed
+
+- **Costante HTTP 422 deprecata** (`backend/api/dashboard.py`): sostituito `status.HTTP_422_UNPROCESSABLE_ENTITY` con `status.HTTP_422_UNPROCESSABLE_CONTENT` (rinominata in Starlette). Stesso codice di stato `422`, nessun cambiamento di comportamento; rimuove il `DeprecationWarning` dalla suite di test.
+
+---
+
 ## 0.8.0 — 2026-06-16
 
 ### Added

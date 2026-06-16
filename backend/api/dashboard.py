@@ -199,7 +199,7 @@ async def update_agent_config(body: AgentConfigUpdate) -> AgentConfigOut:
     patch = body.model_dump(exclude_none=True)
     if not patch:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="No fields to update",
         )
 
