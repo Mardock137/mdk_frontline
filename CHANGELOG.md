@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.8.2 — 2026-06-16
+
+### Removed
+
+- **Dependabot** (`.github/dependabot.yml`): rimossa la configurazione degli aggiornamenti automatici delle dipendenze (backend `pip` e frontend `npm`). La gestione delle dipendenze dei progetti è affidata a MDK Devs, quindi Dependabot era ridondante. Gli alert di sicurezza di GitHub (indipendenti da questo file) restano invariati.
+
+---
+
 ## 0.8.1 — 2026-06-16
 
 ### Fixed
