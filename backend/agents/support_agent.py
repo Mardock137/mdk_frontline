@@ -11,6 +11,7 @@ Implements the full agentic cycle:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from uuid import UUID
 
@@ -78,7 +79,7 @@ class SupportAgent(BaseAgent):
         conversation_id: UUID = input_data["conversation_id"]
         customer_content: str = input_data["content"]
 
-        history = self._load_history(conversation_id)
+        history = await self._load_history(conversation_id)
         messages: list[dict] = history + [
             {"role": "user", "content": customer_content}
         ]
@@ -86,7 +87,7 @@ class SupportAgent(BaseAgent):
 
         reply = await self._run_loop(messages, system_prompt, conversation_id)
 
-        self._save_messages(conversation_id, customer_content, reply)
+        await self._save_messages(conversation_id, customer_content, reply)
         return {"reply": reply}
 
     # ------------------------------------------------------------------
@@ -187,15 +188,15 @@ class SupportAgent(BaseAgent):
         logger.error("SupportAgent called unknown tool: %s", tool_name)
         return f"Errore: tool '{tool_name}' non riconosciuto."
 
-    def _load_history(self, conversation_id: UUID) -> list[dict]:
+    async def _load_history(self, conversation_id: UUID) -> list[dict]:
         """Load past messages for a conversation and convert to LLM format.
 
         MessageRole.CUSTOMER → "user"
         MessageRole.AGENT    → "assistant"
         MessageRole.SYSTEM   → skipped (handled in system prompt)
         """
-        response = (
-            self._supabase.table("messages")
+        response = await asyncio.to_thread(
+            lambda: self._supabase.table("messages")
             .select("role, content")
             .eq("conversation_id", str(conversation_id))
             .order("created_at")
@@ -212,7 +213,7 @@ class SupportAgent(BaseAgent):
                 history.append({"role": llm_role, "content": row["content"]})
         return history
 
-    def _save_messages(
+    async def _save_messages(
         self,
         conversation_id: UUID,
         customer_content: str,
@@ -231,4 +232,6 @@ class SupportAgent(BaseAgent):
                 "content": agent_reply,
             },
         ]
-        self._supabase.table("messages").insert(rows).execute()
+        await asyncio.to_thread(
+            lambda: self._supabase.table("messages").insert(rows).execute()
+        )

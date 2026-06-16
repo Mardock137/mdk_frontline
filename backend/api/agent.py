@@ -7,6 +7,7 @@ once the MDK-137 integration lands.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from uuid import UUID
 
@@ -62,8 +63,8 @@ async def send_message(
     settings = get_settings()
 
     # 1. Resolve company -------------------------------------------------------
-    company_row = (
-        supabase.table("companies")
+    company_row = await asyncio.to_thread(
+        lambda: supabase.table("companies")
         .select("id")
         .eq("slug", company_slug)
         .limit(1)
@@ -77,8 +78,8 @@ async def send_message(
     company_id = UUID(company_row.data[0]["id"])
 
     # 2. Load agent config -----------------------------------------------------
-    cfg_row = (
-        supabase.table("agent_configs")
+    cfg_row = await asyncio.to_thread(
+        lambda: supabase.table("agent_configs")
         .select("*")
         .eq("company_id", str(company_id))
         .limit(1)
@@ -93,16 +94,16 @@ async def send_message(
 
     # 3. Create or reuse conversation ------------------------------------------
     if body.conversation_id is None:
-        conv_row = (
-            supabase.table("conversations")
+        conv_row = await asyncio.to_thread(
+            lambda: supabase.table("conversations")
             .insert({"company_id": str(company_id), "status": "active"})
             .execute()
         )
         conversation_id = UUID(conv_row.data[0]["id"])
         logger.info("New conversation %s for company %s", conversation_id, company_slug)
     else:
-        conv_check = (
-            supabase.table("conversations")
+        conv_check = await asyncio.to_thread(
+            lambda: supabase.table("conversations")
             .select("id")
             .eq("id", str(body.conversation_id))
             .eq("company_id", str(company_id))

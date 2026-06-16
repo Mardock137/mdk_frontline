@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -40,14 +41,16 @@ async def search_chunks(
     query_embeddings = await embedder.embed([query], input_type="query")
     query_embedding = query_embeddings[0]
 
-    response = supabase.rpc(
-        "match_document_chunks",
-        {
-            "query_embedding": query_embedding,
-            "match_company_id": str(company_id),
-            "match_count": top_k,
-        },
-    ).execute()
+    response = await asyncio.to_thread(
+        lambda: supabase.rpc(
+            "match_document_chunks",
+            {
+                "query_embedding": query_embedding,
+                "match_company_id": str(company_id),
+                "match_count": top_k,
+            },
+        ).execute()
+    )
 
     return [
         SearchResult(

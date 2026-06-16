@@ -261,7 +261,7 @@ async def test_load_history_converts_roles(support_agent, supabase, conversation
         ]
     )
 
-    history = support_agent._load_history(conversation_id)
+    history = await support_agent._load_history(conversation_id)
 
     assert len(history) == 2
     assert history[0] == {"role": "user", "content": "Ciao"}

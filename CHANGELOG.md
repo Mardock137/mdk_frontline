@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.8.4 — 2026-06-16
+
+### Fixed
+
+- **Query Supabase non bloccanti nel percorso chat** (`backend/api/agent.py`, `backend/agents/support_agent.py`, `backend/rag/search.py`): tutte le chiamate Supabase sincrone nel percorso della live chat sono ora avvolte in `asyncio.to_thread`, replicando il pattern già usato in `tools/ticket.py` e `tools/escalation.py`. In precedenza ogni query DB bloccava l'intero event loop, impedendo a tutti gli utenti connessi di ricevere risposte durante l'attesa. Nessuna migrazione al client `AsyncClient` (fuori scope MVP).
+
+---
+
 ## 0.8.3 — 2026-06-16
 
 ### Accessibility
