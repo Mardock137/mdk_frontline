@@ -194,7 +194,6 @@ async def update_agent_config(body: AgentConfigUpdate) -> AgentConfigOut:
     are left untouched.
     """
     company_id = _current_company_id()
-    supabase = get_supabase_client()
 
     patch = body.model_dump(exclude_none=True)
     if not patch:
@@ -202,6 +201,8 @@ async def update_agent_config(body: AgentConfigUpdate) -> AgentConfigOut:
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="No fields to update",
         )
+
+    supabase = get_supabase_client()
 
     # tone is an enum — serialise to its string value for Supabase
     if "tone" in patch and isinstance(patch["tone"], AgentTone):

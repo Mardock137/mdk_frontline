@@ -1,6 +1,18 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.3 — 2026-06-17
+
+### Fixed
+
+- **Test instabile sull'endpoint `PATCH /dashboard/agent-config`** (`backend/api/dashboard.py`): il controllo del corpo vuoto (`422 No fields to update`) veniva eseguito *dopo* la creazione del client Supabase. In CI, dove le chiavi Supabase non sono configurate, `get_supabase_client()` sollevava `RuntimeError` prima del controllo, facendo fallire `test_update_agent_config_empty_body` (atteso `422`, ottenuto `500`). In locale il test passava perché il `.env` con le chiavi reali mascherava il problema. Il controllo del corpo vuoto è stato spostato prima della creazione del client: con un corpo vuoto l'endpoint risponde subito `422` senza contattare il database.
+
+### Changed
+
+- **CI anche sui push diretti** (`.github/workflows/backend-ci.yml`, `.github/workflows/frontend-ci.yml`): aggiunto il trigger `push` accanto a `pull_request` (stesso filtro `paths`). In precedenza i test giravano solo all'apertura di una Pull Request, quindi i push diretti non venivano mai verificati. Ora la suite parte sia sui push sia sulle PR, su tutti i branch.
+
+---
+
 ## 0.9.2 — 2026-06-17
 
 ### Fixed
