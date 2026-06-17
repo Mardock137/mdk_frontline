@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.1 — 2026-06-17
+
+### Fixed
+
+- **Linting frontend rotto** (`frontend/eslint.config.mjs`, `frontend/package.json`): in Next.js 16 il comando `next lint` è stato rimosso, causando il fallimento dello script `npm run lint` (e del passo CI corrispondente). Migrazione allo standard ESLint CLI: creato `eslint.config.mjs` con flat config nativa (`eslint-config-next/core-web-vitals` + `eslint-config-next/typescript`, già inclusi nelle dipendenze) e aggiornato lo script a `"lint": "eslint ."`. Nessuna nuova dipendenza, nessuna modifica al workflow CI.
+
+---
+
 ## 0.9.0 — 2026-06-17
 
 ### Added
