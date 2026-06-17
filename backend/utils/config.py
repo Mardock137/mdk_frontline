@@ -31,6 +31,9 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: str = Field(default="*")
 
+    CHAT_RATE_LIMIT: str = Field(default="20/minute")
+    TRUST_PROXY_HEADERS: bool = Field(default=False)
+
     LOG_LEVEL: str = Field(default="INFO")
 
 

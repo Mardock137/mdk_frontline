@@ -1,6 +1,22 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.8.5 — 2026-06-17
+
+### Added
+
+- **Rate limiting sull'endpoint chat** (`backend/api/agent.py`, `backend/main.py`, `backend/utils/rate_limit.py`): aggiunto un tetto alle richieste verso `POST /chat/{company_slug}/message` tramite la libreria `slowapi`. Il conteggio è per indirizzo IP, in memoria (adatto all'MVP single-istanza). Chi supera il limite riceve `429 Too Many Requests` senza che la chiamata a Claude venga eseguita. Il limite è configurabile da `.env` con la variabile `CHAT_RATE_LIMIT` (default `20/minute`).
+- **`backend/utils/rate_limit.py`**: modulo unico che espone l'istanza `Limiter` condivisa tra `main.py` e `api/agent.py`, evitando import circolari.
+- **`CHAT_RATE_LIMIT`** nelle `Settings` (`backend/utils/config.py`) e documentata in `backend/.env.example`.
+- **`slowapi==0.1.10`** aggiunta a `backend/requirements.txt`.
+- **Test `429`** in `backend/tests/api/test_agent.py`: verifica che superato il limite l'endpoint risponda `429` e che `SupportAgent.run` non venga chiamato.
+- **Fixture `disable_rate_limiter`** in `backend/tests/conftest.py` (`autouse=True`): disabilita il limiter per tutti i test esistenti, che restano invariati e verdi.
+- **Supporto proxy nel rate limiting** (`backend/utils/rate_limit.py`, `backend/utils/config.py`): nuova variabile `TRUST_PROXY_HEADERS` (default `false`). Quando attiva, l'IP usato come chiave del rate limiter viene letto dalla prima voce dell'header `X-Forwarded-For` invece che dal socket. Risolve il caso in cui, dietro un reverse proxy o load balancer, tutte le richieste arriverebbero con l'IP del proxy facendo condividere a tutti i visitatori un unico contatore. L'header viene considerato solo con trust esplicito: fidarsene senza un proxy davanti permetterebbe a chiunque di falsificare l'IP e aggirare il limite.
+- **`TRUST_PROXY_HEADERS`** documentata in `backend/.env.example`, `docs/config.md`, `docs/api_endpoints.md` e nella tabella variabili del `README.md`.
+- **Test bucketing per IP** in `backend/tests/api/test_agent.py`: con `TRUST_PROXY_HEADERS=true`, IP diversi in `X-Forwarded-For` hanno contatori separati (un IP viene bloccato con `429` mentre un altro passa).
+
+---
+
 ## 0.8.4 — 2026-06-16
 
 ### Fixed

@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api.agent as agent_module
+import utils.rate_limit as rate_limit_module
 from main import app
 from utils.config import Settings
 
@@ -246,3 +247,89 @@ def test_send_message_500_when_agent_raises(
     response = test_client.post("/chat/acme/message", json={"content": "Ciao"})
 
     assert response.status_code == 500
+
+
+def test_send_message_429_when_rate_limit_exceeded(
+    monkeypatch, company_id, conversation_id, agent_config_row
+):
+    """Oltre il limite il backend risponde 429 senza chiamare l'agente."""
+    monkeypatch.setattr(
+        agent_module,
+        "get_settings",
+        lambda: Settings(ANTHROPIC_API_KEY="test-key", CHAT_RATE_LIMIT="2/minute"),
+    )
+    supabase = _make_supabase(company_id, conversation_id, agent_config_row)
+    monkeypatch.setattr(agent_module, "get_supabase_client", lambda: supabase)
+    monkeypatch.setattr(agent_module, "get_llm_client", lambda **kw: MagicMock())
+
+    agent_run = AsyncMock(return_value={"reply": "ok"})
+    monkeypatch.setattr(agent_module.SupportAgent, "run", agent_run)
+
+    rate_limit_module.limiter.enabled = True
+    rate_limit_module.limiter._storage.reset()
+
+    try:
+        test_client = TestClient(app, raise_server_exceptions=False)
+
+        test_client.post("/chat/acme/message", json={"content": "Prima"})
+        test_client.post("/chat/acme/message", json={"content": "Seconda"})
+
+        calls_before_limit = agent_run.await_count
+
+        response = test_client.post("/chat/acme/message", json={"content": "Terza"})
+
+        assert response.status_code == 429
+        # L'agente non deve essere chiamato per la richiesta bloccata dal rate limiter.
+        assert agent_run.await_count == calls_before_limit
+    finally:
+        rate_limit_module.limiter.enabled = False
+        rate_limit_module.limiter._storage.reset()
+
+
+def test_rate_limit_keys_by_forwarded_ip_when_proxy_trusted(
+    monkeypatch, company_id, conversation_id, agent_config_row
+):
+    """Con TRUST_PROXY_HEADERS attivo il limite conta il vero IP da X-Forwarded-For.
+
+    IP diversi hanno contatori separati: il primo viene bloccato al secondo
+    messaggio, mentre un IP differente passa comunque.
+    """
+    settings = Settings(
+        ANTHROPIC_API_KEY="test-key",
+        CHAT_RATE_LIMIT="1/minute",
+        TRUST_PROXY_HEADERS=True,
+    )
+    monkeypatch.setattr(agent_module, "get_settings", lambda: settings)
+    monkeypatch.setattr(rate_limit_module, "get_settings", lambda: settings)
+    supabase = _make_supabase(company_id, conversation_id, agent_config_row)
+    monkeypatch.setattr(agent_module, "get_supabase_client", lambda: supabase)
+    monkeypatch.setattr(agent_module, "get_llm_client", lambda **kw: MagicMock())
+    monkeypatch.setattr(
+        agent_module.SupportAgent, "run", AsyncMock(return_value={"reply": "ok"})
+    )
+
+    rate_limit_module.limiter.enabled = True
+    rate_limit_module.limiter._storage.reset()
+
+    try:
+        test_client = TestClient(app, raise_server_exceptions=False)
+
+        first_ip = {"X-Forwarded-For": "1.1.1.1"}
+        other_ip = {"X-Forwarded-For": "2.2.2.2"}
+
+        allowed = test_client.post(
+            "/chat/acme/message", json={"content": "a"}, headers=first_ip
+        )
+        blocked = test_client.post(
+            "/chat/acme/message", json={"content": "b"}, headers=first_ip
+        )
+        other = test_client.post(
+            "/chat/acme/message", json={"content": "c"}, headers=other_ip
+        )
+
+        assert allowed.status_code == 200
+        assert blocked.status_code == 429
+        assert other.status_code == 200
+    finally:
+        rate_limit_module.limiter.enabled = False
+        rate_limit_module.limiter._storage.reset()

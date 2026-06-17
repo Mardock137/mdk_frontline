@@ -5,6 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi import _rate_limit_exceeded_handler
 
 from api.agent import router as agent_router
 from api.config import router as config_router
@@ -12,6 +15,7 @@ from api.dashboard import router as dashboard_router
 from api.documents import router as documents_router
 from utils.config import get_settings
 from utils.logging_config import setup_logging
+from utils.rate_limit import limiter
 
 
 @asynccontextmanager
@@ -25,6 +29,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="MDK Frontline Backend", version="0.1.0", lifespan=lifespan)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 settings = get_settings()
 if settings.FRONTEND_URL == "*":

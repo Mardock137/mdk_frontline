@@ -11,7 +11,7 @@ import asyncio
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from agents.support_agent import SupportAgent
@@ -19,6 +19,7 @@ from database.models import AgentConfig
 from database.supabase_client import get_supabase_client
 from integrations.llm_interfaces.anthropic_interface import get_llm_client
 from utils.config import get_settings
+from utils.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,9 @@ class ChatResponse(BaseModel):
     response_model=ChatResponse,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit(lambda: get_settings().CHAT_RATE_LIMIT)
 async def send_message(
+    request: Request,
     company_slug: str,
     body: ChatRequest,
 ) -> ChatResponse:

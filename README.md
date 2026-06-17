@@ -4,7 +4,7 @@
 [![Frontend CI](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml)
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.8.4`
+- **Versione progetto**: `0.8.5`
 
 ## 📋 Indice
 
@@ -44,16 +44,18 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 
 ### Backend (`backend/.env`)
 
-| Variabile                   | Descrizione                                                       |
-|-----------------------------|-------------------------------------------------------------------|
-| `ANTHROPIC_API_KEY`         | Chiave API Anthropic (Claude)                                     |
-| `VOYAGE_API_KEY`            | Chiave API Voyage AI (embedding)                                  |
-| `SUPABASE_URL`              | URL del progetto Supabase                                         |
-| `SUPABASE_ANON_KEY`         | Chiave pubblica Supabase                                          |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata Supabase (bypassa RLS)                             |
-| `DEV_COMPANY_ID`            | UUID dell'azienda usata in sviluppo (temporanea, MVP only)        |
-| `FRONTEND_URL`              | Origine CORS permessa (`*` in sviluppo, URL esatto in produzione) |
-| `LOG_LEVEL`                 | Livello di logging (default: `INFO`)                              |
+| Variabile                   | Descrizione                                                            |
+|-----------------------------|------------------------------------------------------------------------|
+| `ANTHROPIC_API_KEY`         | Chiave API Anthropic (Claude)                                          |
+| `VOYAGE_API_KEY`            | Chiave API Voyage AI (embedding)                                       |
+| `SUPABASE_URL`              | URL del progetto Supabase                                              |
+| `SUPABASE_ANON_KEY`         | Chiave pubblica Supabase                                               |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata Supabase (bypassa RLS)                                  |
+| `DEV_COMPANY_ID`            | UUID dell'azienda usata in sviluppo (temporanea, MVP only)             |
+| `FRONTEND_URL`              | Origine CORS permessa (`*` in sviluppo, URL esatto in produzione)      |
+| `CHAT_RATE_LIMIT`           | Limite richieste per IP sull'endpoint chat (default: `20/minute`)      |
+| `TRUST_PROXY_HEADERS`       | Legge l'IP da `X-Forwarded-For` dietro proxy fidato (default: `false`) |
+| `LOG_LEVEL`                 | Livello di logging (default: `INFO`)                                   |
 
 ### Frontend (`frontend/.env.local`)
 
