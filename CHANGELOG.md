@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.2 — 2026-06-17
+
+### Fixed
+
+- **Errore lint `react-hooks/set-state-in-effect`** (`frontend/app/dashboard/documents/page.tsx`): la pagina Documenti caricava i dati iniziali chiamando una funzione `async` (`void fetchDocuments()`) dentro `useEffect`, facendo scattare la nuova regola di React Hooks. L'`useEffect` ora usa lo stile a catena di promise (`getDocuments().then().catch().finally()`), coerente con le altre pagine della dashboard (tickets, config, stats). La funzione `fetchDocuments` resta invariata per il refresh dopo upload. Nessun cambiamento di comportamento.
+
+---
+
 ## 0.9.1 — 2026-06-17
 
 ### Fixed

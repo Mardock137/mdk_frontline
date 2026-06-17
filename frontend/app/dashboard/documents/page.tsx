@@ -56,7 +56,13 @@ export default function DocumentsPage() {
   };
 
   useEffect(() => {
-    void fetchDocuments();
+    getDocuments()
+      .then((docs) => {
+        setDocuments(docs);
+        setError(null);
+      })
+      .catch((err) => setError((err as Error).message))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
