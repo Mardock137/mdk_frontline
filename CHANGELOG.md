@@ -1,6 +1,17 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.0 — 2026-06-17
+
+### Added
+
+- **Persistenza cronologia chat** (`frontend/app/chat/[slug]/page.tsx`, `frontend/lib/api.ts`): il browser memorizza il `conversation_id` in localStorage (`mdk:conversation:<slug>`) dopo il primo messaggio inviato. Alla riapertura della pagina, la cronologia reale viene ricaricata dal database tramite il nuovo endpoint e mostrata nella chat (preceduta dal welcome message di configurazione). Se l'ID salvato risulta stale (conversazione non trovata), la chiave localStorage viene pulita e la chat riparte da zero senza errori visibili.
+- **Endpoint `GET /chat/{company_slug}/conversation/{conversation_id}/messages`** (`backend/api/agent.py`): nuovo endpoint pubblico di sola lettura che restituisce i messaggi di una conversazione in ordine cronologico (ruolo `system` escluso). Include controllo cross-tenant identico al POST: chi non conosce sia lo slug sia il `conversation_id` non può accedere alla conversazione.
+- **Tipo `ChatMessage` e funzione `getConversationMessages`** (`frontend/lib/api.ts`): nuovo tipo `{ id, role, content }` e funzione fetch con supporto `AbortSignal`.
+- **Test** (`backend/tests/api/test_agent.py`): 5 test per il nuovo endpoint — happy path con messaggi, lista vuota, 404 company non trovata, 404 conversazione non trovata, 404 cross-tenant.
+
+---
+
 ## 0.8.5 — 2026-06-17
 
 ### Added

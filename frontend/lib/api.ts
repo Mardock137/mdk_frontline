@@ -1,13 +1,29 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 // ---------------------------------------------------------------------------
+// Errors
+// ---------------------------------------------------------------------------
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
-    throw new Error((error as { detail?: string })?.detail ?? `Request failed (${res.status})`);
+    const detail =
+      (error as { detail?: string })?.detail ?? `Request failed (${res.status})`;
+    throw new ApiError(res.status, detail);
   }
   return res.json() as Promise<T>;
 }
@@ -32,6 +48,12 @@ export interface SendMessageRequest {
 export interface SendMessageResponse {
   conversation_id: string;
   reply: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "customer" | "agent";
+  content: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -122,6 +144,18 @@ export async function sendMessage(
     body: JSON.stringify(payload),
   });
   return handleResponse<SendMessageResponse>(res);
+}
+
+export async function getConversationMessages(
+  slug: string,
+  conversationId: string,
+  signal?: AbortSignal,
+): Promise<ChatMessage[]> {
+  const res = await fetch(
+    `${API_URL}/chat/${slug}/conversation/${conversationId}/messages`,
+    { signal },
+  );
+  return handleResponse<ChatMessage[]>(res);
 }
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { use } from "react";
 import Image from "next/image";
-import { getConfig, sendMessage, type ChatConfig } from "@/lib/api";
+import { getConfig, sendMessage, getConversationMessages, ApiError, type ChatConfig } from "@/lib/api";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { type Message } from "@/components/chat/MessageBubble";
@@ -24,6 +24,34 @@ function customerMessage(content: string): Message {
   return { id: makeId(), role: "customer", content };
 }
 
+function storageKey(slug: string) {
+  return `mdk:conversation:${slug}`;
+}
+
+function loadStoredConversationId(slug: string): string | null {
+  try {
+    return localStorage.getItem(storageKey(slug));
+  } catch {
+    return null;
+  }
+}
+
+function saveConversationId(slug: string, id: string) {
+  try {
+    localStorage.setItem(storageKey(slug), id);
+  } catch {
+    // localStorage non disponibile (es. SSR, private browsing con storage bloccato)
+  }
+}
+
+function clearConversationId(slug: string) {
+  try {
+    localStorage.removeItem(storageKey(slug));
+  } catch {
+    // noop
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -41,16 +69,42 @@ export default function ChatPage({ params }: PageProps) {
   const [isTyping, setIsTyping] = useState(false);
   const conversationId = useRef<string | null>(null);
 
-  // Load config on mount -------------------------------------------------
+  // Load config on mount — then restore history if a conversation_id is stored
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
 
     getConfig(slug, controller.signal)
-      .then((cfg) => {
+      .then(async (cfg) => {
         if (cancelled) return;
         setConfig(cfg);
-        setMessages([agentMessage(cfg.welcome_message)]);
+
+        const storedId = loadStoredConversationId(slug);
+
+        if (storedId) {
+          try {
+            const history = await getConversationMessages(slug, storedId, controller.signal);
+            if (cancelled) return;
+            conversationId.current = storedId;
+            const historyMessages: Message[] = history.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+            }));
+            setMessages([agentMessage(cfg.welcome_message), ...historyMessages]);
+          } catch (err) {
+            if (cancelled) return;
+            // Solo se la conversazione non esiste più (404) puliamo l'ID salvato.
+            // Per errori transitori (rete, 500) lo manteniamo: un refresh successivo
+            // potrà ritentare il ripristino senza perdere la conversazione.
+            if (err instanceof ApiError && err.status === 404) {
+              clearConversationId(slug);
+            }
+            setMessages([agentMessage(cfg.welcome_message)]);
+          }
+        } else {
+          setMessages([agentMessage(cfg.welcome_message)]);
+        }
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -79,6 +133,7 @@ export default function ChatPage({ params }: PageProps) {
       });
 
       conversationId.current = res.conversation_id;
+      saveConversationId(slug, res.conversation_id);
       setMessages((prev) => [...prev, agentMessage(res.reply)]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Errore sconosciuto";

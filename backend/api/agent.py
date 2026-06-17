@@ -42,6 +42,12 @@ class ChatResponse(BaseModel):
     reply: str
 
 
+class ChatMessageOut(BaseModel):
+    id: UUID
+    role: str
+    content: str
+
+
 # --- Endpoint ---------------------------------------------------------------
 
 
@@ -140,3 +146,63 @@ async def send_message(
     )
 
     return ChatResponse(conversation_id=conversation_id, reply=result["reply"])
+
+
+@router.get(
+    "/chat/{company_slug}/conversation/{conversation_id}/messages",
+    response_model=list[ChatMessageOut],
+    status_code=status.HTTP_200_OK,
+)
+async def get_conversation_messages(
+    company_slug: str,
+    conversation_id: UUID,
+) -> list[ChatMessageOut]:
+    """Restituisce i messaggi di una conversazione esistente.
+
+    Endpoint pubblico di sola lettura per ripristinare la cronologia chat.
+    Il ``conversation_id`` funge da capability URL: chi lo possiede può leggere
+    la conversazione, coerentemente con la natura pubblica degli endpoint ``/chat/*``.
+    """
+    supabase = get_supabase_client()
+
+    # 1. Resolve company -------------------------------------------------------
+    company_row = await asyncio.to_thread(
+        lambda: supabase.table("companies")
+        .select("id")
+        .eq("slug", company_slug)
+        .limit(1)
+        .execute()
+    )
+    if not company_row.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Company '{company_slug}' not found",
+        )
+    company_id = UUID(company_row.data[0]["id"])
+
+    # 2. Verify cross-tenant ownership ----------------------------------------
+    conv_check = await asyncio.to_thread(
+        lambda: supabase.table("conversations")
+        .select("id")
+        .eq("id", str(conversation_id))
+        .eq("company_id", str(company_id))
+        .limit(1)
+        .execute()
+    )
+    if not conv_check.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found",
+        )
+
+    # 3. Load messages (exclude system role, chronological order) --------------
+    messages_row = await asyncio.to_thread(
+        lambda: supabase.table("messages")
+        .select("id, role, content")
+        .eq("conversation_id", str(conversation_id))
+        .neq("role", "system")
+        .order("created_at")
+        .execute()
+    )
+
+    return [ChatMessageOut(**row) for row in messages_row.data or []]

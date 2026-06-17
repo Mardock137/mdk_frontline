@@ -8,7 +8,7 @@
  │    │    ├── 📄 base_agent.py                              # Base class comune per tutti gli agenti.
  │    │    └── 📄 support_agent.py                           # Agente AI di supporto: loop autonomo con tool calling, salva messaggi nel DB.
  │    ├── 📁 api/                                            # Endpoint HTTP esposti dal backend verso il frontend.
- │    │    ├── 📄 agent.py                                   # Endpoint POST /chat/{company_slug}/message.
+ │    │    ├── 📄 agent.py                                   # Endpoint chat: POST /chat/{company_slug}/message e GET /chat/{company_slug}/conversation/{id}/messages.
  │    │    ├── 📄 config.py                                  # Endpoint pubblico GET /chat/{company_slug}/config (branding + welcome).
  │    │    ├── 📄 dashboard.py                               # Endpoint /dashboard/*: ticket, agent-config, stats.
  │    │    └── 📄 documents.py                               # Endpoint /documents/* e /rag/search.

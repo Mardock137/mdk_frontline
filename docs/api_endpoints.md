@@ -104,6 +104,22 @@ Ritorna i dati di branding e il messaggio di benvenuto per la pagina di live cha
 
 - **Errori**: `404` company o agent_config non trovata.
 
+### `GET /chat/{company_slug}/conversation/{conversation_id}/messages`
+
+Restituisce i messaggi di una conversazione esistente, in ordine cronologico. Endpoint pubblico di sola lettura (nessuna autenticazione, nessun rate limit) usato dalla live chat per ripristinare la cronologia dopo un refresh.
+
+- **Path params**: `company_slug` — slug dell'azienda; `conversation_id` — UUID della conversazione.
+- **Risposta `200`**: array di `{ id, role, content }` (ruolo `system` escluso, lista vuota se non ci sono messaggi).
+
+```json
+[
+    { "id": "uuid", "role": "customer", "content": "Come resetto la password?" },
+    { "id": "uuid", "role": "agent",    "content": "Segui questi passi..." }
+]
+```
+
+- **Errori**: `404` company non trovata, `404` conversazione non trovata o appartenente a un'altra company (`"Conversation not found"`).
+
 ### `POST /chat/{company_slug}/message`
 
 Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se `conversation_id` è null viene creata una nuova conversazione. L'agente usa la knowledge base, può aprire ticket e scalare a operatori umani autonomamente.
