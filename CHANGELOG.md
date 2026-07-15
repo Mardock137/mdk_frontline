@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.4 — 2026-07-15
+
+### Fixed
+
+- **Errore Security Advisor su `documents_with_counts`** (`backend/database/migrations/015_documents_with_counts_security_invoker.sql`): la view era definita senza `security_invoker`, facendola girare implicitamente con i permessi del creatore (equivalente a `SECURITY DEFINER`) invece che di chi la interroga, bypassando così la RLS delle tabelle sottostanti. Impostato `security_invoker = true` sulla view.
+
+---
+
 ## 0.9.3 — 2026-06-17
 
 ### Fixed
