@@ -36,7 +36,9 @@
  │    │    │    ├── 📄 013_documents_with_counts_view.sql                # Vista documents_with_counts che espone il numero di chunk per documento.
  │    │    │    ├── 📄 014_tickets_add_is_escalation.sql                 # Aggiunge colonna is_escalation (boolean) alla tabella tickets.
  │    │    │    ├── 📄 015_documents_with_counts_security_invoker.sql    # Imposta security_invoker=true sulla view documents_with_counts (fix Security Advisor).
- │    │    │    └── 📄 016_fix_functions_search_path.sql                 # Fissa search_path su set_updated_at e match_document_chunks (fix Security Advisor).
+ │    │    │    ├── 📄 016_fix_functions_search_path.sql                 # Fissa search_path su set_updated_at e match_document_chunks (fix Security Advisor).
+ │    │    │    ├── 📄 017_revoke_rls_auto_enable_execute.sql            # Revoca l'esecuzione di rls_auto_enable() a anon/authenticated (fix Security Advisor).
+ │    │    │    └── 📄 018_revoke_rls_auto_enable_execute_public.sql     # Revoca l'esecuzione di rls_auto_enable() a PUBLIC, causa reale del permesso ereditato da anon/authenticated.
  │    │    ├── 📄 models.py                                              # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                                     # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                               # Integrazione delle API esterne.

@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.6 — 2026-07-17
+
+### Fixed
+
+- **Warning Security Advisor su `rls_auto_enable()`** (`backend/database/migrations/017_revoke_rls_auto_enable_execute.sql`, `backend/database/migrations/018_revoke_rls_auto_enable_execute_public.sql`): la funzione (creata da Supabase per l'auto-enable di RLS sulle nuove tabelle, non dal codice del progetto) è `SECURITY DEFINER` e viveva in `public`, quindi era auto-esposta come RPC pubblico (`/rest/v1/rpc/rls_auto_enable`) chiamabile da `anon` e `authenticated`. La prima revoca (017) toglieva il permesso direttamente a `anon`/`authenticated`, ma senza effetto: quei ruoli lo ereditavano dal permesso concesso di default al ruolo `PUBLIC` (comportamento standard di Postgres alla creazione di una funzione). La seconda migration (018) revoca il permesso direttamente da `PUBLIC`, eliminandolo alla radice per tutti i ruoli che lo ereditano. La funzione e il suo event trigger restano invariati e continuano a funzionare automaticamente sulle nuove `CREATE TABLE`.
+
+---
+
 ## 0.9.5 — 2026-07-17
 
 ### Fixed
