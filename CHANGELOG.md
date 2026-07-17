@@ -1,6 +1,14 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.9.5 — 2026-07-17
+
+### Fixed
+
+- **Warning Security Advisor `role mutable search_path`** (`backend/database/migrations/016_fix_functions_search_path.sql`): le funzioni `set_updated_at()` e `match_document_chunks()` non avevano un `search_path` fissato, lasciando che venisse risolto usando quello di chi le chiamava (rischio di "search_path hijacking"). Impostato `search_path = public, pg_temp` su entrambe, senza modificarne la logica.
+
+---
+
 ## 0.9.4 — 2026-07-15
 
 ### Fixed

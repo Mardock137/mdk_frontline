@@ -35,7 +35,8 @@
  │    │    │    ├── 📄 012_search_function.sql                           # Funzione SQL match_document_chunks per la ricerca semantica multi-tenant.
  │    │    │    ├── 📄 013_documents_with_counts_view.sql                # Vista documents_with_counts che espone il numero di chunk per documento.
  │    │    │    ├── 📄 014_tickets_add_is_escalation.sql                 # Aggiunge colonna is_escalation (boolean) alla tabella tickets.
- │    │    │    └── 📄 015_documents_with_counts_security_invoker.sql    # Imposta security_invoker=true sulla view documents_with_counts (fix Security Advisor).
+ │    │    │    ├── 📄 015_documents_with_counts_security_invoker.sql    # Imposta security_invoker=true sulla view documents_with_counts (fix Security Advisor).
+ │    │    │    └── 📄 016_fix_functions_search_path.sql                 # Fissa search_path su set_updated_at e match_document_chunks (fix Security Advisor).
  │    │    ├── 📄 models.py                                              # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                                     # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                               # Integrazione delle API esterne.
