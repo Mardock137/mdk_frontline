@@ -82,6 +82,7 @@ L'elenco completo delle variabili è visibile nel file [backend/.env.example](..
 | `SUPABASE_URL`              | URL del progetto Supabase.                                                                                             | Sì                       |
 | `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                                                                | Sì                       |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                             | Sì                       |
+| `SUPABASE_SCHEMA`           | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas. | No (default `frontline`) |
 | `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP).                                          | Solo in dev              |
 | `FRONTEND_URL`              | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.          | No                       |
 | `CHAT_RATE_LIMIT`           | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                 | No (default `20/minute`) |

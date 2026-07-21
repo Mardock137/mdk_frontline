@@ -1,6 +1,19 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.10.0 — 2026-07-21
+
+### Changed
+
+- **Tutti gli oggetti del database spostati nello schema dedicato `frontline`** (migration `001`-`016`): tabelle, indici, trigger, la funzione trigger `set_updated_at`, la funzione `match_document_chunks` e la view `documents_with_counts` vivono ora nello schema `frontline` invece che in `public`, così `public` resta libero per un futuro secondo prodotto. L'estensione `vector` (pgvector) resta in `public` per ora (spostamento rimandato alla Fase 2). La migration `001_enable_extensions.sql` crea lo schema; le migration `002`-`008`, `010`, `011`, `012`, `013`, `014`, `015`, `016` sono state aggiornate per creare/alterare gli oggetti in `frontline`. Il `search_path` di `match_document_chunks` è `frontline, public, pg_temp` per continuare a risolvere l'operatore vettoriale `<=>` (ancora in `public`). Le migration `009` (storage) e `017`/`018` (funzione `rls_auto_enable` gestita da Supabase in `public`) restano invariate.
+- **Nuova variabile `SUPABASE_SCHEMA`** (`backend/utils/config.py`, `backend/.env.example`): default `frontline`. Il client Supabase (`backend/database/supabase_client.py`) la passa tramite `ClientOptions(schema=...)`, così tutte le chiamate `.table(...)` e `.rpc(...)` esistenti puntano automaticamente allo schema corretto senza altre modifiche al codice.
+
+### Notes
+
+- Passi manuali su Supabase (staging): eseguire le migration aggiornate `001`-`018` su un DB pulito, poi aggiungere `frontline` in **Settings → API → Exposed schemas** e impostare `SUPABASE_SCHEMA=frontline` in `backend/.env`. Documentazione aggiornata in `docs/database.md`, `docs/architecture.md`, `docs/config.md`, `docs/rag.md`, `docs/repo_structure.md` e `README.md`.
+
+---
+
 ## 0.9.6 — 2026-07-17
 
 ### Fixed

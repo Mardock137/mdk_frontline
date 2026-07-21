@@ -6,10 +6,10 @@
 -- tenant without joining back to documents (faster, plus keeps a single
 -- column for future RLS policies).
 
-create table if not exists public.document_chunks (
+create table if not exists frontline.document_chunks (
     id uuid primary key default gen_random_uuid(),
-    document_id uuid not null references public.documents (id) on delete cascade,
-    company_id uuid not null references public.companies (id) on delete cascade,
+    document_id uuid not null references frontline.documents (id) on delete cascade,
+    company_id uuid not null references frontline.companies (id) on delete cascade,
     chunk_index integer not null,
     content text not null,
     embedding vector(1024) not null,
@@ -18,13 +18,13 @@ create table if not exists public.document_chunks (
 );
 
 create index if not exists document_chunks_document_id_idx
-    on public.document_chunks (document_id);
+    on frontline.document_chunks (document_id);
 create index if not exists document_chunks_company_id_idx
-    on public.document_chunks (company_id);
+    on frontline.document_chunks (company_id);
 
 -- HNSW index on the embedding vector for fast cosine-similarity search.
 create index if not exists document_chunks_embedding_idx
-    on public.document_chunks
+    on frontline.document_chunks
     using hnsw (embedding vector_cosine_ops);
 
-alter table public.document_chunks enable row level security;
+alter table frontline.document_chunks enable row level security;

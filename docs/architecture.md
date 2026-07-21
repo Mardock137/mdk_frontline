@@ -23,7 +23,7 @@ Componenti principali:
 
 - **Backend (Python + FastAPI)** — API REST, orchestratore dell'agente AI, sistema RAG, integrazione con Claude (Anthropic).
 - **Frontend (Next.js + shadcn/ui)** — dashboard aziendale in inglese e pagina di live chat pubblica.
-- **Database (Supabase)** — PostgreSQL con estensione `pgvector` per gli embedding, Supabase Storage per i file, Row Level Security per l'isolamento multi-tenant.
+- **Database (Supabase)** — PostgreSQL con estensione `pgvector` per gli embedding, Supabase Storage per i file, Row Level Security per l'isolamento multi-tenant. Tutti gli oggetti applicativi vivono nello schema dedicato `frontline`.
 - **LLM esterno** — Anthropic Claude.
 
 ---
@@ -64,6 +64,8 @@ Il backend si connette a Supabase tramite **service role key** (chiave privata).
 ## 🗄️ Schema del database
 
 Lo schema è definito da migration SQL in [backend/database/migrations/](../backend/database/migrations/). Vanno eseguite manualmente nel SQL Editor di Supabase **in ordine numerico**.
+
+Tabelle, funzioni e view vivono in uno schema dedicato **`frontline`** (lo schema `public` resta libero per un futuro secondo prodotto). L'estensione `vector` (pgvector) resta invece in `public` fino alla Fase 2. Il backend punta allo schema giusto tramite la variabile `SUPABASE_SCHEMA` (default `frontline`).
 
 ### Tabelle
 

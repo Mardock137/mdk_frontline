@@ -6,7 +6,7 @@
 -- where 1.0 means identical direction. Ordering is by distance ascending
 -- (smaller distance = more similar) for efficiency with the HNSW index.
 
-create or replace function public.match_document_chunks(
+create or replace function frontline.match_document_chunks(
     query_embedding vector(1024),
     match_company_id uuid,
     match_count integer default 5
@@ -27,7 +27,7 @@ as $$
         dc.chunk_index,
         dc.content,
         1 - (dc.embedding <=> query_embedding) as similarity
-    from public.document_chunks dc
+    from frontline.document_chunks dc
     where dc.company_id = match_company_id
     order by dc.embedding <=> query_embedding
     limit match_count;

@@ -20,6 +20,8 @@ Guida operativa al database Supabase di MDK Frontline: come applicare le migrati
 
 Il database è su **Supabase** (PostgreSQL gestito). Lo schema è definito come file SQL versionati in [backend/database/migrations/](../backend/database/migrations/). Nell'MVP le migration si applicano **manualmente** dal SQL Editor di Supabase.
 
+Tutti gli oggetti di Frontline (tabelle, funzioni, view) vivono in uno **schema dedicato `frontline`**, così lo schema `public` resta libero per un futuro secondo prodotto. Il backend punta a questo schema tramite la variabile `SUPABASE_SCHEMA` (default `frontline`). L'estensione `vector` (pgvector) resta per ora in `public`. Lo Storage dei file non è coinvolto: usa lo schema `storage`, separato.
+
 Il backend si connette con la **service role key** (chiave privata), che bypassa la Row Level Security. L'isolamento tra aziende clienti è garantito filtrando sempre per `company_id` a livello applicativo.
 
 ---
@@ -36,11 +38,17 @@ La **prima volta** (o quando si aggiunge una nuova migration):
 
 > ⚠️ L'ordine è importante: `002_companies.sql` deve esistere prima di `003_users.sql` (che ha una foreign key verso `companies`), e così via.
 
-Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor**.
+Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor** (seleziona lo schema `frontline` dal menù a tendina in alto).
+
+> ⚠️ **Exposed schemas**: dopo aver creato lo schema `frontline`, vai su **Settings → API → Exposed schemas** e aggiungi `frontline` alla lista (accanto a `public`, `graphql_public`). Salva: PostgREST ricarica lo schema. Senza questo passo il backend non riesce a leggere/scrivere le tabelle.
 
 ---
 
 ## ⚙️ Come funziona
+
+### Schema
+
+Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle, la funzione `match_document_chunks`, la funzione trigger `set_updated_at` e la view `documents_with_counts`. Lo schema `public` resta vuoto e pronto per un futuro secondo prodotto; l'estensione `vector` è l'unica cosa che al momento resta in `public`. Il backend sa a quale schema puntare grazie alla variabile `SUPABASE_SCHEMA` (vedi [config.md](config.md#-variabili-dambiente)).
 
 ### Tabelle
 
@@ -107,6 +115,11 @@ I test **non** toccano il database reale: i modelli sono validati in locale e il
 
 **Causa**: `SUPABASE_URL` o `SUPABASE_SERVICE_ROLE_KEY` non sono valorizzate in `backend/.env`.
 **Soluzione**: copia i valori dal dashboard Supabase (**Project Settings → API**) e incollali in `backend/.env`. Riavvia il processo.
+
+### Problema: il backend non trova le tabelle (`relation ... does not exist` o `404` da PostgREST)
+
+**Causa**: lo schema `frontline` non è tra gli "Exposed schemas" di Supabase, oppure `SUPABASE_SCHEMA` in `backend/.env` non è impostata su `frontline`.
+**Soluzione**: aggiungi `frontline` in **Settings → API → Exposed schemas** e verifica che `SUPABASE_SCHEMA=frontline` sia presente in `backend/.env`. Riavvia il backend.
 
 ### Problema: `foreign key violation` durante una migration
 

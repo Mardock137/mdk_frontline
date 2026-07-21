@@ -3,6 +3,8 @@
 -- Pinning search_path prevents a malicious search_path from redirecting
 -- name resolution to attacker-controlled objects.
 
-alter function public.set_updated_at() set search_path = public, pg_temp;
+alter function frontline.set_updated_at() set search_path = frontline, pg_temp;
 
-alter function public.match_document_chunks(vector, uuid, integer) set search_path = public, pg_temp;
+-- public is kept in the search_path so the vector similarity operator (<=>),
+-- which lives in the vector extension in public, still resolves (phase 1).
+alter function frontline.match_document_chunks(vector, uuid, integer) set search_path = frontline, public, pg_temp;

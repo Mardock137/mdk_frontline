@@ -4,7 +4,7 @@
 [![Frontend CI](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml)
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.9.6`
+- **Versione progetto**: `0.10.0`
 
 ## 📋 Indice
 
@@ -51,6 +51,7 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 | `SUPABASE_URL`              | URL del progetto Supabase                                              |
 | `SUPABASE_ANON_KEY`         | Chiave pubblica Supabase                                               |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata Supabase (bypassa RLS)                                  |
+| `SUPABASE_SCHEMA`           | Schema del DB con tabelle/funzioni/view di Frontline (default: `frontline`) |
 | `DEV_COMPANY_ID`            | UUID dell'azienda usata in sviluppo (temporanea, MVP only)             |
 | `FRONTEND_URL`              | Origine CORS permessa (`*` in sviluppo, URL esatto in produzione)      |
 | `CHAT_RATE_LIMIT`           | Limite richieste per IP sull'endpoint chat (default: `20/minute`)      |

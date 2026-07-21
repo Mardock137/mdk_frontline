@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = Field(default="")
     SUPABASE_ANON_KEY: str = Field(default="")
     SUPABASE_SERVICE_ROLE_KEY: str = Field(default="")
+    SUPABASE_SCHEMA: str = Field(default="frontline")
 
     DEV_COMPANY_ID: str = Field(default="")
 

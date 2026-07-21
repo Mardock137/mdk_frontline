@@ -62,7 +62,7 @@ File caricato
 [Voyage AI embed] (input_type=query)
    │
    ▼
-[match_document_chunks RPC] ── filtro per company_id + ORDER BY distance
+[frontline.match_document_chunks RPC] ── filtro per company_id + ORDER BY distance
    │
    ▼
 Top K chunk con similarity score
@@ -93,6 +93,7 @@ Top K chunk con similarity score
 | `VOYAGE_API_KEY`            | `backend/.env`        | Chiave API di Voyage AI (ottenibile su voyageai.com).    |
 | `SUPABASE_URL`              | `backend/.env`        | URL progetto Supabase.                                   |
 | `SUPABASE_SERVICE_ROLE_KEY` | `backend/.env`        | Service role key (bypassa RLS, solo backend).            |
+| `SUPABASE_SCHEMA`           | `backend/.env`        | Schema del DB (default `frontline`); ospita `document_chunks` e `match_document_chunks`. |
 | `DEV_COMPANY_ID`            | `backend/.env`        | UUID della company di sviluppo (tenant corrente).        |
 
 ### Migration

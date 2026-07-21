@@ -4,4 +4,4 @@
 -- Setting security_invoker = true makes the view respect the RLS policies
 -- and permissions of the querying user instead.
 
-alter view public.documents_with_counts set (security_invoker = true);
+alter view frontline.documents_with_counts set (security_invoker = true);
