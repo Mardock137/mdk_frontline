@@ -21,7 +21,7 @@
  │    ├── 📁 core/                                                       # Logica di business trasversale e orchestrazione degli agenti.
  │    ├── 📁 database/                                                   # Modelli dati (Pydantic), client Supabase e migration SQL delle tabelle.
  │    │    ├── 📁 migrations/                                            # Migration SQL da eseguire manualmente nel SQL Editor di Supabase (in ordine numerico). Tabelle, funzioni e view sono create nello schema dedicato "frontline".
- │    │    │    ├── 📄 001_enable_extensions.sql                         # Abilita le estensioni PostgreSQL (pgvector, pgcrypto) e crea lo schema dedicato "frontline".
+ │    │    │    ├── 📄 001_enable_extensions.sql                         # Crea gli schemi dedicati "extensions" e "frontline"; abilita pgvector in "extensions" e pgcrypto.
  │    │    │    ├── 📄 002_companies.sql                                 # Tabella companies (tenant).
  │    │    │    ├── 📄 003_users.sql                                     # Tabella users (utenti dashboard, predisposta per il futuro).
  │    │    │    ├── 📄 004_agent_configs.sql                             # Tabella agent_configs (configurazione agente per azienda).

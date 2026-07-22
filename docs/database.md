@@ -20,7 +20,7 @@ Guida operativa al database Supabase di MDK Frontline: come applicare le migrati
 
 Il database è su **Supabase** (PostgreSQL gestito). Lo schema è definito come file SQL versionati in [backend/database/migrations/](../backend/database/migrations/). Nell'MVP le migration si applicano **manualmente** dal SQL Editor di Supabase.
 
-Tutti gli oggetti di Frontline (tabelle, funzioni, view) vivono in uno **schema dedicato `frontline`**, così lo schema `public` resta libero per un futuro secondo prodotto. Il backend punta a questo schema tramite la variabile `SUPABASE_SCHEMA` (default `frontline`). L'estensione `vector` (pgvector) resta per ora in `public`. Lo Storage dei file non è coinvolto: usa lo schema `storage`, separato.
+Tutti gli oggetti di Frontline (tabelle, funzioni, view) vivono in uno **schema dedicato `frontline`**, così lo schema `public` resta libero per un futuro secondo prodotto. Il backend punta a questo schema tramite la variabile `SUPABASE_SCHEMA` (default `frontline`). L'estensione `vector` (pgvector) vive in un secondo schema dedicato, **`extensions`**: `public` è quindi completamente vuoto. Lo Storage dei file non è coinvolto: usa lo schema `storage`, separato.
 
 Il backend si connette con la **service role key** (chiave privata), che bypassa la Row Level Security. L'isolamento tra aziende clienti è garantito filtrando sempre per `company_id` a livello applicativo.
 
@@ -48,7 +48,7 @@ Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor** (
 
 ### Schema
 
-Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle, la funzione `match_document_chunks`, la funzione trigger `set_updated_at` e la view `documents_with_counts`. Lo schema `public` resta vuoto e pronto per un futuro secondo prodotto; l'estensione `vector` è l'unica cosa che al momento resta in `public`. Il backend sa a quale schema puntare grazie alla variabile `SUPABASE_SCHEMA` (vedi [config.md](config.md#-variabili-dambiente)).
+Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle, la funzione `match_document_chunks`, la funzione trigger `set_updated_at` e la view `documents_with_counts`. L'estensione `vector` vive nello schema **`extensions`**. Lo schema `public` resta completamente vuoto e pronto per un futuro secondo prodotto. Il backend sa a quale schema puntare grazie alla variabile `SUPABASE_SCHEMA` (vedi [config.md](config.md#-variabili-dambiente)); `extensions` non va aggiunto agli "Exposed schemas" perché il backend non lo interroga mai direttamente (l'operatore vettoriale è usato solo dentro `match_document_chunks`, che vive in `frontline`).
 
 ### Tabelle
 
@@ -65,7 +65,7 @@ Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle
 
 ### Estensioni
 
-- `vector` (pgvector) — usato dalla tabella `document_chunks` per la ricerca semantica (indice HNSW, cosine distance).
+- `vector` (pgvector) — installato nello schema `extensions`, usato dalla tabella `document_chunks` per la ricerca semantica (indice HNSW, cosine distance).
 - `pgcrypto` — per `gen_random_uuid()` usato nelle primary key.
 
 ### Funzioni SQL

@@ -10,7 +10,7 @@ create table if not exists frontline.documents (
     content_type text not null,
     status text not null default 'pending'
         check (status in ('pending', 'processing', 'ready', 'error')),
-    embedding vector(1536),
+    embedding extensions.vector(1536),
     created_at timestamptz not null default now()
 );
 

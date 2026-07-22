@@ -5,6 +5,6 @@
 
 alter function frontline.set_updated_at() set search_path = frontline, pg_temp;
 
--- public is kept in the search_path so the vector similarity operator (<=>),
--- which lives in the vector extension in public, still resolves (phase 1).
-alter function frontline.match_document_chunks(vector, uuid, integer) set search_path = frontline, public, pg_temp;
+-- extensions is kept in the search_path so the vector similarity operator
+-- (<=>), which lives in the vector extension, still resolves (phase 2).
+alter function frontline.match_document_chunks(extensions.vector, uuid, integer) set search_path = frontline, extensions, pg_temp;

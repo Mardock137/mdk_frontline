@@ -75,19 +75,19 @@ Per customer support ad alto volume, `effort: low` è la scelta consigliata: rid
 
 L'elenco completo delle variabili è visibile nel file [backend/.env.example](../backend/.env.example), che va copiato in `.env` e compilato con i valori reali.
 
-| Variabile                   | Descrizione                                                                                                            | Obbligatoria             |
-|-----------------------------|------------------------------------------------------------------------------------------------------------------------|--------------------------|
-| `ANTHROPIC_API_KEY`         | Chiave API per il provider LLM (Anthropic Claude).                                                                     | Sì                       |
-| `VOYAGE_API_KEY`            | Chiave API per Voyage AI (embedding RAG).                                                                              | Sì                       |
-| `SUPABASE_URL`              | URL del progetto Supabase.                                                                                             | Sì                       |
-| `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                                                                | Sì                       |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                             | Sì                       |
+| Variabile                   | Descrizione                                                                                                                                | Obbligatoria             |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
+| `ANTHROPIC_API_KEY`         | Chiave API per il provider LLM (Anthropic Claude).                                                                                         | Sì                       |
+| `VOYAGE_API_KEY`            | Chiave API per Voyage AI (embedding RAG).                                                                                                  | Sì                       |
+| `SUPABASE_URL`              | URL del progetto Supabase.                                                                                                                 | Sì                       |
+| `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                                                                                    | Sì                       |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                                                 | Sì                       |
 | `SUPABASE_SCHEMA`           | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas. | No (default `frontline`) |
-| `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP).                                          | Solo in dev              |
-| `FRONTEND_URL`              | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.          | No                       |
-| `CHAT_RATE_LIMIT`           | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                 | No (default `20/minute`) |
-| `TRUST_PROXY_HEADERS`       | Se `true`, l'IP usato per il rate limiting è letto da `X-Forwarded-For`. Attivare solo dietro un reverse proxy fidato. | No (default `false`)     |
-| `LOG_LEVEL`                 | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                               | No (default `INFO`)      |
+| `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP).                                                              | Solo in dev              |
+| `FRONTEND_URL`              | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.                              | No                       |
+| `CHAT_RATE_LIMIT`           | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                                     | No (default `20/minute`) |
+| `TRUST_PROXY_HEADERS`       | Se `true`, l'IP usato per il rate limiting è letto da `X-Forwarded-For`. Attivare solo dietro un reverse proxy fidato.                     | No (default `false`)     |
+| `LOG_LEVEL`                 | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                                                   | No (default `INFO`)      |
 
 > **Attenzione**: il file `.env` contiene dati sensibili e non deve mai essere committato. È escluso dal controllo versione tramite `.gitignore`.
 

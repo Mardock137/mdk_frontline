@@ -1,6 +1,19 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.10.1 — 2026-07-22
+
+### Changed
+
+- **Estensione `vector` spostata dallo schema `public` a uno schema dedicato `extensions`** (migration `001`, `005`, `010`, `012`, `016`): chiude l'ultimo warning del Security Advisor (`extension vector installed in public`), lasciando `public` completamente vuoto. La migration `001_enable_extensions.sql` crea lo schema `extensions` e installa `vector` al suo interno (`with schema extensions`); il tipo è ora qualificato esplicitamente come `extensions.vector` nella colonna legacy `documents.embedding` (migration `005`), nella colonna `document_chunks.embedding` e nel relativo indice HNSW (migration `010`, `extensions.vector_cosine_ops`), e nel parametro `query_embedding` di `match_document_chunks` (migration `012`). Il `search_path` della funzione (migration `016`) passa da `frontline, public, pg_temp` a `frontline, extensions, pg_temp` per continuare a risolvere l'operatore `<=>`.
+- **Nessuna modifica al codice Python né a `SUPABASE_SCHEMA`**: nessun modulo backend referenzia il tipo `vector` o il suo schema; l'ingestion passa gli embedding come liste e la ricerca passa dalla funzione RPC `match_document_chunks`. Lo schema `extensions` non va aggiunto agli "Exposed schemas" di Supabase: non è mai interrogato direttamente dal backend.
+
+### Notes
+
+- Passi manuali su Supabase (staging): `drop schema if exists frontline cascade;` e `drop extension if exists vector;`, poi rieseguire le migration aggiornate `001`-`018` su un DB pulito. Verificare nel Table Editor che `public` sia vuoto e che `vector` risulti nello schema `extensions` (Database → Extensions); il warning residuo del Security Advisor deve sparire. Documentazione aggiornata in `docs/database.md`, `docs/architecture.md` e `docs/repo_structure.md`.
+
+---
+
 ## 0.10.0 — 2026-07-21
 
 ### Changed

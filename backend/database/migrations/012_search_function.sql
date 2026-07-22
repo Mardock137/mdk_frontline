@@ -7,7 +7,7 @@
 -- (smaller distance = more similar) for efficiency with the HNSW index.
 
 create or replace function frontline.match_document_chunks(
-    query_embedding vector(1024),
+    query_embedding extensions.vector(1024),
     match_company_id uuid,
     match_count integer default 5
 )

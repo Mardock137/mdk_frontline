@@ -12,7 +12,7 @@ create table if not exists frontline.document_chunks (
     company_id uuid not null references frontline.companies (id) on delete cascade,
     chunk_index integer not null,
     content text not null,
-    embedding vector(1024) not null,
+    embedding extensions.vector(1024) not null,
     created_at timestamptz not null default now(),
     unique (document_id, chunk_index)
 );
@@ -25,6 +25,6 @@ create index if not exists document_chunks_company_id_idx
 -- HNSW index on the embedding vector for fast cosine-similarity search.
 create index if not exists document_chunks_embedding_idx
     on frontline.document_chunks
-    using hnsw (embedding vector_cosine_ops);
+    using hnsw (embedding extensions.vector_cosine_ops);
 
 alter table frontline.document_chunks enable row level security;
