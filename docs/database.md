@@ -36,7 +36,7 @@ La **prima volta** (o quando si aggiunge una nuova migration):
 4. Per ogni file: copia tutto il contenuto, incollalo nel SQL Editor, clicca **Run**.
 5. Verifica che non ci siano errori prima di passare al file successivo.
 
-> ⚠️ L'ordine è importante: `002_companies.sql` deve esistere prima di `003_users.sql` (che ha una foreign key verso `companies`), e così via.
+> ⚠️ L'ordine è importante: `002_companies.sql` deve esistere prima di `004_agent_configs.sql` (che ha una foreign key verso `companies`), e così via.
 
 Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor** (seleziona lo schema `frontline` dal menù a tendina in alto).
 
@@ -55,7 +55,6 @@ Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle
 | Tabella           | Descrizione                                                                 |
 |-------------------|-----------------------------------------------------------------------------|
 | `companies`       | Aziende clienti (tenant). `slug` unico per l'URL della chat pubblica.       |
-| `users`           | Utenti della dashboard (MVP: minimale, usata in futuro).                    |
 | `agent_configs`   | Configurazione agente per azienda (nome, logo, colore, tono, lingua).       |
 | `documents`       | Metadata dei documenti + riferimento allo Storage.                          |
 | `document_chunks` | Chunk di testo con embedding `vector(1024)` per la ricerca semantica (RAG). |

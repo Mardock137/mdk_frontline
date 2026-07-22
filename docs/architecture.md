@@ -72,7 +72,6 @@ Tabelle, funzioni e view vivono in uno schema dedicato **`frontline`** (lo schem
 | Tabella           | Scopo                                                                                           |
 |-------------------|-------------------------------------------------------------------------------------------------|
 | `companies`       | Aziende clienti (tenant). Ogni azienda ha uno `slug` usato nell'URL chat.                       |
-| `users`           | Utenti della dashboard (MVP: minimale, predisposta per il futuro).                              |
 | `agent_configs`   | Configurazione dell'agente per ogni azienda (nome, logo, tono, ecc.).                           |
 | `documents`       | Documenti della knowledge base (metadata + riferimento allo Storage).                           |
 | `document_chunks` | Pezzi di documento con embedding (vector 1024) per la ricerca semantica.                        |
@@ -84,7 +83,6 @@ Tabelle, funzioni e view vivono in uno schema dedicato **`frontline`** (lo schem
 
 ```mermaid
 erDiagram
-    companies ||--o{ users : has
     companies ||--|| agent_configs : has
     companies ||--o{ documents : has
     documents ||--o{ document_chunks : has

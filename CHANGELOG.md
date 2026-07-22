@@ -1,16 +1,20 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.10.2 — 2026-07-22
+
+### Removed
+
+- **Tabella `users` rimossa** (`backend/database/migrations/019_drop_users_table.sql`): non era referenziata da nessun endpoint, tool o agente, solo dai modelli Pydantic (`UserCreate`/`User` in `backend/database/models.py`) e dai loro test. Era stata creata nella migration `003` in previsione di un futuro supporto multi-utente per azienda, mai collegata al resto del codice. Come già fatto per `011_drop_documents_embedding.sql`, la rimozione avviene con una nuova migration numerata invece di modificare retroattivamente la `003`, che resta come documento storico. Nessun impatto sul comportamento dell'app.
+
+---
+
 ## 0.10.1 — 2026-07-22
 
 ### Changed
 
 - **Estensione `vector` spostata dallo schema `public` a uno schema dedicato `extensions`** (migration `001`, `005`, `010`, `012`, `016`): chiude l'ultimo warning del Security Advisor (`extension vector installed in public`), lasciando `public` completamente vuoto. La migration `001_enable_extensions.sql` crea lo schema `extensions` e installa `vector` al suo interno (`with schema extensions`); il tipo è ora qualificato esplicitamente come `extensions.vector` nella colonna legacy `documents.embedding` (migration `005`), nella colonna `document_chunks.embedding` e nel relativo indice HNSW (migration `010`, `extensions.vector_cosine_ops`), e nel parametro `query_embedding` di `match_document_chunks` (migration `012`). Il `search_path` della funzione (migration `016`) passa da `frontline, public, pg_temp` a `frontline, extensions, pg_temp` per continuare a risolvere l'operatore `<=>`.
 - **Nessuna modifica al codice Python né a `SUPABASE_SCHEMA`**: nessun modulo backend referenzia il tipo `vector` o il suo schema; l'ingestion passa gli embedding come liste e la ricerca passa dalla funzione RPC `match_document_chunks`. Lo schema `extensions` non va aggiunto agli "Exposed schemas" di Supabase: non è mai interrogato direttamente dal backend.
-
-### Notes
-
-- Passi manuali su Supabase (staging): `drop schema if exists frontline cascade;` e `drop extension if exists vector;`, poi rieseguire le migration aggiornate `001`-`018` su un DB pulito. Verificare nel Table Editor che `public` sia vuoto e che `vector` risulti nello schema `extensions` (Database → Extensions); il warning residuo del Security Advisor deve sparire. Documentazione aggiornata in `docs/database.md`, `docs/architecture.md` e `docs/repo_structure.md`.
 
 ---
 
@@ -20,10 +24,6 @@
 
 - **Tutti gli oggetti del database spostati nello schema dedicato `frontline`** (migration `001`-`016`): tabelle, indici, trigger, la funzione trigger `set_updated_at`, la funzione `match_document_chunks` e la view `documents_with_counts` vivono ora nello schema `frontline` invece che in `public`, così `public` resta libero per un futuro secondo prodotto. L'estensione `vector` (pgvector) resta in `public` per ora (spostamento rimandato alla Fase 2). La migration `001_enable_extensions.sql` crea lo schema; le migration `002`-`008`, `010`, `011`, `012`, `013`, `014`, `015`, `016` sono state aggiornate per creare/alterare gli oggetti in `frontline`. Il `search_path` di `match_document_chunks` è `frontline, public, pg_temp` per continuare a risolvere l'operatore vettoriale `<=>` (ancora in `public`). Le migration `009` (storage) e `017`/`018` (funzione `rls_auto_enable` gestita da Supabase in `public`) restano invariate.
 - **Nuova variabile `SUPABASE_SCHEMA`** (`backend/utils/config.py`, `backend/.env.example`): default `frontline`. Il client Supabase (`backend/database/supabase_client.py`) la passa tramite `ClientOptions(schema=...)`, così tutte le chiamate `.table(...)` e `.rpc(...)` esistenti puntano automaticamente allo schema corretto senza altre modifiche al codice.
-
-### Notes
-
-- Passi manuali su Supabase (staging): eseguire le migration aggiornate `001`-`018` su un DB pulito, poi aggiungere `frontline` in **Settings → API → Exposed schemas** e impostare `SUPABASE_SCHEMA=frontline` in `backend/.env`. Documentazione aggiornata in `docs/database.md`, `docs/architecture.md`, `docs/config.md`, `docs/rag.md`, `docs/repo_structure.md` e `README.md`.
 
 ---
 
@@ -339,10 +339,6 @@
 
 - Rimossa la colonna `documents.embedding` ([migration 011](backend/database/migrations/011_drop_documents_embedding.sql)): gli embedding vivono ora su `document_chunks`.
 - Timeout HTTP di `VoyageEmbedding` alzato da 30s a 60s (default) per supportare batch di chunk più grossi.
-
-### Notes
-
-- Il pacchetto ufficiale `voyageai` non supporta Python 3.14: usiamo la REST API direttamente, zero SDK aggiuntivo.
 
 ---
 

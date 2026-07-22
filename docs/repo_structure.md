@@ -23,7 +23,7 @@
  │    │    ├── 📁 migrations/                                            # Migration SQL da eseguire manualmente nel SQL Editor di Supabase (in ordine numerico). Tabelle, funzioni e view sono create nello schema dedicato "frontline".
  │    │    │    ├── 📄 001_enable_extensions.sql                         # Crea gli schemi dedicati "extensions" e "frontline"; abilita pgvector in "extensions" e pgcrypto.
  │    │    │    ├── 📄 002_companies.sql                                 # Tabella companies (tenant).
- │    │    │    ├── 📄 003_users.sql                                     # Tabella users (utenti dashboard, predisposta per il futuro).
+ │    │    │    ├── 📄 003_users.sql                                     # Tabella users (utenti dashboard, predisposta per il futuro) — rimossa dalla migration 019, mai usata.
  │    │    │    ├── 📄 004_agent_configs.sql                             # Tabella agent_configs (configurazione agente per azienda).
  │    │    │    ├── 📄 005_documents.sql                                 # Tabella documents (knowledge base) con colonna embedding per il RAG.
  │    │    │    ├── 📄 006_conversations.sql                             # Tabella conversations (live chat).
@@ -38,7 +38,8 @@
  │    │    │    ├── 📄 015_documents_with_counts_security_invoker.sql    # Imposta security_invoker=true sulla view documents_with_counts (fix Security Advisor).
  │    │    │    ├── 📄 016_fix_functions_search_path.sql                 # Fissa search_path su set_updated_at e match_document_chunks (fix Security Advisor).
  │    │    │    ├── 📄 017_revoke_rls_auto_enable_execute.sql            # Revoca l'esecuzione di rls_auto_enable() a anon/authenticated (fix Security Advisor).
- │    │    │    └── 📄 018_revoke_rls_auto_enable_execute_public.sql     # Revoca l'esecuzione di rls_auto_enable() a PUBLIC, causa reale del permesso ereditato da anon/authenticated.
+ │    │    │    ├── 📄 018_revoke_rls_auto_enable_execute_public.sql     # Revoca l'esecuzione di rls_auto_enable() a PUBLIC, causa reale del permesso ereditato da anon/authenticated.
+ │    │    │    └── 📄 019_drop_users_table.sql                         # Rimuove la tabella users, mai usata da nessun endpoint.
  │    │    ├── 📄 models.py                                              # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                                     # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                               # Integrazione delle API esterne.

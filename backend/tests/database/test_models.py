@@ -20,7 +20,6 @@ from database.models import (
     MessageRole,
     TicketCreate,
     TicketStatus,
-    UserCreate,
 )
 
 
@@ -46,19 +45,6 @@ def test_company_output_parses_full_row():
         "created_at": datetime.now(timezone.utc),
     }
     assert Company(**row).slug == "acme"
-
-
-# --- users ------------------------------------------------------------------
-
-
-def test_user_create_defaults_role_to_owner():
-    user = UserCreate(company_id=uuid4(), email="admin@acme.com")
-    assert user.role == "owner"
-
-
-def test_user_create_rejects_bad_email():
-    with pytest.raises(ValidationError):
-        UserCreate(company_id=uuid4(), email="not-an-email")
 
 
 # --- agent_configs ----------------------------------------------------------

@@ -69,20 +69,6 @@ class Company(CompanyCreate):
     created_at: datetime
 
 
-# --- users ------------------------------------------------------------------
-
-
-class UserCreate(_DbModel):
-    company_id: UUID
-    email: str = Field(min_length=3, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-    role: str = "owner"
-
-
-class User(UserCreate):
-    id: UUID
-    created_at: datetime
-
-
 # --- agent_configs ----------------------------------------------------------
 
 
@@ -190,8 +176,6 @@ __all__ = [
     "TicketStatus",
     "CompanyCreate",
     "Company",
-    "UserCreate",
-    "User",
     "AgentConfigCreate",
     "AgentConfig",
     "DocumentCreate",
