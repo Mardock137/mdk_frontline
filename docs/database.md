@@ -50,6 +50,8 @@ Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor** (
 
 Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle, la funzione `match_document_chunks`, la funzione trigger `set_updated_at` e la view `documents_with_counts`. L'estensione `vector` vive nello schema **`extensions`**. Lo schema `public` resta completamente vuoto e pronto per un futuro secondo prodotto. Il backend sa a quale schema puntare grazie alla variabile `SUPABASE_SCHEMA` (vedi [config.md](config.md#-variabili-dambiente)); `extensions` non va aggiunto agli "Exposed schemas" perché il backend non lo interroga mai direttamente (l'operatore vettoriale è usato solo dentro `match_document_chunks`, che vive in `frontline`).
 
+A differenza di `public`, uno schema custom come `frontline` non riceve permessi di default da Postgres: [020_grant_frontline_privileges.sql](../backend/database/migrations/020_grant_frontline_privileges.sql) concede esplicitamente a `service_role` i permessi su schema, tabelle, sequenze e funzioni (inclusi quelli per gli oggetti creati da migration future, tramite `alter default privileges`).
+
 ### Tabelle
 
 | Tabella           | Descrizione                                                                 |
@@ -119,6 +121,11 @@ I test **non** toccano il database reale: i modelli sono validati in locale e il
 
 **Causa**: lo schema `frontline` non è tra gli "Exposed schemas" di Supabase, oppure `SUPABASE_SCHEMA` in `backend/.env` non è impostata su `frontline`.
 **Soluzione**: aggiungi `frontline` in **Settings → API → Exposed schemas** e verifica che `SUPABASE_SCHEMA=frontline` sia presente in `backend/.env`. Riavvia il backend.
+
+### Problema: `403 Forbidden` / `permission denied for schema frontline` (Postgres `42501`)
+
+**Causa**: lo schema `frontline` non ha ricevuto i permessi di base per `service_role` (a differenza di `public`, un nuovo schema non li assegna automaticamente). `service_role` bypassa la Row Level Security, ma non i permessi su schema/tabelle/view/funzioni/sequenze.
+**Soluzione**: esegui [020_grant_frontline_privileges.sql](../backend/database/migrations/020_grant_frontline_privileges.sql) dal SQL Editor di Supabase, poi riavvia il backend e ricarica la dashboard.
 
 ### Problema: `foreign key violation` durante una migration
 

@@ -1,6 +1,15 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.11.1 — 2026-07-24
+
+### Fixed
+
+- **`403 Forbidden` / `permission denied for schema frontline` (Postgres `42501`) su ogni chiamata REST verso lo schema `frontline`** (`backend/database/migrations/020_grant_frontline_privileges.sql`): a differenza di `public`, uno schema custom non riceve permessi di default da Postgres, quindi `service_role` (usato dal backend) non poteva accedere a tabelle, view, funzioni e sequenze anche se bypassa la Row Level Security. La nuova migration concede esplicitamente `usage` sullo schema e i permessi su tutti gli oggetti esistenti a `service_role`, più `alter default privileges` per applicare automaticamente gli stessi permessi agli oggetti creati dalle migration future.
+- **Documentazione aggiornata**: `docs/database.md` (sezione "Come funziona" e nuova voce di Troubleshooting), `docs/repo_structure.md` (riga per `020_grant_frontline_privileges.sql`).
+
+---
+
 ## 0.11.0 — 2026-07-24
 
 ### Changed

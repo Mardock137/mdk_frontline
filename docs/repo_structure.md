@@ -39,7 +39,8 @@
  │    │    │    ├── 📄 016_fix_functions_search_path.sql                 # Fissa search_path su set_updated_at e match_document_chunks (fix Security Advisor).
  │    │    │    ├── 📄 017_revoke_rls_auto_enable_execute.sql            # Revoca l'esecuzione di rls_auto_enable() a anon/authenticated (fix Security Advisor).
  │    │    │    ├── 📄 018_revoke_rls_auto_enable_execute_public.sql     # Revoca l'esecuzione di rls_auto_enable() a PUBLIC, causa reale del permesso ereditato da anon/authenticated.
- │    │    │    └── 📄 019_drop_users_table.sql                         # Rimuove la tabella users, mai usata da nessun endpoint.
+ │    │    │    ├── 📄 019_drop_users_table.sql                         # Rimuove la tabella users, mai usata da nessun endpoint.
+ │    │    │    └── 📄 020_grant_frontline_privileges.sql               # Concede a service_role i permessi sullo schema frontline (fix 403/42501 su schema custom).
  │    │    ├── 📄 models.py                                              # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                                     # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                               # Integrazione delle API esterne.
