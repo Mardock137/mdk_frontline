@@ -55,15 +55,15 @@ Campi supportati:
 
 | Campo        | Tipo     | Obbligatorio | Default  | Descrizione                                                                                                                                                                                                                                                                    |
 |--------------|----------|--------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `model`      | `str`    | Sì           | —        | Identificatore del modello Claude (es. `claude-sonnet-4-6`).                                                                                                                                                                                                                   |
+| `model`      | `str`    | Sì           | —        | Identificatore del modello Claude (es. `claude-sonnet-5`).                                                                                                                                                                                                                     |
 | `max_tokens` | `int`    | Sì           | —        | Numero massimo di token che il modello può generare per risposta.                                                                                                                                                                                                              |
 | `effort`     | `str`    | No           | `high`   | Quanti token Claude spende per la risposta (testo, tool call ed eventuale thinking; non richiede il thinking attivo). Valori validi: `low`, `medium`, `high`, `xhigh`, `max`. Valori più bassi riducono latenza e costo; `high` equivale al comportamento di default dell'API. |
 
 Esempio (`support_agent.yaml`):
 
 ```yaml
-model: claude-sonnet-4-6
-max_tokens: 2048
+model: claude-sonnet-5
+max_tokens: 4096
 effort: low
 ```
 

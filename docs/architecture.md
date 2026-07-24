@@ -46,7 +46,7 @@ Componenti principali:
                 ▼       ▼       ▼
            [Supabase]       [Anthropic Claude]
         (DB + Storage       (tool calling,
-          + pgvector)        claude-sonnet-4-6)
+          + pgvector)        claude-sonnet-5)
 ```
 
 Il backend si connette a Supabase tramite **service role key** (chiave privata). Il service role **bypassa la Row Level Security**: l'isolamento tra tenant è garantito a livello applicativo, filtrando sempre per `company_id` nelle query.

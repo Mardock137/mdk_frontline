@@ -1,6 +1,18 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.11.0 — 2026-07-24
+
+### Changed
+
+- **Modello LLM aggiornato a Claude Sonnet 5** (`backend/config/llm_models/support_agent.yaml`): `model` passa da `claude-sonnet-4-6` a `claude-sonnet-5`, drop-in replacement secondo la documentazione Anthropic (stessi tool, stesso formato di richieste/risposte). Il codice non usa `temperature`/`top_p`/`top_k` né thinking manuale (`budget_tokens`), quindi nessuna delle breaking change dell'API introdotte da Sonnet 5 impatta il progetto.
+- **`max_tokens` alzato da `2048` a `4096`** (stesso file): su Sonnet 5 l'adaptive thinking è attivo di default e consuma parte dello stesso budget di `max_tokens` condiviso con la risposta finale; inoltre il nuovo tokenizer del modello produce ~30% di token in più a parità di testo. Il margine più ampio previene risposte troncate (`stop_reason: "max_tokens"`). `effort: low` resta invariato, già la scelta corretta per customer support ad alto volume.
+- **Nessuna modifica al codice Python**: `loader.py` e `anthropic_interface.py` leggono `model`/`max_tokens` dinamicamente dal YAML senza validare il nome del modello.
+- **Documentazione aggiornata**: `README.md`, `docs/architecture.md`, `docs/config.md` (riferimenti a `claude-sonnet-4-6` sostituiti).
+- **Nessun impatto su ambienti reali**: il progetto non è ancora stato deployato né in staging né in produzione.
+
+---
+
 ## 0.10.2 — 2026-07-22
 
 ### Removed

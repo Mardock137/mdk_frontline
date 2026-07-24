@@ -4,7 +4,7 @@
 [![Frontend CI](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml)
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.10.2`
+- **Versione progetto**: `0.11.0`
 
 ## 📋 Indice
 
@@ -33,7 +33,7 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 | Backend       | Python 3.14 · FastAPI · Pydantic        |
 | Database      | Supabase (PostgreSQL + pgvector)        |
 | File storage  | Supabase Storage                        |
-| LLM           | Anthropic Claude (`claude-sonnet-4-6`)  |
+| LLM           | Anthropic Claude (`claude-sonnet-5`)    |
 | Embedding     | Voyage AI (`voyage-3`)                  |
 | Frontend      | Next.js 16 · React 19 · Tailwind CSS v4 |
 | UI components | shadcn/ui                               |
