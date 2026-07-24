@@ -66,6 +66,10 @@ logger.error("Errore durante l'elaborazione")
 
 Non serve configurare nulla nei singoli moduli: ereditano la configurazione dal root logger.
 
+### Librerie di terze parti silenziate
+
+Le librerie HTTP di basso livello usate sotto il cofano (`httpx`, `httpcore`, `hpack`) a livello `DEBUG` stampano le intestazioni HTTP grezze delle richieste — comprese `Authorization` e `apikey`, cioè la `SUPABASE_SERVICE_ROLE_KEY`. Per evitare che finiscano nel file di log, `setup_logging()` forza questi tre logger a `WARNING` **indipendentemente** dal `LOG_LEVEL` scelto per il resto dell'app: puoi quindi usare `LOG_LEVEL=DEBUG` per debuggare la tua logica applicativa senza rischiare di scrivere segreti su disco.
+
 ---
 
 ## 🔧 Configurazione

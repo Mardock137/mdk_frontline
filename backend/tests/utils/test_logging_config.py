@@ -43,3 +43,24 @@ def test_setup_logging_is_idempotent(tmp_path: Path):
         for handler in list(logger.handlers):
             logger.removeHandler(handler)
             handler.close()
+
+
+def test_setup_logging_caps_noisy_third_party_loggers_even_at_debug(tmp_path: Path):
+    """httpx/httpcore/hpack log raw HTTP headers (incl. secrets) at DEBUG.
+
+    They must stay at WARNING even when the app's own LOG_LEVEL is DEBUG, so
+    enabling DEBUG for troubleshooting never writes the Supabase service role
+    key or bearer tokens to the log file.
+    """
+    log_file = tmp_path / "backend.log"
+
+    logger = setup_logging(log_level="DEBUG", log_file=log_file)
+
+    try:
+        assert logger.level == logging.DEBUG
+        for logger_name in ("httpx", "httpcore", "hpack"):
+            assert logging.getLogger(logger_name).level == logging.WARNING
+    finally:
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+            handler.close()

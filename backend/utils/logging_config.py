@@ -15,6 +15,13 @@ DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 MAX_BYTES = 5 * 1024 * 1024
 BACKUP_COUNT = 5
 
+# These third-party loggers emit raw HTTP headers (including the Supabase
+# service role key and bearer tokens) at DEBUG level. They are capped to
+# WARNING regardless of LOG_LEVEL, so enabling DEBUG for the app's own code
+# never leaks secrets to the log file.
+_NOISY_THIRD_PARTY_LOGGERS = ("httpx", "httpcore", "hpack")
+_THIRD_PARTY_LOG_LEVEL = logging.WARNING
+
 
 def setup_logging(log_level: str | None = None, log_file: Path | None = None) -> logging.Logger:
     """Configure the root logger with console and rotating file handlers.
@@ -51,5 +58,8 @@ def setup_logging(log_level: str | None = None, log_file: Path | None = None) ->
     file_handler.setLevel(level)
     file_handler.setFormatter(formatter)
     root_logger.addHandler(file_handler)
+
+    for logger_name in _NOISY_THIRD_PARTY_LOGGERS:
+        logging.getLogger(logger_name).setLevel(_THIRD_PARTY_LOG_LEVEL)
 
     return root_logger

@@ -1,6 +1,16 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.11.2 — 2026-07-24
+
+### Fixed
+
+- **Segreti esposti nel log a `LOG_LEVEL=DEBUG`** (`backend/utils/logging_config.py`): a livello `DEBUG`, le librerie `httpx`, `httpcore` e `hpack` stampano le intestazioni HTTP grezze di ogni richiesta, comprese `Authorization` e `apikey` — cioè la `SUPABASE_SERVICE_ROLE_KEY` in chiaro nel file `backend/logs/backend.log`. `setup_logging()` ora forza questi tre logger a `WARNING` indipendentemente dal `LOG_LEVEL` applicativo, così il debug della logica di business non rischia più di scrivere segreti su disco. Il codice applicativo (tutte le chiamate `logger.*` nei moduli del progetto) non ha mai loggato segreti: il problema riguardava solo le dipendenze HTTP di terze parti.
+- **Test aggiunto** (`backend/tests/utils/test_logging_config.py`): verifica che `httpx`/`httpcore`/`hpack` restino a `WARNING` anche quando il logger applicativo è impostato su `DEBUG`.
+- **Documentazione aggiornata**: `docs/observability.md` (nuova sezione "Librerie di terze parti silenziate").
+
+---
+
 ## 0.11.1 — 2026-07-24
 
 ### Fixed
