@@ -113,6 +113,7 @@
  │    ├── 📄 api_endpoints.md                                            # Contiene l'elenco degli endpoint API utilizzati.
  │    ├── 📄 architecture.md                                             # Architettura sistema, stack e schema del database.
  │    ├── 📄 database.md                                                 # Guida operativa alle migration Supabase e allo schema.
+ │    ├── 📄 deploy.md                                                   #
  │    ├── 📄 rag.md                                                      # Guida al sistema RAG (upload, chunking, embedding, ricerca).
  │    ├── 📄 config.md                                                   # Guida alla configurazione
  │    ├── 📄 frontend.md                                                 #
