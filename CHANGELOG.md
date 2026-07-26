@@ -1,6 +1,16 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.11.3 — 2026-07-26
+
+### Added
+
+- **Dockerfile per il backend** (`backend/Dockerfile`, `backend/.dockerignore`): immagine basata su `python:3.14-slim`, pensata per il deploy su Google Cloud Run. La porta viene letta dalla variabile d'ambiente `PORT` (default `8080`), coerente con il comportamento di Cloud Run. Build e run testati in locale: il container risponde correttamente su `/health`.
+- **Documentazione aggiornata**: `docs/repo_structure.md` (righe per `Dockerfile` e `.dockerignore`), `docs/deploy.md` (prima guida al deploy in staging, sezione build/run locale dell'immagine).
+- **Nessun impatto sul comportamento dell'app**: nessuna modifica al codice Python, solo aggiunta dell'infrastruttura di containerizzazione.
+
+---
+
 ## 0.11.2 — 2026-07-24
 
 ### Fixed

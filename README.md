@@ -4,7 +4,7 @@
 [![Frontend CI](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml)
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.11.2`
+- **Versione progetto**: `0.11.3`
 
 ## 📋 Indice
 
@@ -140,3 +140,4 @@ Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
 - [Endpoints API](docs/api_endpoints.md)
 - [Sistema RAG](docs/rag.md)
 - [Frontend](docs/frontend.md)
+- [Deploy](docs/deploy.md)

@@ -39,8 +39,8 @@
  │    │    │    ├── 📄 016_fix_functions_search_path.sql                 # Fissa search_path su set_updated_at e match_document_chunks (fix Security Advisor).
  │    │    │    ├── 📄 017_revoke_rls_auto_enable_execute.sql            # Revoca l'esecuzione di rls_auto_enable() a anon/authenticated (fix Security Advisor).
  │    │    │    ├── 📄 018_revoke_rls_auto_enable_execute_public.sql     # Revoca l'esecuzione di rls_auto_enable() a PUBLIC, causa reale del permesso ereditato da anon/authenticated.
- │    │    │    ├── 📄 019_drop_users_table.sql                         # Rimuove la tabella users, mai usata da nessun endpoint.
- │    │    │    └── 📄 020_grant_frontline_privileges.sql               # Concede a service_role i permessi sullo schema frontline (fix 403/42501 su schema custom).
+ │    │    │    ├── 📄 019_drop_users_table.sql                          # Rimuove la tabella users, mai usata da nessun endpoint.
+ │    │    │    └── 📄 020_grant_frontline_privileges.sql                # Concede a service_role i permessi sullo schema frontline (fix 403/42501 su schema custom).
  │    │    ├── 📄 models.py                                              # Modelli Pydantic che rappresentano le tabelle del database.
  │    │    └── 📄 supabase_client.py                                     # Factory cached del client Supabase (service role).
  │    ├── 📁 integrations/                                               # Integrazione delle API esterne.
@@ -98,8 +98,10 @@
  │    ├── 📁 utils/                                                      # Utility comuni e configurazione.
  │    │    ├── 📄 config.py                                              # Caricamento e gestione delle variabili d'ambiente dal file .env.
  │    │    └── 📄 logging_config.py                                      # Configurazione centralizzata del logging (console e file, rotazione, formato).
+ │    ├── 📄 .dockerignore                                               # File e cartelle esclusi dal contesto di build Docker (venv, test, log, segreti).
  │    ├── 📄 .env                                                        # Contiene le chiavi API e variabili d'ambiente riservate.
  │    ├── 📄 .env.example                                                # Contiene un esempio delle variabili d’ambiente in uso.
+ │    ├── 📄 Dockerfile                                                  # Immagine Docker del backend (Python 3.14-slim) usata per il deploy su Cloud Run.
  │    ├── 📄 main.py                                                     # Punto di ingresso del backend: inizializza FastAPI, registra endpoint e middleware.
  │    ├── 📄 pytest.ini                                                  #
  │    └── 📄 requirements.txt                                            # Elenco delle dipendenze Python e relative versioni.
@@ -113,7 +115,7 @@
  │    ├── 📄 api_endpoints.md                                            # Contiene l'elenco degli endpoint API utilizzati.
  │    ├── 📄 architecture.md                                             # Architettura sistema, stack e schema del database.
  │    ├── 📄 database.md                                                 # Guida operativa alle migration Supabase e allo schema.
- │    ├── 📄 deploy.md                                                   #
+ │    ├── 📄 deploy.md                                                   # Guida al deploy in staging (Cloud Run + Vercel).
  │    ├── 📄 rag.md                                                      # Guida al sistema RAG (upload, chunking, embedding, ricerca).
  │    ├── 📄 config.md                                                   # Guida alla configurazione
  │    ├── 📄 frontend.md                                                 #
