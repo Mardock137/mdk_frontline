@@ -24,9 +24,10 @@ Il database (Supabase) è già un servizio gestito esternamente: non richiede de
 
 Non è ancora configurato un dominio custom: sia il backend che il frontend usano gli URL automatici forniti rispettivamente da Cloud Run (`*.run.app`) e Vercel (`*.vercel.app`).
 
-**Stato attuale**: il backend è online in staging su Google Cloud Run. Il frontend non è ancora stato deployato.
+**Stato attuale**: backend e frontend sono entrambi online in staging e collegati tra loro. Dashboard e live chat sono state testate end-to-end.
 
 - **URL backend staging**: `https://frontline-backend-staging-124059097841.europe-west1.run.app`
+- **URL frontend staging**: `https://mdk-frontline-git-staging-mdk-137.vercel.app`
 
 ---
 
@@ -88,12 +89,24 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 | `SUPABASE_URL`        | URL del progetto Supabase (riusato da dev/locale)             |
 | `SUPABASE_SCHEMA`     | `frontline`                                                   |
 | `DEV_COMPANY_ID`      | stesso valore usato in sviluppo locale                        |
-| `FRONTEND_URL`        | `*` (temporaneo, in attesa del deploy del frontend su Vercel) |
+| `FRONTEND_URL`        | `https://mdk-frontline-git-staging-mdk-137.vercel.app`        |
 | `CHAT_RATE_LIMIT`     | `20/minute`                                                   |
 | `TRUST_PROXY_HEADERS` | `true`                                                        |
 | `LOG_LEVEL`           | `INFO`                                                        |
 
 > **Nota su `TRUST_PROXY_HEADERS`**: in locale resta `false` (valore di default), ma su Cloud Run è impostato a `true` in sicurezza, perché l'header `X-Forwarded-For` viene scritto dall'infrastruttura di Google davanti al container e non è falsificabile da un client esterno.
+
+### Deploy del frontend su Vercel
+
+Il progetto Vercel **`mdk-frontline`** è collegato allo stesso repository GitHub, con **Root Directory** impostata su `frontend` (Vercel rileva automaticamente Next.js da lì).
+
+- **Repository**: `Mardock137/mdk_frontline`
+- **Branch usato in staging**: `staging`, pubblicato come **Preview Deployment** (non come "Production" di Vercel, che resta associato a `main` e libero per una futura vera produzione — stessa convenzione già in uso sul sito MDK-137).
+- **Variabile d'ambiente** `NEXT_PUBLIC_API_URL`: puntata all'URL del backend su Cloud Run, impostata sia per l'ambiente Production che Preview di Vercel (Development resta escluso, usa `frontend/.env.local` in locale).
+
+Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticamente un nuovo Preview Deployment sullo stesso URL.
+
+> **Nota terminologica**: "Production"/"Preview" sono nomi interni di Vercel per i tipi di deployment, non corrispondono agli ambienti di business (staging/produzione del progetto). In questa fase usiamo un Preview Deployment di Vercel come nostro ambiente di staging.
 
 ---
 
@@ -102,6 +115,7 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 - `docker build` deve completare senza errori.
 - Il container avviato con `docker run` deve rispondere `200 {"status": "ok"}` su `/health`.
 - In staging, il servizio Cloud Run deve rispondere `200 {"status": "ok"}` su `/health` dopo ogni nuova revisione (vedi URL nella sezione Panoramica).
+- In staging, verificare end-to-end aprendo `/dashboard` (documenti, ticket, config, stats) e `/chat/<slug>` sul frontend, con dati reali provenienti dal backend su Cloud Run.
 
 ---
 
@@ -110,4 +124,4 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 - **Dockerfile**: [backend/Dockerfile](../backend/Dockerfile)
 - **Dockerignore**: [backend/.dockerignore](../backend/.dockerignore)
 - **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md)
-- **Risorse esterne**: [Cloud Run](https://cloud.google.com/run), [Secret Manager](https://cloud.google.com/secret-manager)
+- **Risorse esterne**: [Cloud Run](https://cloud.google.com/run), [Secret Manager](https://cloud.google.com/secret-manager), [Vercel](https://vercel.com/docs)
