@@ -30,6 +30,9 @@ class Settings(BaseSettings):
 
     DEV_COMPANY_ID: str = Field(default="")
 
+    SSO_SHARED_SECRET: str = Field(default="")
+    FRONTLINE_SESSION_SECRET: str = Field(default="")
+
     FRONTEND_URL: str = Field(default="*")
 
     CHAT_RATE_LIMIT: str = Field(default="20/minute")

@@ -10,7 +10,7 @@ Panoramica dell'architettura tecnica di MDK Frontline: componenti principali, st
 - [⚙️ Come funziona](#️-come-funziona)
 - [🗄️ Schema del database](#️-schema-del-database)
 - [🔒 Sicurezza e isolamento multi-tenant](#-sicurezza-e-isolamento-multi-tenant)
-- [🔑 Autenticazione (pianificata)](#-autenticazione-pianificata)
+- [🔑 Autenticazione (SSO da MDK-137)](#-autenticazione-sso-da-mdk-137)
 - [📚 Riferimenti](#-riferimenti)
 
 ---
@@ -107,51 +107,25 @@ Il bucket Supabase `documents` è **privato**: solo il backend (service role) pu
 ## 🔒 Sicurezza e isolamento multi-tenant
 
 - **Row Level Security (RLS)** attivata su tutte le tabelle. Nell'MVP non ci sono policy per `anon`/`authenticated` (quindi: nessun accesso diretto dal frontend al DB). Tutto il traffico passa dal backend, che usa il service role e bypassa RLS.
-- **Isolamento applicativo**: ogni query backend filtra per `company_id` (nell'MVP identificato dalla variabile `DEV_COMPANY_ID`). In fase successiva l'identità reale arriverà dall'integrazione auth con MDK-137 (vedi [Autenticazione (pianificata)](#-autenticazione-pianificata)).
+- **Isolamento applicativo**: ogni query backend filtra per `company_id`. Dashboard e documenti lo ricavano dal token di sessione Frontline (`Authorization: Bearer`); se l'header manca si usa `DEV_COMPANY_ID` (sviluppo locale). La live chat pubblica usa lo slug nell'URL.
 - **Storage**: bucket privato, oggetti namespaciati per `company_id`.
 - **Segreti**: `SUPABASE_SERVICE_ROLE_KEY` e `ANTHROPIC_API_KEY` vivono solo in `backend/.env`, mai esposti al frontend.
 
 ---
 
-## 🔑 Autenticazione (pianificata)
+## 🔑 Autenticazione (SSO da MDK-137)
 
-> Funzionalità non ancora implementata. Questa sezione descrive la direzione di progetto, non lo stato attuale (nell'MVP la dashboard usa `DEV_COMPANY_ID` e non ha autenticazione).
+MDK Frontline **non gestisce login, registrazione o password**: queste responsabilità restano sul sito MDK-137. Frontline non ha una propria pagina di login: si fida di chi arriva con un JWT valido emesso dal sito.
 
-MDK Frontline **non gestisce login, registrazione o password**: queste responsabilità restano sul sito MDK-137, che funge da fornitore d'identità centrale. Frontline non costruisce una propria pagina di login, ma si **fida** di chi arriva con una prova d'identità valida emessa da MDK-137.
-
-### Flusso previsto
-
-```mermaid
-sequenceDiagram
-    participant Admin as Admin azienda
-    participant MDK137 as Sito MDK-137
-    participant Frontline as Dashboard Frontline
-    Admin->>MDK137: Login (cliente gia' registrato e pagante)
-    Admin->>MDK137: Click "Gestisci MDK Frontline"
-    MDK137->>Frontline: Redirect con token firmato
-    Frontline->>Frontline: Verifica la firma del token
-    Frontline->>Frontline: Ricava company_id e apre una sessione locale
-    Frontline-->>Admin: Accesso alla dashboard del proprio tenant
-```
+### Flusso
 
 1. L'azienda cliente effettua il login **su MDK-137** (dove ha già acquistato il prodotto).
-2. Dalla propria area su MDK-137 apre la gestione di MDK Frontline.
-3. MDK-137 reindirizza alla dashboard di Frontline passando un **token firmato** (non falsificabile) che attesta l'identità dell'azienda.
-4. Frontline **verifica la firma** del token, ne ricava il `company_id` reale e apre una propria sessione.
-5. Da quel momento le query usano il `company_id` autenticato **al posto di** `DEV_COMPANY_ID`.
+2. Dal sito apre Frontline. MDK-137 reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, claim `sub` = `company_id`).
+3. Il frontend chiede al backend `POST /auth/sso`. Il backend verifica firma (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline` e scadenza (leeway 10s).
+4. Il backend emette un token di sessione interno (24h, `FRONTLINE_SESSION_SECRET`, mai condiviso col sito). Il frontend lo salva nel cookie `frontline_session` e lo allega come `Authorization: Bearer` alle chiamate dashboard/documenti.
+5. Token mancante, scaduto o non valido → pagina `/sso/error` con link di ritorno al sito.
 
-### Impatto sul codice attuale
-
-Il punto di sostituzione è unico e già isolato: oggi il tenant è la costante `DEV_COMPANY_ID` ([backend/utils/config.py](../backend/utils/config.py)), usata dagli endpoint `/dashboard/*`. L'autenticazione la rimpiazzerà con l'identità ricavata dal token, senza toccare la logica di business sottostante.
-
-### Decisioni da definire al momento dell'implementazione
-
-- **Formato del token** (es. JWT) e claim minimi necessari (almeno l'identità dell'azienda).
-- **Meccanismo di fiducia** tra i due sistemi: segreto condiviso (firma simmetrica) oppure chiave pubblica/privata (firma asimmetrica).
-- **Durata e rinnovo** del token, e come Frontline mantiene la sessione dopo il primo redirect.
-- **Comportamento in caso di token assente, scaduto o non valido** (es. redirect verso MDK-137).
-
-Questi dettagli vanno concordati con il lato MDK-137 quando i due progetti verranno integrati.
+In locale, senza header di sessione, gli endpoint continuano a usare `DEV_COMPANY_ID`.
 
 ---
 
@@ -161,5 +135,6 @@ Questi dettagli vanno concordati con il lato MDK-137 quando i due progetti verra
 - **Client Supabase**: [backend/database/supabase_client.py](../backend/database/supabase_client.py)
 - **Modelli Pydantic**: [backend/database/models.py](../backend/database/models.py)
 - **Test**: [backend/tests/database/](../backend/tests/database/)
-- **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md)
+- **SSO / sessione**: [backend/utils/auth.py](../backend/utils/auth.py), [backend/api/auth.py](../backend/api/auth.py)
+- **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md), [api_endpoints.md](api_endpoints.md)
 - **Whiteboard di prodotto**: [dev_support/whiteboard.md](../dev_support/whiteboard.md)

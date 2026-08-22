@@ -1,7 +1,7 @@
 """HTTP endpoints for documents and RAG search.
 
-In the MVP the tenant is identified by the ``DEV_COMPANY_ID`` env var.
-Real authentication will replace this once the MDK-137 integration lands.
+The tenant comes from the Frontline session token (``Authorization: Bearer``),
+with a ``DEV_COMPANY_ID`` fallback when no header is sent (local tests / dev).
 """
 
 from __future__ import annotations
@@ -9,34 +9,18 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel, Field
 
 from database.supabase_client import get_supabase_client
 from rag.ingestion import STORAGE_BUCKET, ingest_document
 from rag.search import search_chunks
 from rag.text_extraction import UnsupportedDocumentError
-from utils.config import get_settings
+from utils.auth import get_current_company_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def _current_company_id() -> UUID:
-    settings = get_settings()
-    if not settings.DEV_COMPANY_ID:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="DEV_COMPANY_ID is not set",
-        )
-    try:
-        return UUID(settings.DEV_COMPANY_ID)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="DEV_COMPANY_ID is not a valid UUID",
-        ) from exc
 
 
 # --- Schemas ----------------------------------------------------------------
@@ -82,9 +66,11 @@ class SearchResponse(BaseModel):
     response_model=UploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
+async def upload_document(
+    file: UploadFile = File(...),
+    company_id: UUID = Depends(get_current_company_id),
+) -> UploadResponse:
     """Upload a document and run the full ingestion pipeline synchronously."""
-    company_id = _current_company_id()
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Missing filename"
@@ -116,9 +102,10 @@ async def upload_document(file: UploadFile = File(...)) -> UploadResponse:
 
 
 @router.get("/documents", response_model=list[DocumentOut])
-async def list_documents() -> list[DocumentOut]:
+async def list_documents(
+    company_id: UUID = Depends(get_current_company_id),
+) -> list[DocumentOut]:
     """List all documents belonging to the current company."""
-    company_id = _current_company_id()
     supabase = get_supabase_client()
 
     response = (
@@ -132,9 +119,11 @@ async def list_documents() -> list[DocumentOut]:
 
 
 @router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_document(document_id: UUID) -> None:
+async def delete_document(
+    document_id: UUID,
+    company_id: UUID = Depends(get_current_company_id),
+) -> None:
     """Delete a document, its chunks and its storage object."""
-    company_id = _current_company_id()
     supabase = get_supabase_client()
 
     doc = (
@@ -160,9 +149,11 @@ async def delete_document(document_id: UUID) -> None:
 
 
 @router.post("/rag/search", response_model=SearchResponse)
-async def rag_search(body: SearchRequest) -> SearchResponse:
+async def rag_search(
+    body: SearchRequest,
+    company_id: UUID = Depends(get_current_company_id),
+) -> SearchResponse:
     """Semantic search over the current company's knowledge base."""
-    company_id = _current_company_id()
     results = await search_chunks(
         query=body.query, company_id=company_id, top_k=body.top_k
     )

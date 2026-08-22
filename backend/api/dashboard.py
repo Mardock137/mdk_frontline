@@ -1,9 +1,8 @@
 """Dashboard endpoints for the company admin area.
 
 Tickets (read + status update), agent configuration (read + update), and stats.
-The tenant is identified by ``DEV_COMPANY_ID`` from settings (same pattern as
-``api/documents.py``).  Real authentication will replace this once the
-MDK-137 integration lands.
+The tenant comes from the Frontline session token (``Authorization: Bearer``),
+with a ``DEV_COMPANY_ID`` fallback when no header is sent (local tests / dev).
 """
 
 from __future__ import annotations
@@ -12,37 +11,16 @@ import logging
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from database.models import AgentTone, TicketStatus
 from database.supabase_client import get_supabase_client
-from utils.config import get_settings
+from utils.auth import get_current_company_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/dashboard")
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _current_company_id() -> UUID:
-    settings = get_settings()
-    if not settings.DEV_COMPANY_ID:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="DEV_COMPANY_ID is not set",
-        )
-    try:
-        return UUID(settings.DEV_COMPANY_ID)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="DEV_COMPANY_ID is not a valid UUID",
-        ) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -101,9 +79,10 @@ class StatsOut(BaseModel):
 
 
 @router.get("/tickets", response_model=list[TicketOut])
-async def list_tickets() -> list[TicketOut]:
+async def list_tickets(
+    company_id: UUID = Depends(get_current_company_id),
+) -> list[TicketOut]:
     """Return all tickets for the current company, newest first."""
-    company_id = _current_company_id()
     supabase = get_supabase_client()
 
     response = (
@@ -123,9 +102,9 @@ async def list_tickets() -> list[TicketOut]:
 async def update_ticket_status(
     ticket_id: UUID,
     body: TicketStatusUpdate,
+    company_id: UUID = Depends(get_current_company_id),
 ) -> TicketOut:
     """Update the status of a ticket (open → in_progress → closed)."""
-    company_id = _current_company_id()
     supabase = get_supabase_client()
 
     existing = (
@@ -162,9 +141,10 @@ async def update_ticket_status(
 
 
 @router.get("/agent-config", response_model=AgentConfigOut)
-async def get_agent_config() -> AgentConfigOut:
+async def get_agent_config(
+    company_id: UUID = Depends(get_current_company_id),
+) -> AgentConfigOut:
     """Return the agent configuration for the current company."""
-    company_id = _current_company_id()
     supabase = get_supabase_client()
 
     response = (
@@ -187,13 +167,15 @@ async def get_agent_config() -> AgentConfigOut:
 
 
 @router.patch("/agent-config", response_model=AgentConfigOut)
-async def update_agent_config(body: AgentConfigUpdate) -> AgentConfigOut:
+async def update_agent_config(
+    body: AgentConfigUpdate,
+    company_id: UUID = Depends(get_current_company_id),
+) -> AgentConfigOut:
     """Partially update the agent configuration for the current company.
 
     Only the fields present in the request body are changed; omitted fields
     are left untouched.
     """
-    company_id = _current_company_id()
 
     patch = body.model_dump(exclude_none=True)
     if not patch:
@@ -228,7 +210,9 @@ async def update_agent_config(body: AgentConfigUpdate) -> AgentConfigOut:
 
 
 @router.get("/stats", response_model=StatsOut)
-async def get_stats() -> StatsOut:
+async def get_stats(
+    company_id: UUID = Depends(get_current_company_id),
+) -> StatsOut:
     """Return dashboard statistics for the current company.
 
     Returns:
@@ -236,7 +220,6 @@ async def get_stats() -> StatsOut:
         - ``tickets_by_status``: ticket counts grouped by status.
         - ``escalation_open_count``: open/in-progress escalation tickets.
     """
-    company_id = _current_company_id()
     supabase = get_supabase_client()
 
     conv_response = (

@@ -13,6 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api.dashboard as dashboard_module
+import utils.auth as auth_module
 from main import app
 
 # ---------------------------------------------------------------------------
@@ -53,7 +54,7 @@ def client(monkeypatch):
     """TestClient with DEV_COMPANY_ID patched to our stable UUID."""
     mock_settings = MagicMock()
     mock_settings.DEV_COMPANY_ID = COMPANY_ID
-    monkeypatch.setattr(dashboard_module, "get_settings", lambda: mock_settings)
+    monkeypatch.setattr(auth_module, "get_settings", lambda: mock_settings)
     return TestClient(app)
 
 
@@ -111,7 +112,7 @@ def test_list_tickets_empty(client, monkeypatch):
 def test_list_tickets_500_when_supabase_raises(monkeypatch):
     mock_settings = MagicMock()
     mock_settings.DEV_COMPANY_ID = COMPANY_ID
-    monkeypatch.setattr(dashboard_module, "get_settings", lambda: mock_settings)
+    monkeypatch.setattr(auth_module, "get_settings", lambda: mock_settings)
 
     mock_sb = MagicMock()
     mock_sb.table.side_effect = RuntimeError("DB down")

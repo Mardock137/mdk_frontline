@@ -9,9 +9,10 @@
  │    │    └── 📄 support_agent.py                                       # Agente AI di supporto: loop autonomo con tool calling, salva messaggi nel DB.
  │    ├── 📁 api/                                                        # Endpoint HTTP esposti dal backend verso il frontend.
  │    │    ├── 📄 agent.py                                               # Endpoint chat: POST /chat/{company_slug}/message e GET /chat/{company_slug}/conversation/{id}/messages.
+ │    │    ├── 📄 auth.py                                                # Endpoint POST /auth/sso: scambio token sito → sessione Frontline.
  │    │    ├── 📄 config.py                                              # Endpoint pubblico GET /chat/{company_slug}/config (branding + welcome).
- │    │    ├── 📄 dashboard.py                                           # Endpoint /dashboard/*: ticket, agent-config, stats.
- │    │    └── 📄 documents.py                                           # Endpoint /documents/* e /rag/search.
+ │    │    ├── 📄 dashboard.py                                           # Endpoint /dashboard/*: ticket, agent-config, stats (tenant da sessione).
+ │    │    └── 📄 documents.py                                           # Endpoint /documents/* e /rag/search (tenant da sessione).
  │    ├── 📁 config/                                                     # Configurazioni.
  │    │    ├── 📁 llm_models/                                            # Configurazione dei modelli IA per ogni agente.
  │    │    │    ├── 📄 loader.py                                         # Loader YAML: legge e valida LLMModelConfig (model, max_tokens, effort).
@@ -63,6 +64,7 @@
  │    │    │    └── 📄 test_support_agent.py                             # Test del loop dell'agente (LLM e tool mockati).
  │    │    ├── 📁 api/                                                   # Test degli endpoint HTTP.
  │    │    │    ├── 📄 test_agent.py                                     # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
+ │    │    │    ├── 📄 test_auth.py                                      # Test POST /auth/sso.
  │    │    │    ├── 📄 test_config.py                                    # Test endpoint /chat/{slug}/config (Supabase mockato).
  │    │    │    ├── 📄 test_dashboard.py                                 # Test endpoint /dashboard/* (13 test, Supabase mockato).
  │    │    │    └── 📄 test_documents.py
@@ -88,6 +90,7 @@
  │    │    │    ├── 📄 test_knowledge.py                                 # Test search_knowledge (search_chunks mockato).
  │    │    │    └── 📄 test_ticket.py                                    # Test create_ticket (Supabase mockato).
  │    │    ├── 📁 utils/                                                 # Test delle utility.
+ │    │    │    ├── 📄 test_auth.py                                      # Test verifica JWT sito, sessione interna, fallback DEV_COMPANY_ID.
  │    │    │    ├── 📄 test_config.py
  │    │    │    └── 📄 test_logging_config.py
  │    │    └── 📄 test_main.py                                           # Test del punto di ingresso dell'applicazione.
@@ -96,6 +99,7 @@
  │    │    ├── 📄 ticket.py                                              # Tool create_ticket: crea ticket di supporto nel DB.
  │    │    └── 📄 escalation.py                                          # Tool escalate: crea ticket di escalation e aggiorna stato conversazione.
  │    ├── 📁 utils/                                                      # Utility comuni e configurazione.
+ │    │    ├── 📄 auth.py                                                # Verifica JWT del sito, token di sessione interno, dipendenza get_current_company_id.
  │    │    ├── 📄 config.py                                              # Caricamento e gestione delle variabili d'ambiente dal file .env.
  │    │    └── 📄 logging_config.py                                      # Configurazione centralizzata del logging (console e file, rotazione, formato).
  │    ├── 📄 .dockerignore                                               # File e cartelle esclusi dal contesto di build Docker (venv, test, log, segreti).
@@ -128,7 +132,12 @@
  │    │    ├── 📁 chat/
  │    │    │    └── 📁 [slug]/
  │    │    │         └── 📄 page.tsx                                     # Pagina pubblica di live chat: carica config, mostra welcome, gestisce conversazione.
- │    │    ├── 📁 dashboard/                                             # Dashboard aziendale (admin area, usa DEV_COMPANY_ID).
+ │    │    ├── 📁 sso/
+ │    │    │    ├── 📁 callback/
+ │    │    │    │    └── 📄 route.ts                                     # Scambio sso_token → cookie di sessione, redirect a /dashboard.
+ │    │    │    └── 📁 error/
+ │    │    │         └── 📄 page.tsx                                     # Errore SSO con link di ritorno al sito MDK-137.
+ │    │    ├── 📁 dashboard/                                             # Dashboard aziendale (admin area).
  │    │    │    ├── 📁 config/
  │    │    │    │    └── 📄 page.tsx                                     # Form modifica agent_name, colore, tono, lingua, welcome message.
  │    │    │    ├── 📁 documents/
@@ -160,7 +169,8 @@
  │    │         ├── 📄 textarea.tsx                                      # Textarea stilizzata.
  │    │         └── 📄 toast.tsx                                         # Toast notification: ToastProvider + hook useToast().
  │    ├── 📁 lib/
- │    │    ├── 📄 api.ts                                                 # Tutte le chiamate al backend (chat, documenti, dashboard).
+ │    │    ├── 📄 api.ts                                                 # Tutte le chiamate al backend (chat, documenti, dashboard; Bearer sulle API admin).
+ │    │    ├── 📄 session.ts                                             # Cookie di sessione Frontline (lettura lato browser).
  │    │    └── 📄 utils.ts                                               # Utility cn() per classi Tailwind condizionali.
  │    ├── 📄 .env.local                                                  # Variabili d'ambiente locali (NEXT_PUBLIC_API_URL).
  │    ├── 📄 .env.local.example                                          # Esempio di variabili d'ambiente frontend.

@@ -83,7 +83,9 @@ L'elenco completo delle variabili è visibile nel file [backend/.env.example](..
 | `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                                                                                    | Sì                       |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                                                 | Sì                       |
 | `SUPABASE_SCHEMA`           | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas. | No (default `frontline`) |
-| `DEV_COMPANY_ID`            | Identità dell'azienda cliente usata in sviluppo (placeholder temporaneo MVP).                                                              | Solo in dev              |
+| `DEV_COMPANY_ID`            | Identità dell'azienda usata in sviluppo quando la richiesta non ha `Authorization: Bearer`.                                                | Solo in dev              |
+| `SSO_SHARED_SECRET`         | Secret condiviso col sito MDK-137. Serve a verificare il JWT di ingresso (`sso_token`). Stesso valore sui due progetti.                    | Sì in staging/prod       |
+| `FRONTLINE_SESSION_SECRET`  | Secret solo di Frontline (mai condiviso col sito). Firma il token di sessione interno, durata 24 ore.                                      | Sì in staging/prod       |
 | `FRONTEND_URL`              | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.                              | No                       |
 | `CHAT_RATE_LIMIT`           | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                                     | No (default `20/minute`) |
 | `TRUST_PROXY_HEADERS`       | Se `true`, l'IP usato per il rate limiting è letto da `X-Forwarded-For`. Attivare solo dietro un reverse proxy fidato.                     | No (default `false`)     |
