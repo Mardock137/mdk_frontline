@@ -10,6 +10,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from slowapi import _rate_limit_exceeded_handler
 
 from api.agent import router as agent_router
+from api.auth import router as auth_router
 from api.config import router as config_router
 from api.dashboard import router as dashboard_router
 from api.documents import router as documents_router
@@ -52,6 +53,7 @@ app.add_middleware(
 
 app.include_router(documents_router)
 app.include_router(agent_router)
+app.include_router(auth_router)
 app.include_router(config_router)
 app.include_router(dashboard_router)
 

@@ -11,6 +11,7 @@ from database.models import DocumentStatus
 from main import app
 from rag.ingestion import IngestionResult
 from rag.search import SearchResult
+from utils import auth as auth_module
 from utils.config import Settings
 
 
@@ -24,7 +25,7 @@ def client(monkeypatch, company_id):
     def fake_settings() -> Settings:
         return Settings(DEV_COMPANY_ID=str(company_id))
 
-    monkeypatch.setattr(documents_module, "get_settings", fake_settings)
+    monkeypatch.setattr(auth_module, "get_settings", fake_settings)
     return TestClient(app)
 
 

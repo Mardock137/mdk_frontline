@@ -22,7 +22,9 @@ Guida operativa al frontend di MDK Frontline: pagina di live chat pubblica e set
 Il frontend è un'applicazione **Next.js 16** con TypeScript e Tailwind CSS. Espone due aree principali:
 
 - **`/chat/[slug]`** — Live chat pubblica dedicata per ogni azienda cliente. Non richiede login.
-- **`/dashboard`** — Dashboard aziendale per la gestione di documenti, ticket, configurazione agente e statistiche. Usa `DEV_COMPANY_ID` dal backend (nessun login nell'MVP).
+- **`/dashboard`** — Dashboard aziendale per la gestione di documenti, ticket, configurazione agente e statistiche. Si apre dal sito MDK-137 via `/sso/callback`.
+- **`/sso/callback`** — Riceve `sso_token` dal sito, ottiene la sessione Frontline, redirect alla dashboard.
+- **`/sso/error`** — Pagina di errore se il token manca, è scaduto o non valido, con link di ritorno al sito.
 
 ---
 
@@ -68,7 +70,10 @@ Mostra risposta agente, salva conversation_id per i messaggi successivi
 | File                                    | Ruolo                                                          |
 |-----------------------------------------|----------------------------------------------------------------|
 | `app/dashboard/layout.tsx`              | Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats) |
+| `app/sso/callback/route.ts`             | Route handler: scambia `sso_token`, salva cookie, redirect     |
+| `app/sso/error/page.tsx`                | Errore SSO con link di ritorno al sito MDK-137                 |
 | `app/dashboard/page.tsx`                | Redirect automatico a `/dashboard/documents`                   |
+| `lib/session.ts`                        | Nome cookie di sessione e lettura lato browser                 |
 | `app/dashboard/documents/page.tsx`      | Upload, lista e cancellazione documenti                        |
 | `app/dashboard/tickets/page.tsx`        | Lista ticket con badge stato/escalation e cambio stato         |
 | `app/dashboard/config/page.tsx`         | Form configurazione agente (nome, colore, tono, lingua, welcome) |
@@ -125,9 +130,10 @@ Il caricamento della configurazione usa un `AbortController`: se l'utente naviga
 
 Il frontend usa un file `.env.local` nella cartella `frontend/` (non va nel git):
 
-| Variabile             | Descrizione                  | Valore sviluppo         |
-|-----------------------|------------------------------|-------------------------|
-| `NEXT_PUBLIC_API_URL` | URL base del backend FastAPI | `http://localhost:8000` |
+| Variabile                 | Descrizione                                      | Valore sviluppo         |
+|---------------------------|--------------------------------------------------|-------------------------|
+| `NEXT_PUBLIC_API_URL`     | URL base del backend FastAPI                     | `http://localhost:8000` |
+| `NEXT_PUBLIC_WEBSITE_URL` | URL del sito MDK-137 (link di ritorno da /sso/error) | `https://mdk137.com` |
 
 Copiare `frontend/.env.local.example` in `frontend/.env.local` e inserire i valori.
 
@@ -161,6 +167,7 @@ npm install
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_WEBSITE_URL=https://mdk137.com
 ```
 
 3. **Avvia il server di sviluppo**:
@@ -199,7 +206,7 @@ npm run dev
 
 ## ⚠️ Note MVP
 
-- **Nessun login**: la pagina `/chat/[slug]` è pubblica; la dashboard usa `DEV_COMPANY_ID` dal backend.
+- **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre dal sito MDK-137 (`/sso/callback`). In locale, senza cookie, il backend usa ancora `DEV_COMPANY_ID`.
 - **Conversazione in memoria**: il `conversation_id` vive nello stato React. Ricaricare la pagina azzera la conversazione.
 - **Nessun test automatico**: il frontend non ha test automatici nell'MVP. I test UI sono rimandati a post-MVP.
 - **Home page (`/`) vuota**: la root del sito mostra un placeholder. Non è ancora una landing page.
@@ -216,6 +223,8 @@ npm run dev
   - [frontend/components/ui/](../frontend/components/ui/)
 - **API client**:
   - [frontend/lib/api.ts](../frontend/lib/api.ts)
+  - [frontend/lib/session.ts](../frontend/lib/session.ts)
+  - [frontend/app/sso/](../frontend/app/sso/)
 - **Backend correlato**:
   - [backend/api/config.py](../backend/api/config.py) — `GET /chat/{slug}/config`
   - [backend/api/agent.py](../backend/api/agent.py) — `POST /chat/{slug}/message`

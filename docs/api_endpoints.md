@@ -14,7 +14,7 @@ Elenco degli endpoint HTTP esposti dal backend FastAPI.
 
 ## 📄 Panoramica
 
-Il backend espone una REST API. Nell'MVP il tenant corrente (azienda cliente) è identificato dalla variabile d'ambiente `DEV_COMPANY_ID` (l'auth reale arriverà dopo). Tutte le risposte sono JSON.
+Il backend espone una REST API. Dashboard e documenti identificano l'azienda dal token di sessione (`Authorization: Bearer`). Se l'header manca, si usa `DEV_COMPANY_ID` (sviluppo locale). La live chat resta pubblica, identificata dallo slug nell'URL. Tutte le risposte sono JSON.
 
 ---
 
@@ -40,7 +40,8 @@ Upload di un file e ingestion sincrona nella knowledge base (estrazione testo �
 }
 ```
 
-- **Errori**: `400` file vuoto/senza nome, `415` formato non supportato.
+- **Auth**: header `Authorization: Bearer <session_token>` (fallback `DEV_COMPANY_ID` se assente).
+- **Errori**: `400` file vuoto/senza nome, `415` formato non supportato, `401` sessione non valida.
 
 ### `GET /documents`
 
@@ -84,6 +85,14 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 ```
 
 - `similarity` è in `[0, 1]` (cosine similarity, più alto = più rilevante).
+
+### `POST /auth/sso`
+
+Scambia il JWT del sito MDK-137 con un token di sessione interno di Frontline (24h).
+
+- **Body**: `{ "sso_token": "..." }`
+- **Risposta `200`**: `{ "session_token": "..." }`
+- **Errori**: `401` token scaduto o non valido, `422` body vuoto.
 
 ### `GET /chat/{company_slug}/config`
 
@@ -149,7 +158,7 @@ Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se
 
 ## 🖥️ Dashboard endpoints (`/dashboard`)
 
-Tutti gli endpoint `/dashboard` usano `DEV_COMPANY_ID` dal settings (stesso pattern degli endpoint documenti). Nessuna autenticazione richiesta nell'MVP.
+Tutti gli endpoint `/dashboard` (e `/documents`, `/rag/search`) usano `get_current_company_id`: token di sessione se presente, altrimenti `DEV_COMPANY_ID`.
 
 ### `GET /dashboard/tickets`
 
@@ -218,7 +227,9 @@ Ritorna statistiche aggregate per la company corrente.
 
 - **Router documenti**: [backend/api/documents.py](../backend/api/documents.py)
 - **Router agente**: [backend/api/agent.py](../backend/api/agent.py)
+- **Router auth**: [backend/api/auth.py](../backend/api/auth.py)
 - **Router config**: [backend/api/config.py](../backend/api/config.py)
 - **Router dashboard**: [backend/api/dashboard.py](../backend/api/dashboard.py)
+- **Sessione / SSO**: [backend/utils/auth.py](../backend/utils/auth.py)
 - **Registrazione**: [backend/main.py](../backend/main.py)
 - **Doc correlati**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md), [frontend.md](frontend.md)

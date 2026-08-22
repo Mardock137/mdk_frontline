@@ -81,6 +81,8 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 - `VOYAGE_API_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_ANON_KEY`
+- `SSO_SHARED_SECRET`
+- `FRONTLINE_SESSION_SECRET`
 
 **Variabili d'ambiente semplici** (nessun dato sensibile: URL pubblici o parametri di comportamento):
 
@@ -103,6 +105,7 @@ Il progetto Vercel **`mdk-frontline`** è collegato allo stesso repository GitHu
 - **Repository**: `Mardock137/mdk_frontline`
 - **Branch usato in staging**: `staging`, pubblicato come **Preview Deployment** (non come "Production" di Vercel, che resta associato a `main` e libero per una futura vera produzione — stessa convenzione già in uso sul sito MDK-137).
 - **Variabile d'ambiente** `NEXT_PUBLIC_API_URL`: puntata all'URL del backend su Cloud Run, impostata sia per l'ambiente Production che Preview di Vercel (Development resta escluso, usa `frontend/.env.local` in locale).
+- **Variabile d'ambiente** `NEXT_PUBLIC_WEBSITE_URL`: URL del sito MDK-137 (link di ritorno dalla pagina `/sso/error`).
 
 Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticamente un nuovo Preview Deployment sullo stesso URL.
 

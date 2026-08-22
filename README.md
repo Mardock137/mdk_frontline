@@ -4,7 +4,7 @@
 [![Frontend CI](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml)
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.11.3`
+- **Versione progetto**: `0.12.0`
 
 ## 📋 Indice
 
@@ -52,7 +52,9 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 | `SUPABASE_ANON_KEY`         | Chiave pubblica Supabase                                                    |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata Supabase (bypassa RLS)                                       |
 | `SUPABASE_SCHEMA`           | Schema del DB con tabelle/funzioni/view di Frontline (default: `frontline`) |
-| `DEV_COMPANY_ID`            | UUID dell'azienda usata in sviluppo (temporanea, MVP only)                  |
+| `DEV_COMPANY_ID`            | UUID dell'azienda usata in sviluppo se manca l'header di sessione           |
+| `SSO_SHARED_SECRET`         | Secret condiviso col sito MDK-137 per verificare il JWT di ingresso         |
+| `FRONTLINE_SESSION_SECRET`  | Secret solo Frontline per firmare il token di sessione interno (24h)        |
 | `FRONTEND_URL`              | Origine CORS permessa (`*` in sviluppo, URL esatto in produzione)           |
 | `CHAT_RATE_LIMIT`           | Limite richieste per IP sull'endpoint chat (default: `20/minute`)           |
 | `TRUST_PROXY_HEADERS`       | Legge l'IP da `X-Forwarded-For` dietro proxy fidato (default: `false`)      |
@@ -60,9 +62,10 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 
 ### Frontend (`frontend/.env.local`)
 
-| Variabile             | Descrizione                                                     |
-|-----------------------|-----------------------------------------------------------------|
-| `NEXT_PUBLIC_API_URL` | URL base del backend FastAPI (default: `http://localhost:8000`) |
+| Variabile                 | Descrizione                                                                      |
+|---------------------------|----------------------------------------------------------------------------------|
+| `NEXT_PUBLIC_API_URL`     | URL base del backend FastAPI (default: `http://localhost:8000`)                  |
+| `NEXT_PUBLIC_WEBSITE_URL` | URL del sito MDK-137 per il link "torna al sito" (default: `https://mdk137.com`) |
 
 ---
 

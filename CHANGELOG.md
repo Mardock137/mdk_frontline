@@ -1,6 +1,23 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.12.0 — 2026-08-22
+
+### Added
+
+- **SSO dal sito MDK-137** (`backend/utils/auth.py`, `backend/api/auth.py`): il sito invia un JWT firmato (`sso_token` in query). Il backend verifica firma, scadenza (leeway 10s), issuer `mdk-137-website` e audience `mdk-frontline`, poi emette un token di sessione interno (24h) firmato con un secret diverso, mai condiviso col sito. Endpoint `POST /auth/sso` → `{ session_token }`. Token mancante/scaduto/non valido → `401`.
+- **Identità azienda reale sulle API dashboard/documenti**: `get_current_company_id` legge `Authorization: Bearer`. Se l'header manca, resta il fallback su `DEV_COMPANY_ID` (sviluppo locale e test esistenti).
+- **Callback frontend** (`frontend/app/sso/callback/route.ts`): scambia il token del sito, salva la sessione in un cookie leggibile dal browser (`frontline_session`), redirect a `/dashboard`. Pagina di errore `frontend/app/sso/error/page.tsx` con link di ritorno al sito.
+- **Chiamate dashboard/documenti autenticati** (`frontend/lib/api.ts`): allegano `Authorization: Bearer` se il cookie è presente. La live chat pubblica non cambia.
+- **Variabili** `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` in Settings / `.env.example`; dipendenza `PyJWT`. Frontend: `NEXT_PUBLIC_WEBSITE_URL` per il link di ritorno.
+- **Azienda di test in staging** nello schema `frontline`, stesso `id` di `website.companies` (MDK-137 OÜ, slug `mdk-137`) + riga `agent_configs`, per il test end-to-end del bottone "Open app".
+
+### Changed
+
+- `_current_company_id()` duplicata in `dashboard.py` e `documents.py` sostituita dalla dipendenza condivisa.
+
+---
+
 ## 0.11.3 — 2026-07-26
 
 ### Added
