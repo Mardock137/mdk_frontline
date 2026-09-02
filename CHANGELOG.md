@@ -12,6 +12,10 @@
 - **Variabili** `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` in Settings / `.env.example`; dipendenza `PyJWT`. Frontend: `NEXT_PUBLIC_WEBSITE_URL` per il link di ritorno.
 - **Azienda di test in staging** nello schema `frontline`, stesso `id` di `website.companies` (MDK-137 OÜ, slug `mdk-137`) + riga `agent_configs`, per il test end-to-end del bottone "Open app".
 
+### Fixed
+
+- **Test end-to-end reale dell'SSO in staging**: risolti due problemi di configurazione emersi durante la prima prova con un click vero dal sito MDK-137 (nessuna modifica al codice). `website.products.web_app_url` puntava alla root del dominio invece che a `/sso/callback`, quindi il token non veniva mai letto da Frontline. Sul backend, i secret `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` erano stati creati in Secret Manager ma senza il ruolo `Secret Manager Secret Accessor` concesso al service account del servizio, causando `Permission denied` al deploy.
+
 ### Changed
 
 - `_current_company_id()` duplicata in `dashboard.py` e `documents.py` sostituita dalla dipendenza condivisa.
