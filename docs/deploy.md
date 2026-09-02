@@ -97,6 +97,7 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 | `LOG_LEVEL`           | `INFO`                                                        |
 
 > **Nota su `TRUST_PROXY_HEADERS`**: in locale resta `false` (valore di default), ma su Cloud Run è impostato a `true` in sicurezza, perché l'header `X-Forwarded-For` viene scritto dall'infrastruttura di Google davanti al container e non è falsificabile da un client esterno.
+> **Attenzione — permesso IAM per ogni singolo secret**: creare un secret in Secret Manager non basta per renderlo leggibile dal servizio. Ogni secret richiede il ruolo `Secret Manager Secret Accessor` concesso esplicitamente (Secret Manager → apri il secret → scheda **Autorizzazioni** → Concedi accesso) al service account del servizio (es. `<project-number>-compute@developer.gserviceaccount.com`). Dimenticarlo per un secret nuovo fa fallire il deploy con un errore `Permission denied on secret: ...` — è capitato con `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` alla loro prima introduzione.
 
 ### Deploy del frontend su Vercel
 
@@ -110,6 +111,20 @@ Il progetto Vercel **`mdk-frontline`** è collegato allo stesso repository GitHu
 Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticamente un nuovo Preview Deployment sullo stesso URL.
 
 > **Nota terminologica**: "Production"/"Preview" sono nomi interni di Vercel per i tipi di deployment, non corrispondono agli ambienti di business (staging/produzione del progetto). In questa fase usiamo un Preview Deployment di Vercel come nostro ambiente di staging.
+
+### Collegamento con il sito MDK-137 (SSO)
+
+Il bottone "Open app" sul sito MDK-137 punta a un URL letto dalla colonna `web_app_url` della tabella `products` (schema `website`, database del sito — non di Frontline). Quando questo URL cambia (nuovo ambiente, nuovo dominio), va aggiornato **nel database del sito**, non nel codice:
+
+```sql
+update website.products
+set web_app_url = 'https://<url-frontend-frontline>/sso/callback'
+where slug = 'mdk-frontline';
+```
+
+> **Attenzione — l'URL deve finire con `/sso/callback`**, non con la sola root del dominio. Se punta solo a `https://<dominio>` il token SSO arriva sulla home page di Frontline (che non lo legge) e il login automatico non parte mai, senza nessun errore visibile lato Frontline. Questo va allineato separatamente per ogni ambiente (staging e, più avanti, produzione): sono database Supabase distinti, aggiornare uno non tocca l'altro.
+
+Vedi anche [architecture.md](architecture.md#-autenticazione-sso-da-mdk-137) per il flusso completo del token.
 
 ---
 
@@ -126,5 +141,5 @@ Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticame
 
 - **Dockerfile**: [backend/Dockerfile](../backend/Dockerfile)
 - **Dockerignore**: [backend/.dockerignore](../backend/.dockerignore)
-- **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md)
+- **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md), [architecture.md](architecture.md)
 - **Risorse esterne**: [Cloud Run](https://cloud.google.com/run), [Secret Manager](https://cloud.google.com/secret-manager), [Vercel](https://vercel.com/docs)
