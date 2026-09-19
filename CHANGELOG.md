@@ -1,6 +1,17 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.12.1 — 2026-09-19
+
+### Fixed
+
+- **Alert di sicurezza GitHub sul frontend** (`frontend/package.json`, `frontend/package-lock.json`): tre dipendenze npm risultavano nelle versioni segnalate da Dependabot. Nessuna modifica al codice applicativo (chat, dashboard, SSO, `next.config.ts`). `npm run lint` e `npm run build` passano sulla nuova stack. Backend e workflow CI invariati; Dependabot version-update resta disattivato (come da 0.8.2).
+  - **`next` e `eslint-config-next` da `16.2.12` a `16.3.4`**: chiude CVE-2026-75604 / GHSA-p293-qw3h-jr36 (RCE su server Next ospitati su Windows) e GHSA-2xp9-vwfh-vxw4 (RCE nell'ottimizzazione immagini AVIF via `sharp`/libheif). L'advisory indica `16.3.3` come prima patch; si usa `16.3.4` perché riabilita l'ottimizzazione AVIF dopo il fix upstream e corregge un errore di build con TypeScript 6 (già in uso nel progetto, `6.0.3`). Le novità 16.3 (Cache Components, Instant Navigations, Partial Prefetching) restano disattivate: sono opt-in. Staging è su Vercel (Linux), quindi il CVE Windows non era sfruttabile in deploy; il salto chiude comunque l'alert e copre lo sviluppo locale su Windows.
+  - **Override `sharp` da `^0.35.0` (`0.35.3` risolto) a `0.35.4`**: GHSA-rgj7-g3m4-5g8c, RCE in libheif su Linux se si processano AVIF/HEIF. `sharp` non è importato dal codice: lo usa Next per `/_next/image` (logo in `frontend/app/chat/[slug]/page.tsx`). Il range `^0.35.0` aveva lasciato il lock sulla `0.35.3` ancora vulnerabile; pin esatto per non ripetere il problema.
+  - **Override `js-yaml` da `4.3.1` a `4.3.2`**: CVE-2026-84375, consumo CPU sul parse di YAML untrusted. Dipendenza transitiva solo di ESLint (`@eslint/eslintrc`), non presente a runtime. Il config di lint è `frontend/eslint.config.mjs` (JavaScript), non YAML.
+
+---
+
 ## 0.12.0 — 2026-08-22
 
 ### Added
