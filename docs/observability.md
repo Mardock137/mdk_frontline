@@ -66,6 +66,8 @@ logger.error("Errore durante l'elaborazione")
 
 Non serve configurare nulla nei singoli moduli: ereditano la configurazione dal root logger.
 
+`utils.replay_guard` scrive nel log quando il controllo monouso del token SSO non può parlare con Redis (variabili mancanti, timeout, risposta non valida). Il messaggio non contiene il token SSO né il valore di `KV_REST_API_TOKEN`. `api.auth` registra `SSO replay guard unavailable` e rifiuta il login.
+
 ### Librerie di terze parti silenziate
 
 Le librerie HTTP di basso livello usate sotto il cofano (`httpx`, `httpcore`, `hpack`) a livello `DEBUG` stampano le intestazioni HTTP grezze delle richieste — comprese `Authorization` e `apikey`, cioè la `SUPABASE_SERVICE_ROLE_KEY`. Per evitare che finiscano nel file di log, `setup_logging()` forza questi tre logger a `WARNING` **indipendentemente** dal `LOG_LEVEL` scelto per il resto dell'app: puoi quindi usare `LOG_LEVEL=DEBUG` per debuggare la tua logica applicativa senza rischiare di scrivere segreti su disco.

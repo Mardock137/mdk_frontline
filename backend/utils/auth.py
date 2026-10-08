@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from utils.config import get_settings
 
 SITE_TOKEN_ISSUER = "mdk-137-website"
 SITE_TOKEN_AUDIENCE = "mdk-frontline"
+SITE_TOKEN_PRODUCT = "mdk-frontline"
 SITE_TOKEN_LEEWAY_SECONDS = 10
 
 SESSION_TOKEN_ISSUER = "mdk-frontline"
@@ -22,8 +24,16 @@ SESSION_TOKEN_TTL = timedelta(hours=24)
 _bearer = HTTPBearer(auto_error=False)
 
 
-def verify_site_token(token: str) -> UUID:
-    """Verify the website JWT and return the company id from ``sub``."""
+@dataclass(frozen=True)
+class SiteTokenClaims:
+    """Identity carried by a verified website SSO token."""
+
+    company_id: UUID
+    jti: str
+
+
+def verify_site_token(token: str) -> SiteTokenClaims:
+    """Verify the website JWT and return the company id and token id."""
     settings = get_settings()
     if not settings.SSO_SHARED_SECRET:
         raise jwt.InvalidTokenError("SSO_SHARED_SECRET is not configured")
@@ -35,8 +45,14 @@ def verify_site_token(token: str) -> UUID:
         audience=SITE_TOKEN_AUDIENCE,
         issuer=SITE_TOKEN_ISSUER,
         leeway=SITE_TOKEN_LEEWAY_SECONDS,
+        options={"require": ["exp", "iat", "sub", "jti"]},
     )
-    return _company_id_from_sub(payload)
+    jti = payload.get("jti")
+    if not isinstance(jti, str) or not jti.strip():
+        raise jwt.InvalidTokenError("Token is missing the jti claim")
+    if payload.get("product") != SITE_TOKEN_PRODUCT:
+        raise jwt.InvalidTokenError("Token product claim is invalid")
+    return SiteTokenClaims(company_id=_company_id_from_sub(payload), jti=jti)
 
 
 def create_session_token(company_id: UUID) -> str:

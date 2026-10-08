@@ -14,6 +14,8 @@ import utils.auth as auth_module
 from utils.auth import (
     SITE_TOKEN_AUDIENCE,
     SITE_TOKEN_ISSUER,
+    SITE_TOKEN_PRODUCT,
+    SiteTokenClaims,
     create_session_token,
     get_current_company_id,
     verify_session_token,
@@ -24,6 +26,7 @@ from utils.config import Settings
 SSO_SECRET = "test-sso-shared-secret-at-least-32b"
 SESSION_SECRET = "test-frontline-session-secret-32b"
 COMPANY_ID = UUID("11111111-1111-1111-1111-111111111111")
+JTI = "22222222-2222-4222-8222-222222222222"
 
 
 @pytest.fixture
@@ -47,6 +50,10 @@ def _site_token(
     exp_delta: timedelta = timedelta(seconds=60),
     include_sub: bool = True,
     sub: str | None = None,
+    include_jti: bool = True,
+    jti: str = JTI,
+    include_product: bool = True,
+    product: str = SITE_TOKEN_PRODUCT,
 ) -> str:
     now = datetime.now(UTC)
     payload: dict = {
@@ -58,12 +65,16 @@ def _site_token(
     }
     if include_sub:
         payload["sub"] = sub if sub is not None else str(company_id)
+    if include_jti:
+        payload["jti"] = jti
+    if include_product:
+        payload["product"] = product
     return jwt.encode(payload, secret, algorithm="HS256")
 
 
 def test_verify_site_token_valid(auth_settings):
     token = _site_token()
-    assert verify_site_token(token) == COMPANY_ID
+    assert verify_site_token(token) == SiteTokenClaims(company_id=COMPANY_ID, jti=JTI)
 
 
 def test_verify_site_token_expired(auth_settings):
@@ -86,6 +97,24 @@ def test_verify_site_token_missing_sub(auth_settings):
 
 def test_verify_site_token_invalid_sub(auth_settings):
     token = _site_token(sub="not-a-uuid")
+    with pytest.raises(jwt.InvalidTokenError):
+        verify_site_token(token)
+
+
+def test_verify_site_token_missing_jti(auth_settings):
+    token = _site_token(include_jti=False)
+    with pytest.raises(jwt.InvalidTokenError):
+        verify_site_token(token)
+
+
+def test_verify_site_token_missing_product(auth_settings):
+    token = _site_token(include_product=False)
+    with pytest.raises(jwt.InvalidTokenError):
+        verify_site_token(token)
+
+
+def test_verify_site_token_wrong_product(auth_settings):
+    token = _site_token(product="other-product")
     with pytest.raises(jwt.InvalidTokenError):
         verify_site_token(token)
 
