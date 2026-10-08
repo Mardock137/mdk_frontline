@@ -64,7 +64,7 @@
  │    │    │    └── 📄 test_support_agent.py                             # Test del loop dell'agente (LLM e tool mockati).
  │    │    ├── 📁 api/                                                   # Test degli endpoint HTTP.
  │    │    │    ├── 📄 test_agent.py                                     # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
- │    │    │    ├── 📄 test_auth.py                                      # Test POST /auth/sso.
+ │    │    │    ├── 📄 test_auth.py                                      # Test POST /auth/sso: sessione, token scaduto o già usato, `jti`/`product` assenti, Redis non disponibile (`503`).
  │    │    │    ├── 📄 test_config.py                                    # Test endpoint /chat/{slug}/config (Supabase mockato).
  │    │    │    ├── 📄 test_dashboard.py                                 # Test endpoint /dashboard/* (13 test, Supabase mockato).
  │    │    │    └── 📄 test_documents.py
@@ -90,18 +90,20 @@
  │    │    │    ├── 📄 test_knowledge.py                                 # Test search_knowledge (search_chunks mockato).
  │    │    │    └── 📄 test_ticket.py                                    # Test create_ticket (Supabase mockato).
  │    │    ├── 📁 utils/                                                 # Test delle utility.
- │    │    │    ├── 📄 test_auth.py                                      # Test verifica JWT sito, sessione interna, fallback DEV_COMPANY_ID.
+ │    │    │    ├── 📄 test_auth.py                                      # Test verifica JWT sito (`jti`, `product`), sessione interna, fallback DEV_COMPANY_ID.
  │    │    │    ├── 📄 test_config.py
- │    │    │    └── 📄 test_logging_config.py
+ │    │    │    ├── 📄 test_logging_config.py
+ │    │    │    └── 📄 test_replay_guard.py                              # Test del controllo monouso: `jti` nuovo, già usato, errore HTTP, timeout, variabili mancanti. Nessuna chiamata reale.
  │    │    └── 📄 test_main.py                                           # Test del punto di ingresso dell'applicazione.
  │    ├── 📁 tools/                                                      # Tool che l'agente AI può invocare autonomamente.
  │    │    ├── 📄 knowledge.py                                           # Tool search_knowledge: ricerca semantica sulla KB.
  │    │    ├── 📄 ticket.py                                              # Tool create_ticket: crea ticket di supporto nel DB.
  │    │    └── 📄 escalation.py                                          # Tool escalate: crea ticket di escalation e aggiorna stato conversazione.
  │    ├── 📁 utils/                                                      # Utility comuni e configurazione.
- │    │    ├── 📄 auth.py                                                # Verifica JWT del sito, token di sessione interno, dipendenza get_current_company_id.
+ │    │    ├── 📄 auth.py                                                # Verifica JWT del sito (`jti` e `product` obbligatori), token di sessione interno, dipendenza get_current_company_id.
  │    │    ├── 📄 config.py                                              # Caricamento e gestione delle variabili d'ambiente dal file .env.
- │    │    └── 📄 logging_config.py                                      # Configurazione centralizzata del logging (console e file, rotazione, formato).
+ │    │    ├── 📄 logging_config.py                                      # Configurazione centralizzata del logging (console e file, rotazione, formato).
+ │    │    └── 📄 replay_guard.py                                        # Registra il `jti` del token SSO su Upstash (monouso). Se Redis non risponde, il login viene rifiutato.
  │    ├── 📄 .dockerignore                                               # File e cartelle esclusi dal contesto di build Docker (venv, test, log, segreti).
  │    ├── 📄 .env                                                        # Contiene le chiavi API e variabili d'ambiente riservate.
  │    ├── 📄 .env.example                                                # Contiene un esempio delle variabili d’ambiente in uso.

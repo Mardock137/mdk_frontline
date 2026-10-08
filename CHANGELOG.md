@@ -1,6 +1,20 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.13.0 — 2026-10-08
+
+### Added
+
+- **Token SSO monouso** (`backend/utils/replay_guard.py`, `backend/api/auth.py`): dopo la verifica della firma, Frontline richiede `jti` e `product` uguale a `mdk-frontline`. Il `jti` viene registrato su Upstash Redis (`SET` con `NX`, scadenza 90 secondi). Un secondo uso dello stesso token risponde `401`. Se Redis non risponde, va in timeout o mancano `KV_REST_API_URL` / `KV_REST_API_TOKEN`, la risposta è `503` e non viene emesso alcun token di sessione.
+
+### Changed
+
+- `verify_site_token` restituisce l'id azienda insieme al `jti`. I token senza `jti` o senza `product` corretto ora vengono rifiutati.
+- `docs/config.md`, `docs/api_endpoints.md`, `docs/architecture.md`, `docs/deploy.md`, `docs/repo_structure.md`, `docs/observability.md` e `README.md`.
+- `README.md`: versione bumped a `0.13.0`.
+
+---
+
 ## 0.12.1 — 2026-09-19
 
 ### Fixed

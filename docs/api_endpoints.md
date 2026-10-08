@@ -88,11 +88,12 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 
 ### `POST /auth/sso`
 
-Scambia il JWT del sito MDK-137 con un token di sessione interno di Frontline (24h).
+Scambia il JWT del sito MDK-137 con un token di sessione interno di Frontline (24h). Il token del sito è monouso.
 
 - **Body**: `{ "sso_token": "..." }`
+- Il JWT deve includere `jti` e `product` uguale a `mdk-frontline`, oltre a firma, issuer, audience e scadenza.
 - **Risposta `200`**: `{ "session_token": "..." }`
-- **Errori**: `401` token scaduto o non valido, `422` body vuoto.
+- **Errori**: `401` se il token è scaduto, non valido, senza i claim richiesti o già usato; `503` se Redis non risponde o mancano `KV_REST_API_URL` / `KV_REST_API_TOKEN` (nessun token di sessione); `422` body vuoto.
 
 ### `GET /chat/{company_slug}/config`
 

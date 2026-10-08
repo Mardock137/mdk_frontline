@@ -32,6 +32,8 @@ class Settings(BaseSettings):
 
     SSO_SHARED_SECRET: str = Field(default="")
     FRONTLINE_SESSION_SECRET: str = Field(default="")
+    KV_REST_API_URL: str = Field(default="")
+    KV_REST_API_TOKEN: str = Field(default="")
 
     FRONTEND_URL: str = Field(default="*")
 

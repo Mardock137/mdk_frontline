@@ -120,10 +120,10 @@ MDK Frontline **non gestisce login, registrazione o password**: queste responsab
 ### Flusso
 
 1. L'azienda cliente effettua il login **su MDK-137** (dove ha già acquistato il prodotto).
-2. Dal sito apre Frontline. MDK-137 reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, claim `sub` = `company_id`).
-3. Il frontend chiede al backend `POST /auth/sso`. Il backend verifica firma (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline` e scadenza (leeway 10s).
+2. Dal sito apre Frontline. MDK-137 reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, `sub` = `company_id`, `jti` univoco, `product` = `mdk-frontline`).
+3. Il frontend chiede al backend `POST /auth/sso`. Il backend verifica firma (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline`, scadenza (leeway 10s), `jti` presente e `product` uguale a `mdk-frontline`. Poi registra il `jti` su Upstash Redis per 90 secondi: se è già presente risponde `401`; se Redis non risponde o le variabili mancano risponde `503` e non emette la sessione.
 4. Il backend emette un token di sessione interno (24h, `FRONTLINE_SESSION_SECRET`, mai condiviso col sito). Il frontend lo salva nel cookie `frontline_session` e lo allega come `Authorization: Bearer` alle chiamate dashboard/documenti.
-5. Token mancante, scaduto o non valido → pagina `/sso/error` con link di ritorno al sito.
+5. Token mancante, scaduto, già usato o non valido → pagina `/sso/error` con link di ritorno al sito. Se il controllo anti-riuso non è disponibile, la stessa pagina: il frontend tratta `401` e `503` allo stesso modo.
 
 In locale, senza header di sessione, gli endpoint continuano a usare `DEV_COMPANY_ID`.
 
@@ -135,6 +135,6 @@ In locale, senza header di sessione, gli endpoint continuano a usare `DEV_COMPAN
 - **Client Supabase**: [backend/database/supabase_client.py](../backend/database/supabase_client.py)
 - **Modelli Pydantic**: [backend/database/models.py](../backend/database/models.py)
 - **Test**: [backend/tests/database/](../backend/tests/database/)
-- **SSO / sessione**: [backend/utils/auth.py](../backend/utils/auth.py), [backend/api/auth.py](../backend/api/auth.py)
+- **SSO / sessione**: [backend/utils/auth.py](../backend/utils/auth.py), [backend/utils/replay_guard.py](../backend/utils/replay_guard.py), [backend/api/auth.py](../backend/api/auth.py)
 - **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md), [api_endpoints.md](api_endpoints.md)
 - **Whiteboard di prodotto**: [dev_support/whiteboard.md](../dev_support/whiteboard.md)
