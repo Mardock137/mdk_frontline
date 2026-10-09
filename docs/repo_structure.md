@@ -131,6 +131,9 @@
  │
  ├── 📁 frontend/                                                        # Codice sorgente del frontend (Next.js 16 + Tailwind CSS v4).
  │    ├── 📁 app/                                                        # App Router di Next.js.
+ │    │    ├── 📁 api/
+ │    │    │    └── 📁 [...path]/
+ │    │    │         └── 📄 route.ts                                     # Proxy: inoltra solo documents e dashboard, aggiunge Bearer dal cookie httpOnly.
  │    │    ├── 📁 chat/
  │    │    │    └── 📁 [slug]/
  │    │    │         └── 📄 page.tsx                                     # Pagina pubblica di live chat: carica config, mostra welcome, gestisce conversazione.
@@ -171,8 +174,8 @@
  │    │         ├── 📄 textarea.tsx                                      # Textarea stilizzata.
  │    │         └── 📄 toast.tsx                                         # Toast notification: ToastProvider + hook useToast().
  │    ├── 📁 lib/
- │    │    ├── 📄 api.ts                                                 # Tutte le chiamate al backend (chat, documenti, dashboard; Bearer sulle API admin).
- │    │    ├── 📄 session.ts                                             # Cookie di sessione Frontline (lettura lato browser).
+ │    │    ├── 📄 api.ts                                                 # Chat sul backend; documenti e dashboard sul proxy /api (niente Bearer dal browser).
+ │    │    ├── 📄 session.ts                                             # Nome e durata del cookie di sessione (niente lettura lato browser).
  │    │    └── 📄 utils.ts                                               # Utility cn() per classi Tailwind condizionali.
  │    ├── 📄 .env.local                                                  # Variabili d'ambiente locali (NEXT_PUBLIC_API_URL).
  │    ├── 📄 .env.local.example                                          # Esempio di variabili d'ambiente frontend.

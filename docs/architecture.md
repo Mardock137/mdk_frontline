@@ -122,7 +122,7 @@ MDK Frontline **non gestisce login, registrazione o password**: queste responsab
 1. L'azienda cliente effettua il login **su MDK-137** (dove ha già acquistato il prodotto).
 2. Dal sito apre Frontline. MDK-137 reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, `sub` = `company_id`, `jti` univoco, `product` = `mdk-frontline`).
 3. Il frontend chiede al backend `POST /auth/sso`. Il backend verifica firma (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline`, scadenza (leeway 10s), `jti` presente e `product` uguale a `mdk-frontline`. Poi registra il `jti` su Upstash Redis per 90 secondi: se è già presente risponde `401`; se Redis non risponde o le variabili mancano risponde `503` e non emette la sessione.
-4. Il backend emette un token di sessione interno (24h, `FRONTLINE_SESSION_SECRET`, mai condiviso col sito). Il frontend lo salva nel cookie `frontline_session` e lo allega come `Authorization: Bearer` alle chiamate dashboard/documenti.
+4. Il backend emette un token di sessione interno (24h, `FRONTLINE_SESSION_SECRET`, mai condiviso col sito). Il frontend lo salva nel cookie `frontline_session` con `httpOnly`: JavaScript non può leggerlo e il browser non allega `Authorization: Bearer`. Lo allega il proxy Next.js (`/api/...`) alle chiamate dashboard/documenti.
 5. Token mancante, scaduto, già usato o non valido → pagina `/sso/error` con link di ritorno al sito. Se il controllo anti-riuso non è disponibile, la stessa pagina: il frontend tratta `401` e `503` allo stesso modo.
 
 In locale, senza header di sessione, gli endpoint continuano a usare `DEV_COMPANY_ID`.

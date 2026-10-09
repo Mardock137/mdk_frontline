@@ -63,17 +63,18 @@ Mostra risposta agente, salva conversation_id per i messaggi successivi
 | `components/chat/MessageBubble.tsx`   | Singola bolla (cliente a destra, agente a sinistra)                             |
 | `components/chat/MessageInput.tsx`    | Input testo + pulsante invia (Enter per inviare, Shift+Enter per andare a capo) |
 | `components/chat/TypingIndicator.tsx` | Tre pallini animati mentre l'agente elabora                                     |
-| `lib/api.ts`                          | Tutte le chiamate al backend (chat, documenti, dashboard)                       |
+| `lib/api.ts`                          | Chat sul backend pubblico; documenti e dashboard sul proxy `/api` (senza Bearer dal browser) |
 
 ### Componenti — Dashboard
 
 | File                                    | Ruolo                                                          |
 |-----------------------------------------|----------------------------------------------------------------|
 | `app/dashboard/layout.tsx`              | Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats) |
-| `app/sso/callback/route.ts`             | Route handler: scambia `sso_token`, salva cookie, redirect     |
+| `app/sso/callback/route.ts`             | Route handler: scambia `sso_token`, salva cookie `httpOnly`, redirect |
 | `app/sso/error/page.tsx`                | Errore SSO con link di ritorno al sito MDK-137                 |
+| `app/api/[...path]/route.ts`            | Proxy: inoltra solo `documents` e `dashboard`, aggiunge il Bearer dal cookie |
 | `app/dashboard/page.tsx`                | Redirect automatico a `/dashboard/documents`                   |
-| `lib/session.ts`                        | Nome cookie di sessione e lettura lato browser                 |
+| `lib/session.ts`                        | Nome e durata del cookie di sessione (niente lettura lato browser) |
 | `app/dashboard/documents/page.tsx`      | Upload, lista e cancellazione documenti                        |
 | `app/dashboard/tickets/page.tsx`        | Lista ticket con badge stato/escalation e cambio stato         |
 | `app/dashboard/config/page.tsx`         | Form configurazione agente (nome, colore, tono, lingua, welcome) |
@@ -197,16 +198,17 @@ npm run dev
 
 ### Problema: errore CORS nel browser
 
-**Causa**: il backend non ha il `FRONTEND_URL` configurato o il middleware CORS non copre l'origine del frontend.
+**Causa**: la chat pubblica chiama il backend cross-origin. Il backend non ha il `FRONTEND_URL` configurato o il middleware CORS non copre l'origine del frontend. La dashboard non manda più il token cross-origin: documenti e ticket passano da `/api/...` sullo stesso sito.
 **Soluzione**: verificare che `backend/.env` contenga `FRONTEND_URL=*` (sviluppo) o l'URL esatto del frontend (produzione), e riavviare il backend.
 
-> **Nota**: con `FRONTEND_URL=*` il backend imposta `allow_credentials=False`. Se in futuro si usano cookie o header di autenticazione cross-origin, sarà necessario specificare l'URL esatto del frontend al posto del wildcard.
+> **Nota**: con `FRONTEND_URL=*` il backend imposta `allow_credentials=False`. La chat resta cross-origin e senza cookie, quindi il wildcard resta adatto. La dashboard non fa più chiamate autenticate cross-origin.
 
 ---
 
 ## ⚠️ Note MVP
 
 - **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre dal sito MDK-137 (`/sso/callback`). In locale, senza cookie, il backend usa ancora `DEV_COMPANY_ID`.
+- **Upload documenti**: il file passa dal proxy Next.js. Su Vercel un file sopra 4,5 MB viene rifiutato con `413`.
 - **Conversazione in memoria**: il `conversation_id` vive nello stato React. Ricaricare la pagina azzera la conversazione.
 - **Nessun test automatico**: il frontend non ha test automatici nell'MVP. I test UI sono rimandati a post-MVP.
 - **Home page (`/`) vuota**: la root del sito mostra un placeholder. Non è ancora una landing page.
@@ -224,6 +226,7 @@ npm run dev
 - **API client**:
   - [frontend/lib/api.ts](../frontend/lib/api.ts)
   - [frontend/lib/session.ts](../frontend/lib/session.ts)
+  - [frontend/app/api/[...path]/route.ts](../frontend/app/api/%5B...path%5D/route.ts)
   - [frontend/app/sso/](../frontend/app/sso/)
 - **Backend correlato**:
   - [backend/api/config.py](../backend/api/config.py) — `GET /chat/{slug}/config`

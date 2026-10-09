@@ -1,15 +1,4 @@
-import { readSessionToken } from "@/lib/session";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-function withAuthHeaders(init?: HeadersInit): Headers {
-  const headers = new Headers(init);
-  const token = readSessionToken();
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-  return headers;
-}
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -174,27 +163,23 @@ export async function getConversationMessages(
 // ---------------------------------------------------------------------------
 
 export async function getDocuments(): Promise<Document[]> {
-  const res = await fetch(`${API_URL}/documents`, {
-    headers: withAuthHeaders(),
-  });
+  const res = await fetch("/api/documents");
   return handleResponse<Document[]>(res);
 }
 
 export async function uploadDocument(file: File): Promise<UploadResponse> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_URL}/documents/upload`, {
+  const res = await fetch("/api/documents/upload", {
     method: "POST",
-    headers: withAuthHeaders(),
     body: form,
   });
   return handleResponse<UploadResponse>(res);
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/documents/${id}`, {
+  const res = await fetch(`/api/documents/${id}`, {
     method: "DELETE",
-    headers: withAuthHeaders(),
   });
   if (!res.ok && res.status !== 204) {
     const error = await res.json().catch(() => ({}));
@@ -207,16 +192,14 @@ export async function deleteDocument(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function getTickets(): Promise<Ticket[]> {
-  const res = await fetch(`${API_URL}/dashboard/tickets`, {
-    headers: withAuthHeaders(),
-  });
+  const res = await fetch("/api/dashboard/tickets");
   return handleResponse<Ticket[]>(res);
 }
 
 export async function updateTicketStatus(id: string, status: TicketStatus): Promise<Ticket> {
-  const res = await fetch(`${API_URL}/dashboard/tickets/${id}`, {
+  const res = await fetch(`/api/dashboard/tickets/${id}`, {
     method: "PATCH",
-    headers: withAuthHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
   return handleResponse<Ticket>(res);
@@ -227,16 +210,14 @@ export async function updateTicketStatus(id: string, status: TicketStatus): Prom
 // ---------------------------------------------------------------------------
 
 export async function getAgentConfig(): Promise<AgentConfig> {
-  const res = await fetch(`${API_URL}/dashboard/agent-config`, {
-    headers: withAuthHeaders(),
-  });
+  const res = await fetch("/api/dashboard/agent-config");
   return handleResponse<AgentConfig>(res);
 }
 
 export async function updateAgentConfig(data: AgentConfigUpdate): Promise<AgentConfig> {
-  const res = await fetch(`${API_URL}/dashboard/agent-config`, {
+  const res = await fetch("/api/dashboard/agent-config", {
     method: "PATCH",
-    headers: withAuthHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   return handleResponse<AgentConfig>(res);
@@ -247,8 +228,6 @@ export async function updateAgentConfig(data: AgentConfigUpdate): Promise<AgentC
 // ---------------------------------------------------------------------------
 
 export async function getStats(): Promise<Stats> {
-  const res = await fetch(`${API_URL}/dashboard/stats`, {
-    headers: withAuthHeaders(),
-  });
+  const res = await fetch("/api/dashboard/stats");
   return handleResponse<Stats>(res);
 }

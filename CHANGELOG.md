@@ -1,6 +1,18 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.13.1 — 2026-10-09
+
+### Changed
+
+- **Cookie di sessione non più leggibile da JavaScript** (`frontend/app/sso/callback/route.ts`, `frontend/lib/session.ts`): `frontline_session` è `httpOnly`. Il browser non può più leggere il token e non allega `Authorization: Bearer`.
+- **Proxy Next.js** (`frontend/app/api/[...path]/route.ts`, `frontend/lib/api.ts`): documenti e dashboard chiamano `/api/...` sullo stesso sito. Il proxy legge il cookie e aggiunge il Bearer verso il backend. Path diversi da `documents` e `dashboard` (chat, auth, rag, health) rispondono `404`. La chat pubblica resta sul backend, senza cookie.
+- **Upload su Vercel**: il file passa dal proxy. Sopra 4,5 MB Vercel risponde `413`.
+- `docs/architecture.md`, `docs/frontend.md`, `docs/repo_structure.md`, `docs/api_endpoints.md`, `docs/deploy.md` e `README.md`.
+- `README.md`: versione bumped a `0.13.1`.
+
+---
+
 ## 0.13.0 — 2026-10-08
 
 ### Added

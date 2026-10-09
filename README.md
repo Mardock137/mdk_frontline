@@ -4,7 +4,7 @@
 [![Frontend CI](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Mardock137/mdk_frontline/actions/workflows/frontend-ci.yml)
 
 - **Versione Python utilizzata**: `3.14.4`
-- **Versione progetto**: `0.13.0`
+- **Versione progetto**: `0.13.1`
 
 ## 📋 Indice
 
