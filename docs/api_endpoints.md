@@ -14,7 +14,7 @@ Elenco degli endpoint HTTP esposti dal backend FastAPI.
 
 ## ðŸ“„ Panoramica
 
-Il backend espone una REST API. Dashboard e documenti identificano l'azienda dal token di sessione (`Authorization: Bearer`). Se l'header manca, si usa `DEV_COMPANY_ID` (sviluppo locale). La live chat resta pubblica, identificata dallo slug nell'URL. Tutte le risposte sono JSON.
+Il backend espone una REST API. Il browser della dashboard parla con `/api/...` di Next.js (documenti e dashboard). Il proxy aggiunge `Authorization: Bearer` letto dal cookie `httpOnly`; il backend identifica ancora l'azienda da quell'header. Se l'header manca, si usa `DEV_COMPANY_ID` (sviluppo locale). La live chat resta pubblica e chiama il backend direttamente, identificata dallo slug nell'URL. Tutte le risposte sono JSON.
 
 ---
 
@@ -40,7 +40,8 @@ Upload di un file e ingestion sincrona nella knowledge base (estrazione testo â†
 }
 ```
 
-- **Auth**: header `Authorization: Bearer <session_token>` (fallback `DEV_COMPANY_ID` se assente).
+- **Auth**: header `Authorization: Bearer <session_token>` (fallback `DEV_COMPANY_ID` se assente). Dalla dashboard il Bearer lo aggiunge il proxy Next.js.
+- **Tetto Vercel**: la dashboard carica il file tramite il proxy. Su Vercel un file sopra 4,5 MB viene rifiutato con `413` prima di arrivare al backend.
 - **Errori**: `400` file vuoto/senza nome, `415` formato non supportato, `401` sessione non valida.
 
 ### `GET /documents`

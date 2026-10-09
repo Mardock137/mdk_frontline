@@ -107,8 +107,9 @@ Il progetto Vercel **`mdk-frontline`** è collegato allo stesso repository GitHu
 
 - **Repository**: `Mardock137/mdk_frontline`
 - **Branch usato in staging**: `staging`, pubblicato come **Preview Deployment** (non come "Production" di Vercel, che resta associato a `main` e libero per una futura vera produzione — stessa convenzione già in uso sul sito MDK-137).
-- **Variabile d'ambiente** `NEXT_PUBLIC_API_URL`: puntata all'URL del backend su Cloud Run, impostata sia per l'ambiente Production che Preview di Vercel (Development resta escluso, usa `frontend/.env.local` in locale).
+- **Variabile d'ambiente** `NEXT_PUBLIC_API_URL`: puntata all'URL del backend su Cloud Run, impostata sia per l'ambiente Production che Preview di Vercel (Development resta escluso, usa `frontend/.env.local` in locale). La usano la chat pubblica, il callback SSO e il proxy `/api` (documenti e dashboard). Il browser della dashboard non chiama più Cloud Run direttamente.
 - **Variabile d'ambiente** `NEXT_PUBLIC_WEBSITE_URL`: URL del sito MDK-137 (link di ritorno dalla pagina `/sso/error`).
+- **Upload documenti**: il file passa da Vercel (`/api/documents/upload`). Sopra 4,5 MB Vercel risponde `413` e il backend non riceve il file.
 
 Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticamente un nuovo Preview Deployment sullo stesso URL.
 
