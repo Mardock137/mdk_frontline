@@ -14,7 +14,7 @@ Elenco degli endpoint HTTP esposti dal backend FastAPI.
 
 ## 📄 Panoramica
 
-Il backend espone una REST API. Il browser della dashboard parla con `/api/...` di Next.js (documenti e dashboard). Il proxy aggiunge `Authorization: Bearer` letto dal cookie `httpOnly`; il backend identifica ancora l'azienda da quell'header. Se l'header manca, si usa `DEV_COMPANY_ID` (sviluppo locale). La live chat resta pubblica e chiama il backend direttamente, identificata dallo slug nell'URL. Tutte le risposte sono JSON.
+Il backend espone una REST API. Il browser della dashboard parla con `/api/...` di Next.js (documenti e dashboard). Il proxy aggiunge `Authorization: Bearer` letto dal cookie `httpOnly`; il backend identifica l'azienda da quell'header. Senza Bearer la risposta è `401`, salvo in sviluppo locale con `ALLOW_DEV_COMPANY_FALLBACK=true` (allora si usa `DEV_COMPANY_ID`). Il proxy risponde `403` senza body alle richieste `POST`, `PATCH` e `DELETE` la cui origine non coincide con l'host del sito. La live chat resta pubblica e chiama il backend direttamente, identificata dallo slug nell'URL. Tutte le risposte del backend sono JSON.
 
 ---
 
@@ -40,21 +40,23 @@ Upload di un file e ingestion sincrona nella knowledge base (estrazione testo �
 }
 ```
 
-- **Auth**: header `Authorization: Bearer <session_token>` (fallback `DEV_COMPANY_ID` se assente). Dalla dashboard il Bearer lo aggiunge il proxy Next.js.
+- **Auth**: header `Authorization: Bearer <session_token>`. Senza Bearer la risposta è `401`, salvo `ALLOW_DEV_COMPANY_FALLBACK=true` in sviluppo locale. Dalla dashboard il Bearer lo aggiunge il proxy Next.js, che risponde `403` se l'origine della richiesta non coincide con l'host del sito.
 - **Tetto Vercel**: la dashboard carica il file tramite il proxy. Su Vercel un file sopra 4,5 MB viene rifiutato con `413` prima di arrivare al backend.
-- **Errori**: `400` file vuoto/senza nome, `415` formato non supportato, `401` sessione non valida.
+- **Errori**: `400` file vuoto/senza nome, `415` formato non supportato, `401` sessione assente o non valida.
 
 ### `GET /documents`
 
 Lista documenti della company corrente (più recenti prima).
 
 - **Risposta `200`**: array di `{ id, filename, content_type, status, created_at }`.
+- **Errori**: `401` sessione assente o non valida.
 
 ### `DELETE /documents/{document_id}`
 
 Cancella il documento, i chunk associati e il file da Supabase Storage.
 
 - **Risposta `204`** su successo, `404` se il documento non appartiene alla company.
+- **Errori**: `401` sessione assente o non valida. Dal proxy Next.js, `403` se l'origine non coincide con l'host del sito.
 
 ### `POST /rag/search`
 
@@ -86,6 +88,7 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 ```
 
 - `similarity` è in `[0, 1]` (cosine similarity, più alto = più rilevante).
+- **Errori**: `401` sessione assente o non valida.
 
 ### `POST /auth/sso`
 
@@ -160,13 +163,14 @@ Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se
 
 ## 🖥️ Dashboard endpoints (`/dashboard`)
 
-Tutti gli endpoint `/dashboard` (e `/documents`, `/rag/search`) usano `get_current_company_id`: token di sessione se presente, altrimenti `DEV_COMPANY_ID`.
+Tutti gli endpoint `/dashboard` (e `/documents`, `/rag/search`) usano `get_current_company_id`. Senza Bearer la risposta è `401` (`Authentication required`), salvo il flag di sviluppo `ALLOW_DEV_COMPANY_FALLBACK` (allora si usa `DEV_COMPANY_ID`). Token presente ma non valido: `401` (`Invalid or expired session token`). Le modifiche che passano dal proxy Next.js (`POST`, `PATCH` e `DELETE` su documenti e dashboard) ricevono `403` se l'origine non coincide con l'host del sito.
 
 ### `GET /dashboard/tickets`
 
 Lista tutti i ticket della company corrente, ordinati dal più recente.
 
 - **Risposta `200`**: array di `{ id, conversation_id, subject, description, status, is_escalation, created_at, updated_at }`.
+- **Errori**: `401` sessione assente o non valida.
 - `status`: `"open"` | `"in_progress"` | `"closed"`.
 - `is_escalation`: `true` se l'agente ha aperto il ticket come escalation.
 
@@ -176,7 +180,7 @@ Aggiorna lo stato di un ticket.
 
 - **Body**: `{ "status": "open" | "in_progress" | "closed" }`
 - **Risposta `200`**: oggetto ticket aggiornato.
-- **Errori**: `404` se il ticket non esiste o non appartiene alla company.
+- **Errori**: `401` sessione assente o non valida, `404` se il ticket non esiste o non appartiene alla company. Dal proxy Next.js, `403` se l'origine non coincide con l'host del sito.
 
 ### `GET /dashboard/agent-config`
 
@@ -195,7 +199,7 @@ Legge la configurazione dell'agente per la company corrente.
 }
 ```
 
-- **Errori**: `404` se la configurazione non esiste.
+- **Errori**: `401` sessione assente o non valida, `404` se la configurazione non esiste.
 
 ### `PATCH /dashboard/agent-config`
 
@@ -203,7 +207,7 @@ Aggiorna parzialmente la configurazione dell'agente. Solo i campi presenti nel b
 
 - **Campi aggiornabili**: `agent_name`, `company_display_name`, `primary_color` (hex `#RRGGBB`), `tone` (`formal`|`informal`), `default_language`, `welcome_message`.
 - **Risposta `200`**: configurazione aggiornata.
-- **Errori**: `422` se il body è vuoto, `404` se la configurazione non esiste.
+- **Errori**: `401` sessione assente o non valida, `422` se il body è vuoto, `404` se la configurazione non esiste. Dal proxy Next.js, `403` se l'origine non coincide con l'host del sito.
 
 ### `GET /dashboard/stats`
 
@@ -222,6 +226,8 @@ Ritorna statistiche aggregate per la company corrente.
     "escalation_open_count": 3
 }
 ```
+
+- **Errori**: `401` sessione assente o non valida.
 
 ---
 

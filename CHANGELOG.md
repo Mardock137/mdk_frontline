@@ -1,6 +1,16 @@
 <!-- markdownlint-disable -->
 # 📋 Changelog
 
+## 0.14.0 — 2026-10-15
+
+### Changed
+
+- **Fallback su `DEV_COMPANY_ID` disattivato di default** (`backend/utils/config.py`, `backend/utils/auth.py`, `backend/.env.example`): senza `Authorization: Bearer` le API rispondono `401`. In locale serve `ALLOW_DEV_COMPANY_FALLBACK=true` nel `.env`. In staging e produzione non vanno impostati né il flag né `DEV_COMPANY_ID`.
+- **Controllo di origine sul proxy** (`frontend/app/api/[...path]/route.ts`): `POST`, `PATCH` e `DELETE` rispondono `403` se l'origine non coincide con l'host della richiesta (`Origin`, oppure `Sec-Fetch-Site: same-origin` quando `Origin` manca). `GET` non cambia.
+- `docs/config.md`, `docs/deploy.md`, `docs/api_endpoints.md`, `docs/architecture.md`, `docs/frontend.md`, `docs/database.md`, `docs/rag.md`, `docs/repo_structure.md` e `README.md` (versione `0.14.0`).
+
+---
+
 ## 0.13.1 — 2026-10-09
 
 ### Changed

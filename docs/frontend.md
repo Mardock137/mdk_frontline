@@ -72,7 +72,7 @@ Mostra risposta agente, salva conversation_id per i messaggi successivi
 | `app/dashboard/layout.tsx`              | Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats) |
 | `app/sso/callback/route.ts`             | Route handler: scambia `sso_token`, salva cookie `httpOnly`, redirect |
 | `app/sso/error/page.tsx`                | Errore SSO con link di ritorno al sito MDK-137                 |
-| `app/api/[...path]/route.ts`            | Proxy: inoltra solo `documents` e `dashboard`, aggiunge il Bearer dal cookie |
+| `app/api/[...path]/route.ts`            | Proxy: inoltra solo `documents` e `dashboard`, aggiunge il Bearer dal cookie. `POST`, `PATCH` e `DELETE` da un'altra origine rispondono `403` |
 | `app/dashboard/page.tsx`                | Redirect automatico a `/dashboard/documents`                   |
 | `lib/session.ts`                        | Nome e durata del cookie di sessione (niente lettura lato browser) |
 | `app/dashboard/documents/page.tsx`      | Upload, lista e cancellazione documenti                        |
@@ -180,7 +180,7 @@ npm run dev
 4. **Apri la chat** nel browser: `http://localhost:3000/chat/[slug]`
 5. **Apri la dashboard** nel browser: `http://localhost:3000/dashboard`
 
-> Il backend deve essere avviato in parallelo dalla cartella `backend/` con `uvicorn main:app --reload`. Senza backend il frontend non può caricare la configurazione né inviare messaggi. La dashboard richiede `DEV_COMPANY_ID` configurato nel file `backend/.env`.
+> Il backend deve essere avviato in parallelo dalla cartella `backend/` con `uvicorn main:app --reload`. Senza backend il frontend non può caricare la configurazione né inviare messaggi. La dashboard in locale richiede `ALLOW_DEV_COMPANY_FALLBACK=true` e `DEV_COMPANY_ID` nel file `backend/.env`.
 
 ---
 
@@ -207,7 +207,7 @@ npm run dev
 
 ## ⚠️ Note MVP
 
-- **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre dal sito MDK-137 (`/sso/callback`). In locale, senza cookie, il backend usa ancora `DEV_COMPANY_ID`.
+- **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre dal sito MDK-137 (`/sso/callback`). In locale, senza cookie, il backend usa `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`.
 - **Upload documenti**: il file passa dal proxy Next.js. Su Vercel un file sopra 4,5 MB viene rifiutato con `413`.
 - **Conversazione in memoria**: il `conversation_id` vive nello stato React. Ricaricare la pagina azzera la conversazione.
 - **Nessun test automatico**: il frontend non ha test automatici nell'MVP. I test UI sono rimandati a post-MVP.

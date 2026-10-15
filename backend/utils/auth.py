@@ -91,7 +91,11 @@ def verify_session_token(token: str) -> UUID:
 def get_current_company_id(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
 ) -> UUID:
-    """Resolve the tenant: session token if sent, otherwise ``DEV_COMPANY_ID``."""
+    """Resolve the tenant from the session token.
+
+    Without a Bearer token, ``DEV_COMPANY_ID`` is used only when
+    ``ALLOW_DEV_COMPANY_FALLBACK`` is enabled. Otherwise the request is rejected.
+    """
     if credentials is not None:
         try:
             return verify_session_token(credentials.credentials)
@@ -100,6 +104,12 @@ def get_current_company_id(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired session token",
             ) from exc
+
+    if not get_settings().ALLOW_DEV_COMPANY_FALLBACK:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
     return _dev_company_id()
 
 

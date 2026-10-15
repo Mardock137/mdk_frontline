@@ -66,7 +66,7 @@
  │    │    │    ├── 📄 test_agent.py                                     # Test endpoint /chat/{slug}/message (Supabase e agente mockati).
  │    │    │    ├── 📄 test_auth.py                                      # Test POST /auth/sso: sessione, token scaduto o già usato, `jti`/`product` assenti, Redis non disponibile (`503`).
  │    │    │    ├── 📄 test_config.py                                    # Test endpoint /chat/{slug}/config (Supabase mockato).
- │    │    │    ├── 📄 test_dashboard.py                                 # Test endpoint /dashboard/* (13 test, Supabase mockato).
+ │    │    │    ├── 📄 test_dashboard.py                                 # Test endpoint /dashboard/* (14 test, Supabase mockato), incluso il 401 senza sessione.
  │    │    │    └── 📄 test_documents.py
  │    │    ├── 📁 config/                                                # Test della configurazione.
  │    │    │    └── 📄 test_llm_models_loader.py                         # Test del loader YAML (happy path, errori, validazione).
@@ -90,7 +90,7 @@
  │    │    │    ├── 📄 test_knowledge.py                                 # Test search_knowledge (search_chunks mockato).
  │    │    │    └── 📄 test_ticket.py                                    # Test create_ticket (Supabase mockato).
  │    │    ├── 📁 utils/                                                 # Test delle utility.
- │    │    │    ├── 📄 test_auth.py                                      # Test verifica JWT sito (`jti`, `product`), sessione interna, fallback DEV_COMPANY_ID.
+ │    │    │    ├── 📄 test_auth.py                                      # Test verifica JWT sito (`jti`, `product`), sessione interna, fallback DEV_COMPANY_ID solo col flag.
  │    │    │    ├── 📄 test_config.py
  │    │    │    ├── 📄 test_logging_config.py
  │    │    │    └── 📄 test_replay_guard.py                              # Test del controllo monouso: `jti` nuovo, già usato, errore HTTP, timeout, variabili mancanti. Nessuna chiamata reale.
@@ -133,7 +133,7 @@
  │    ├── 📁 app/                                                        # App Router di Next.js.
  │    │    ├── 📁 api/
  │    │    │    └── 📁 [...path]/
- │    │    │         └── 📄 route.ts                                     # Proxy: inoltra solo documents e dashboard, aggiunge Bearer dal cookie httpOnly.
+ │    │    │         └── 📄 route.ts                                     # Proxy: inoltra documents e dashboard, Bearer dal cookie; POST/PATCH/DELETE con origine diversa rispondono 403.
  │    │    ├── 📁 chat/
  │    │    │    └── 📁 [slug]/
  │    │    │         └── 📄 page.tsx                                     # Pagina pubblica di live chat: carica config, mostra welcome, gestisce conversazione.

@@ -1,7 +1,8 @@
 """HTTP endpoints for documents and RAG search.
 
-The tenant comes from the Frontline session token (``Authorization: Bearer``),
-with a ``DEV_COMPANY_ID`` fallback when no header is sent (local tests / dev).
+The tenant comes from the Frontline session token (``Authorization: Bearer``).
+Without a token the request is rejected, unless ``ALLOW_DEV_COMPANY_FALLBACK``
+is enabled (local development), in which case ``DEV_COMPANY_ID`` is used.
 """
 
 from __future__ import annotations
