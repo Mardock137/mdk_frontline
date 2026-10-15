@@ -88,7 +88,7 @@ Vedi il diagramma ER in [architecture.md](architecture.md#️-schema-del-databas
 - **Row Level Security** attivata su tutte le tabelle applicative.
 - **Nessuna policy per `anon` / `authenticated`** nell'MVP → il frontend **non** parla direttamente col DB: tutto passa dal backend.
 - **Service role key**: usata solo dal backend (`backend/.env`). Non va mai esposta al frontend, commitata su Git o condivisa via chat.
-- **Isolamento applicativo**: ogni query backend filtra per `company_id` (dal token di sessione, oppure da `DEV_COMPANY_ID` in locale).
+- **Isolamento applicativo**: ogni query backend filtra per `company_id` (dal token di sessione; in locale da `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`).
 
 ---
 

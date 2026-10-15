@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     SUPABASE_SCHEMA: str = Field(default="frontline")
 
     DEV_COMPANY_ID: str = Field(default="")
+    ALLOW_DEV_COMPANY_FALLBACK: bool = Field(default=False)
 
     SSO_SHARED_SECRET: str = Field(default="")
     FRONTLINE_SESSION_SECRET: str = Field(default="")

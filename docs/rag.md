@@ -94,7 +94,8 @@ Top K chunk con similarity score
 | `SUPABASE_URL`              | `backend/.env`        | URL progetto Supabase.                                   |
 | `SUPABASE_SERVICE_ROLE_KEY` | `backend/.env`        | Service role key (bypassa RLS, solo backend).            |
 | `SUPABASE_SCHEMA`           | `backend/.env`        | Schema del DB (default `frontline`); ospita `document_chunks` e `match_document_chunks`. |
-| `DEV_COMPANY_ID`            | `backend/.env`        | UUID della company di sviluppo (tenant corrente).        |
+| `ALLOW_DEV_COMPANY_FALLBACK` | `backend/.env`       | Se `true`, senza sessione si usa `DEV_COMPANY_ID`. Solo sviluppo locale (default `false`). |
+| `DEV_COMPANY_ID`            | `backend/.env`        | UUID della company di sviluppo. Usato solo se il flag qui sopra è attivo. |
 
 ### Migration
 
@@ -113,14 +114,14 @@ cd backend
 uvicorn main:app --reload
 ```
 
-4. **Carica un documento**:
+4. **Carica un documento** (in locale serve `ALLOW_DEV_COMPANY_FALLBACK=true`, altrimenti la risposta è `401`):
 
 ```bash
 curl -X POST http://localhost:8000/documents/upload \
      -F "file=@manuale.pdf"
 ```
 
-5. **Prova una ricerca**:
+5. **Prova una ricerca** (anche qui, senza il flag la risposta è `401`):
 
 ```bash
 curl -X POST http://localhost:8000/rag/search \
@@ -163,7 +164,7 @@ Tutti i test usano mock: nessuna chiamata reale a Voyage, Supabase o allo storag
 **Cause possibili**:
 
 - Nessun documento caricato per quella `company_id`.
-- Documenti caricati con un altro `DEV_COMPANY_ID`.
+- Documenti caricati per un'altra azienda (un altro `DEV_COMPANY_ID`, se il fallback locale è attivo, oppure un'altra sessione).
 - Lo `status` dei documenti è `error` (problema in fase di ingestion — controlla i log del backend).
 
 ### Problema: `extension "vector" is not available` o errore sull'indice HNSW

@@ -23,7 +23,10 @@ def company_id():
 @pytest.fixture
 def client(monkeypatch, company_id):
     def fake_settings() -> Settings:
-        return Settings(DEV_COMPANY_ID=str(company_id))
+        return Settings(
+            DEV_COMPANY_ID=str(company_id),
+            ALLOW_DEV_COMPANY_FALLBACK=True,
+        )
 
     monkeypatch.setattr(auth_module, "get_settings", fake_settings)
     return TestClient(app)

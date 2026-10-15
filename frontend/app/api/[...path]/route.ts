@@ -7,6 +7,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const ALLOWED_ROOTS = new Set(["documents", "dashboard"]);
 
+const MUTATING_METHODS = new Set(["POST", "PATCH", "DELETE"]);
+
 type RouteContext = {
   params: Promise<{ path: string[] }>;
 };
@@ -23,10 +25,51 @@ function isAllowedPath(segments: string[]): boolean {
   );
 }
 
+function requestHost(request: NextRequest): string | null {
+  const forwarded = request.headers.get("x-forwarded-host");
+  const raw = (forwarded ?? request.headers.get("host"))?.split(",")[0]?.trim();
+  return raw ? raw : null;
+}
+
+function hostsMatch(origin: string, hostHeader: string): boolean {
+  let originUrl: URL;
+  try {
+    originUrl = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (!originUrl.host) {
+    return false;
+  }
+  let requestUrl: URL;
+  try {
+    requestUrl = new URL(`${originUrl.protocol}//${hostHeader}`);
+  } catch {
+    return false;
+  }
+  return originUrl.host.toLowerCase() === requestUrl.host.toLowerCase();
+}
+
+function isSameOriginMutation(request: NextRequest): boolean {
+  const origin = request.headers.get("origin");
+  if (origin) {
+    const host = requestHost(request);
+    return host !== null && hostsMatch(origin, host);
+  }
+  return request.headers.get("sec-fetch-site") === "same-origin";
+}
+
 async function proxy(
   request: NextRequest,
   context: RouteContext,
 ): Promise<NextResponse> {
+  if (
+    MUTATING_METHODS.has(request.method) &&
+    !isSameOriginMutation(request)
+  ) {
+    return new NextResponse(null, { status: 403 });
+  }
+
   const { path } = await context.params;
   if (!isAllowedPath(path)) {
     return new NextResponse(null, { status: 404 });

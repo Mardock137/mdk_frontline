@@ -91,12 +91,13 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 |-----------------------|---------------------------------------------------------------|
 | `SUPABASE_URL`        | URL del progetto Supabase (riusato da dev/locale)             |
 | `SUPABASE_SCHEMA`     | `frontline`                                                   |
-| `DEV_COMPANY_ID`      | stesso valore usato in sviluppo locale                        |
 | `FRONTEND_URL`        | `https://mdk-frontline-git-staging-mdk-137.vercel.app`        |
 | `CHAT_RATE_LIMIT`     | `20/minute`                                                   |
 | `TRUST_PROXY_HEADERS` | `true`                                                        |
 | `LOG_LEVEL`           | `INFO`                                                        |
 | `KV_REST_API_URL`     | URL REST del database Upstash di Frontline                    |
+
+In staging e produzione non vanno impostati né `DEV_COMPANY_ID` né `ALLOW_DEV_COMPANY_FALLBACK`. Senza sessione le API rispondono `401`.
 
 > **Nota su `TRUST_PROXY_HEADERS`**: in locale resta `false` (valore di default), ma su Cloud Run è impostato a `true` in sicurezza, perché l'header `X-Forwarded-For` viene scritto dall'infrastruttura di Google davanti al container e non è falsificabile da un client esterno.
 > **Attenzione — permesso IAM per ogni singolo secret**: creare un secret in Secret Manager non basta per renderlo leggibile dal servizio. Ogni secret richiede il ruolo `Secret Manager Secret Accessor` concesso esplicitamente (Secret Manager → apri il secret → scheda **Autorizzazioni** → Concedi accesso) al service account del servizio (es. `<project-number>-compute@developer.gserviceaccount.com`). Dimenticarlo per un secret nuovo fa fallire il deploy con un errore `Permission denied on secret: ...` — è capitato con `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` alla loro prima introduzione.

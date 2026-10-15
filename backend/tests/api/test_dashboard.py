@@ -51,9 +51,10 @@ AGENT_CONFIG_ROW = {
 
 @pytest.fixture
 def client(monkeypatch):
-    """TestClient with DEV_COMPANY_ID patched to our stable UUID."""
+    """TestClient with the local company fallback enabled."""
     mock_settings = MagicMock()
     mock_settings.DEV_COMPANY_ID = COMPANY_ID
+    mock_settings.ALLOW_DEV_COMPANY_FALLBACK = True
     monkeypatch.setattr(auth_module, "get_settings", lambda: mock_settings)
     return TestClient(app)
 
@@ -112,6 +113,7 @@ def test_list_tickets_empty(client, monkeypatch):
 def test_list_tickets_500_when_supabase_raises(monkeypatch):
     mock_settings = MagicMock()
     mock_settings.DEV_COMPANY_ID = COMPANY_ID
+    mock_settings.ALLOW_DEV_COMPANY_FALLBACK = True
     monkeypatch.setattr(auth_module, "get_settings", lambda: mock_settings)
 
     mock_sb = MagicMock()
@@ -312,6 +314,18 @@ def test_update_agent_config_not_found(client, monkeypatch):
 # ---------------------------------------------------------------------------
 # GET /dashboard/stats
 # ---------------------------------------------------------------------------
+
+
+def test_get_stats_requires_auth_without_fallback(monkeypatch):
+    mock_settings = MagicMock()
+    mock_settings.DEV_COMPANY_ID = COMPANY_ID
+    mock_settings.ALLOW_DEV_COMPANY_FALLBACK = False
+    monkeypatch.setattr(auth_module, "get_settings", lambda: mock_settings)
+
+    response = TestClient(app).get("/dashboard/stats")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required"
 
 
 def test_get_stats_success(client, monkeypatch):

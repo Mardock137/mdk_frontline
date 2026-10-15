@@ -75,23 +75,24 @@ Per customer support ad alto volume, `effort: low` è la scelta consigliata: rid
 
 L'elenco completo delle variabili è visibile nel file [backend/.env.example](../backend/.env.example), che va copiato in `.env` e compilato con i valori reali.
 
-| Variabile                   | Descrizione                                                                                                                                | Obbligatoria             |
-|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
-| `ANTHROPIC_API_KEY`         | Chiave API per il provider LLM (Anthropic Claude).                                                                                         | Sì                       |
-| `VOYAGE_API_KEY`            | Chiave API per Voyage AI (embedding RAG).                                                                                                  | Sì                       |
-| `SUPABASE_URL`              | URL del progetto Supabase.                                                                                                                 | Sì                       |
-| `SUPABASE_ANON_KEY`         | Chiave pubblica di Supabase, usata dal client frontend.                                                                                    | Sì                       |
-| `SUPABASE_SERVICE_ROLE_KEY` | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                                                 | Sì                       |
-| `SUPABASE_SCHEMA`           | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas. | No (default `frontline`) |
-| `DEV_COMPANY_ID`            | Identità dell'azienda usata in sviluppo quando la richiesta non ha `Authorization: Bearer`.                                                | Solo in dev              |
-| `SSO_SHARED_SECRET`         | Secret condiviso col sito MDK-137. Serve a verificare il JWT di ingresso (`sso_token`). Stesso valore sui due progetti.                    | Sì in staging/prod       |
-| `FRONTLINE_SESSION_SECRET`  | Secret solo di Frontline (mai condiviso col sito). Firma il token di sessione interno, durata 24 ore.                                      | Sì in staging/prod       |
-| `KV_REST_API_URL`           | URL REST del database Upstash di Frontline. Serve a registrare i `jti` dei token SSO già usati. Senza questo valore l'SSO viene rifiutato. | Sì in staging/prod       |
-| `KV_REST_API_TOKEN`         | Token privato dello stesso database Upstash. Non committare il valore reale. Senza questo valore l'SSO viene rifiutato.                    | Sì in staging/prod       |
-| `FRONTEND_URL`              | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.                              | No                       |
-| `CHAT_RATE_LIMIT`           | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                                     | No (default `20/minute`) |
-| `TRUST_PROXY_HEADERS`       | Se `true`, l'IP usato per il rate limiting è letto da `X-Forwarded-For`. Attivare solo dietro un reverse proxy fidato.                     | No (default `false`)     |
-| `LOG_LEVEL`                 | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                                                   | No (default `INFO`)      |
+| Variabile                    | Descrizione                                                                                                                                  | Obbligatoria             |
+|------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
+| `ANTHROPIC_API_KEY`          | Chiave API per il provider LLM (Anthropic Claude).                                                                                           | Sì                       |
+| `VOYAGE_API_KEY`             | Chiave API per Voyage AI (embedding RAG).                                                                                                    | Sì                       |
+| `SUPABASE_URL`               | URL del progetto Supabase.                                                                                                                   | Sì                       |
+| `SUPABASE_ANON_KEY`          | Chiave pubblica di Supabase, usata dal client frontend.                                                                                      | Sì                       |
+| `SUPABASE_SERVICE_ROLE_KEY`  | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                                                   | Sì                       |
+| `SUPABASE_SCHEMA`            | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas.   | No (default `frontline`) |
+| `ALLOW_DEV_COMPANY_FALLBACK` | Se `true`, le richieste senza `Authorization: Bearer` usano `DEV_COMPANY_ID`. Solo sviluppo locale: non impostarlo in staging o produzione.  | No (default `false`)     |
+| `DEV_COMPANY_ID`             | UUID dell'azienda usata quando il fallback di sviluppo è attivo.                                                                             | Solo in dev, col flag    |
+| `SSO_SHARED_SECRET`          | Secret condiviso col sito MDK-137. Serve a verificare il JWT di ingresso (`sso_token`). Stesso valore sui due progetti.                      | Sì in staging/prod       |
+| `FRONTLINE_SESSION_SECRET`   | Secret solo di Frontline (mai condiviso col sito). Firma il token di sessione interno, durata 24 ore.                                        | Sì in staging/prod       |
+| `KV_REST_API_URL`            | URL REST del database Upstash di Frontline. Serve a registrare i `jti` dei token SSO già usati. Senza questo valore l'SSO viene rifiutato.   | Sì in staging/prod       |
+| `KV_REST_API_TOKEN`          | Token privato dello stesso database Upstash. Non committare il valore reale. Senza questo valore l'SSO viene rifiutato.                      | Sì in staging/prod       |
+| `FRONTEND_URL`               | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.                                | No                       |
+| `CHAT_RATE_LIMIT`            | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                                       | No (default `20/minute`) |
+| `TRUST_PROXY_HEADERS`        | Se `true`, l'IP usato per il rate limiting è letto da `X-Forwarded-For`. Attivare solo dietro un reverse proxy fidato.                       | No (default `false`)     |
+| `LOG_LEVEL`                  | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                                                     | No (default `INFO`)      |
 
 > **Attenzione**: il file `.env` contiene dati sensibili e non deve mai essere committato. È escluso dal controllo versione tramite `.gitignore`.
 

@@ -36,6 +36,7 @@ def auth_settings(monkeypatch):
         SSO_SHARED_SECRET=SSO_SECRET,
         FRONTLINE_SESSION_SECRET=SESSION_SECRET,
         DEV_COMPANY_ID=str(COMPANY_ID),
+        ALLOW_DEV_COMPANY_FALLBACK=True,
     )
     monkeypatch.setattr(auth_module, "get_settings", lambda: settings)
     return settings
@@ -131,7 +132,52 @@ def test_create_and_verify_session_token(auth_settings):
 
 
 def test_get_current_company_id_fallback_dev(auth_settings):
+    assert auth_settings.ALLOW_DEV_COMPANY_FALLBACK is True
     assert get_current_company_id(None) == COMPANY_ID
+
+
+def test_get_current_company_id_rejects_missing_bearer_when_fallback_disabled(
+    monkeypatch,
+):
+    settings = Settings(
+        _env_file=None,
+        FRONTLINE_SESSION_SECRET=SESSION_SECRET,
+        DEV_COMPANY_ID=str(COMPANY_ID),
+        ALLOW_DEV_COMPANY_FALLBACK=False,
+    )
+    monkeypatch.setattr(auth_module, "get_settings", lambda: settings)
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_company_id(None)
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Authentication required"
+
+
+def test_get_current_company_id_bearer_works_when_fallback_disabled(monkeypatch):
+    settings = Settings(
+        _env_file=None,
+        FRONTLINE_SESSION_SECRET=SESSION_SECRET,
+        DEV_COMPANY_ID=str(COMPANY_ID),
+        ALLOW_DEV_COMPANY_FALLBACK=False,
+    )
+    monkeypatch.setattr(auth_module, "get_settings", lambda: settings)
+    token = create_session_token(COMPANY_ID)
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    assert get_current_company_id(credentials) == COMPANY_ID
+
+
+def test_get_current_company_id_ignores_dev_company_when_fallback_disabled(
+    monkeypatch,
+):
+    settings = Settings(
+        _env_file=None,
+        DEV_COMPANY_ID=str(COMPANY_ID),
+        ALLOW_DEV_COMPANY_FALLBACK=False,
+    )
+    monkeypatch.setattr(auth_module, "get_settings", lambda: settings)
+    with pytest.raises(HTTPException) as exc_info:
+        get_current_company_id(None)
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Authentication required"
 
 
 def test_get_current_company_id_from_bearer(auth_settings):
@@ -150,7 +196,11 @@ def test_get_current_company_id_invalid_bearer(auth_settings):
 
 
 def test_get_current_company_id_missing_dev(monkeypatch):
-    settings = Settings(_env_file=None, DEV_COMPANY_ID="")
+    settings = Settings(
+        _env_file=None,
+        DEV_COMPANY_ID="",
+        ALLOW_DEV_COMPANY_FALLBACK=True,
+    )
     monkeypatch.setattr(auth_module, "get_settings", lambda: settings)
     with pytest.raises(HTTPException) as exc_info:
         get_current_company_id(None)
