@@ -26,8 +26,8 @@ Non è ancora configurato un dominio custom: sia il backend che il frontend usan
 
 **Stato attuale**: backend e frontend sono entrambi online in staging e collegati tra loro. Dashboard e live chat sono state testate end-to-end.
 
-- **URL backend staging**: `https://frontline-backend-staging-124059097841.europe-west1.run.app`
-- **URL frontend staging**: `https://mdk-frontline-git-staging-mdk-137.vercel.app`
+- **URL backend staging**: `https://<backend-staging>.run.app`
+- **URL frontend staging**: `https://<frontend-staging>.vercel.app`
 
 ---
 
@@ -91,7 +91,7 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 |-----------------------|---------------------------------------------------------------|
 | `SUPABASE_URL`        | URL del progetto Supabase (riusato da dev/locale)             |
 | `SUPABASE_SCHEMA`     | `frontline`                                                   |
-| `FRONTEND_URL`        | `https://mdk-frontline-git-staging-mdk-137.vercel.app`        |
+| `FRONTEND_URL`        | `https://<frontend-staging>.vercel.app`                       |
 | `CHAT_RATE_LIMIT`     | `20/minute`                                                   |
 | `TRUST_PROXY_HEADERS` | `true`                                                        |
 | `LOG_LEVEL`           | `INFO`                                                        |
@@ -107,28 +107,22 @@ In staging e produzione non vanno impostati né `DEV_COMPANY_ID` né `ALLOW_DEV_
 Il progetto Vercel **`mdk-frontline`** è collegato allo stesso repository GitHub, con **Root Directory** impostata su `frontend` (Vercel rileva automaticamente Next.js da lì).
 
 - **Repository**: `Mardock137/mdk_frontline`
-- **Branch usato in staging**: `staging`, pubblicato come **Preview Deployment** (non come "Production" di Vercel, che resta associato a `main` e libero per una futura vera produzione — stessa convenzione già in uso sul sito MDK-137).
+- **Branch usato in staging**: `staging`, pubblicato come **Preview Deployment** (non come "Production" di Vercel, che resta associato a `main` e libero per una futura vera produzione).
 - **Variabile d'ambiente** `NEXT_PUBLIC_API_URL`: puntata all'URL del backend su Cloud Run, impostata sia per l'ambiente Production che Preview di Vercel (Development resta escluso, usa `frontend/.env.local` in locale). La usano la chat pubblica, il callback SSO e il proxy `/api` (documenti e dashboard). Il browser della dashboard non chiama più Cloud Run direttamente.
-- **Variabile d'ambiente** `NEXT_PUBLIC_WEBSITE_URL`: URL del sito MDK-137 (link di ritorno dalla pagina `/sso/error`).
+- **Variabile d'ambiente** `NEXT_PUBLIC_WEBSITE_URL`: URL del sito esterno (link di ritorno dalla pagina `/sso/error`).
 - **Upload documenti**: il file passa da Vercel (`/api/documents/upload`). Sopra 4,5 MB Vercel risponde `413` e il backend non riceve il file.
 
 Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticamente un nuovo Preview Deployment sullo stesso URL.
 
 > **Nota terminologica**: "Production"/"Preview" sono nomi interni di Vercel per i tipi di deployment, non corrispondono agli ambienti di business (staging/produzione del progetto). In questa fase usiamo un Preview Deployment di Vercel come nostro ambiente di staging.
 
-### Collegamento con il sito MDK-137 (SSO)
+### Collegamento con il sito esterno (SSO)
 
-Il bottone "Open app" sul sito MDK-137 punta a un URL letto dalla colonna `web_app_url` della tabella `products` (schema `website`, database del sito — non di Frontline). Quando questo URL cambia (nuovo ambiente, nuovo dominio), va aggiornato **nel database del sito**, non nel codice:
+Il sito esterno deve reindirizzare a un indirizzo che finisce con `/sso/callback`.
 
-```sql
-update website.products
-set web_app_url = 'https://<url-frontend-frontline>/sso/callback'
-where slug = 'mdk-frontline';
-```
+> **Attenzione — l'URL deve finire con `/sso/callback`**, non con la sola root del dominio. Se punta solo a `https://<dominio>` il token SSO arriva sulla home page di Frontline (che non lo legge) e il login automatico non parte mai, senza nessun errore visibile lato Frontline.
 
-> **Attenzione — l'URL deve finire con `/sso/callback`**, non con la sola root del dominio. Se punta solo a `https://<dominio>` il token SSO arriva sulla home page di Frontline (che non lo legge) e il login automatico non parte mai, senza nessun errore visibile lato Frontline. Questo va allineato separatamente per ogni ambiente (staging e, più avanti, produzione): sono database Supabase distinti, aggiornare uno non tocca l'altro.
-
-Vedi anche [architecture.md](architecture.md#-autenticazione-sso-da-mdk-137) per il flusso completo del token.
+Vedi anche [architecture.md](architecture.md#-autenticazione-sso-da-un-sito-esterno) per il flusso completo del token.
 
 ---
 

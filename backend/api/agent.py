@@ -1,8 +1,7 @@
 """HTTP endpoint for the customer-facing AI chat.
 
 In the MVP the tenant is resolved from the ``company_slug`` path parameter
-(matched against the ``companies`` table). Real authentication will be added
-once the MDK-137 integration lands.
+(matched against the ``companies`` table).
 """
 
 from __future__ import annotations

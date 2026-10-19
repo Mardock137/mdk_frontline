@@ -18,11 +18,11 @@
 
 ## 📄 Descrizione
 
-MDK Frontline è un prodotto SaaS multi-tenant di customer support AI sviluppato da [MDK-137 OÜ](https://mdk137.com). Sostituisce il team umano di customer support di un'azienda, gestendo in autonomia le richieste dei clienti finali tramite una live chat dedicata.
+MDK Frontline è un SaaS multi-tenant di customer support AI. Sostituisce il team umano di customer support di un'azienda, gestendo in autonomia le richieste dei clienti finali tramite una live chat dedicata.
 
-L'azienda acquirente configura il sistema da una dashboard aziendale caricando i propri documenti (FAQ, policy, manuali, listini), che vengono usati come base di conoscenza dall'agente AI. La vendita e l'accesso iniziale avvengono esclusivamente tramite il sito MDK-137.
+L'azienda cliente configura il sistema da una dashboard aziendale caricando i propri documenti (FAQ, policy, manuali, listini), che vengono usati come base di conoscenza dall'agente AI.
 
-> **MDK Frontline non gestisce registrazione, pagamenti o checkout.** L'accesso alla dashboard avviene tramite redirect dal sito MDK-137, dove il cliente ha già acquistato il prodotto. Autenticazione e gestione abbonamenti sono responsabilità del sito MDK-137, non di questo progetto.
+> **La dashboard non ha un login proprio.** Si apre con un JWT firmato da un sito esterno, scambiato in `POST /auth/sso` con una sessione interna.
 
 ---
 
@@ -54,7 +54,7 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 | `SUPABASE_SCHEMA`            | Schema del DB con tabelle/funzioni/view di Frontline (default: `frontline`)               |
 | `ALLOW_DEV_COMPANY_FALLBACK` | Se `true`, senza sessione si usa `DEV_COMPANY_ID`. Solo sviluppo locale (default `false`) |
 | `DEV_COMPANY_ID`             | UUID dell'azienda di sviluppo, usato solo se `ALLOW_DEV_COMPANY_FALLBACK` è attivo        |
-| `SSO_SHARED_SECRET`          | Secret condiviso col sito MDK-137 per verificare il JWT di ingresso                       |
+| `SSO_SHARED_SECRET`          | Secret condiviso col sito esterno per verificare il JWT di ingresso                       |
 | `FRONTLINE_SESSION_SECRET`   | Secret solo Frontline per firmare il token di sessione interno (24h)                      |
 | `KV_REST_API_URL`            | URL REST del database Upstash di Frontline (token SSO monouso)                            |
 | `KV_REST_API_TOKEN`          | Token privato dello stesso database Upstash. Senza URL e token l'SSO viene rifiutato      |
@@ -68,7 +68,7 @@ L'azienda acquirente configura il sistema da una dashboard aziendale caricando i
 | Variabile                 | Descrizione                                                                      |
 |---------------------------|----------------------------------------------------------------------------------|
 | `NEXT_PUBLIC_API_URL`     | URL base del backend FastAPI (default: `http://localhost:8000`)                  |
-| `NEXT_PUBLIC_WEBSITE_URL` | URL del sito MDK-137 per il link "torna al sito" (default: `https://mdk137.com`) |
+| `NEXT_PUBLIC_WEBSITE_URL` | URL opzionale del sito esterno per il link di ritorno                            |
 
 ---
 
