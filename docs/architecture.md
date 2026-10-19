@@ -10,7 +10,7 @@ Panoramica dell'architettura tecnica di MDK Frontline: componenti principali, st
 - [⚙️ Come funziona](#️-come-funziona)
 - [🗄️ Schema del database](#️-schema-del-database)
 - [🔒 Sicurezza e isolamento multi-tenant](#-sicurezza-e-isolamento-multi-tenant)
-- [🔑 Autenticazione (SSO da MDK-137)](#-autenticazione-sso-da-mdk-137)
+- [🔑 Autenticazione (SSO da un sito esterno)](#-autenticazione-sso-da-un-sito-esterno)
 - [📚 Riferimenti](#-riferimenti)
 
 ---
@@ -113,14 +113,14 @@ Il bucket Supabase `documents` è **privato**: solo il backend (service role) pu
 
 ---
 
-## 🔑 Autenticazione (SSO da MDK-137)
+## 🔑 Autenticazione (SSO da un sito esterno)
 
-MDK Frontline **non gestisce login, registrazione o password**: queste responsabilità restano sul sito MDK-137. Frontline non ha una propria pagina di login: si fida di chi arriva con un JWT valido emesso dal sito.
+La dashboard non ha un login proprio. Si apre con un JWT firmato da un sito esterno, scambiato in `POST /auth/sso` con una sessione interna.
 
 ### Flusso
 
-1. L'azienda cliente effettua il login **su MDK-137** (dove ha già acquistato il prodotto).
-2. Dal sito apre Frontline. MDK-137 reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, `sub` = `company_id`, `jti` univoco, `product` = `mdk-frontline`).
+1. L'azienda cliente effettua il login **sul sito esterno**.
+2. Dal sito apre Frontline. Il sito esterno reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, `sub` = `company_id`, `jti` univoco, `product` = `mdk-frontline`).
 3. Il frontend chiede al backend `POST /auth/sso`. Il backend verifica firma (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline`, scadenza (leeway 10s), `jti` presente e `product` uguale a `mdk-frontline`. Poi registra il `jti` su Upstash Redis per 90 secondi: se è già presente risponde `401`; se Redis non risponde o le variabili mancano risponde `503` e non emette la sessione.
 4. Il backend emette un token di sessione interno (24h, `FRONTLINE_SESSION_SECRET`, mai condiviso col sito). Il frontend lo salva nel cookie `frontline_session` con `httpOnly`: JavaScript non può leggerlo e il browser non allega `Authorization: Bearer`. Lo allega il proxy Next.js (`/api/...`) alle chiamate dashboard/documenti. Su `POST`, `PATCH` e `DELETE` il proxy risponde `403` se l'origine non coincide con l'host del sito.
 5. Token mancante, scaduto, già usato o non valido → pagina `/sso/error` con link di ritorno al sito. Se il controllo anti-riuso non è disponibile, la stessa pagina: il frontend tratta `401` e `503` allo stesso modo.

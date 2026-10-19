@@ -92,7 +92,7 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 
 ### `POST /auth/sso`
 
-Scambia il JWT del sito MDK-137 con un token di sessione interno di Frontline (24h). Il token del sito è monouso.
+Scambia il JWT del sito esterno con un token di sessione interno di Frontline (24h). Il token del sito è monouso.
 
 - **Body**: `{ "sso_token": "..." }`
 - Il JWT deve includere `jti` e `product` uguale a `mdk-frontline`, oltre a firma, issuer, audience e scadenza.

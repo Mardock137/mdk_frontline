@@ -1,4 +1,4 @@
-"""SSO from the MDK-137 website and internal Frontline session tokens."""
+"""SSO from an external website and internal Frontline session tokens."""
 
 from __future__ import annotations
 

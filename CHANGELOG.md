@@ -52,16 +52,16 @@
 
 ### Added
 
-- **SSO dal sito MDK-137** (`backend/utils/auth.py`, `backend/api/auth.py`): il sito invia un JWT firmato (`sso_token` in query). Il backend verifica firma, scadenza (leeway 10s), issuer `mdk-137-website` e audience `mdk-frontline`, poi emette un token di sessione interno (24h) firmato con un secret diverso, mai condiviso col sito. Endpoint `POST /auth/sso` → `{ session_token }`. Token mancante/scaduto/non valido → `401`.
+- **SSO da un sito esterno** (`backend/utils/auth.py`, `backend/api/auth.py`): il sito invia un JWT firmato (`sso_token` in query). Il backend verifica firma, scadenza (leeway 10s), issuer `mdk-137-website` e audience `mdk-frontline`, poi emette un token di sessione interno (24h) firmato con un secret diverso, mai condiviso col sito. Endpoint `POST /auth/sso` → `{ session_token }`. Token mancante/scaduto/non valido → `401`.
 - **Identità azienda reale sulle API dashboard/documenti**: `get_current_company_id` legge `Authorization: Bearer`. Se l'header manca, resta il fallback su `DEV_COMPANY_ID` (sviluppo locale e test esistenti).
 - **Callback frontend** (`frontend/app/sso/callback/route.ts`): scambia il token del sito, salva la sessione in un cookie leggibile dal browser (`frontline_session`), redirect a `/dashboard`. Pagina di errore `frontend/app/sso/error/page.tsx` con link di ritorno al sito.
 - **Chiamate dashboard/documenti autenticati** (`frontend/lib/api.ts`): allegano `Authorization: Bearer` se il cookie è presente. La live chat pubblica non cambia.
 - **Variabili** `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` in Settings / `.env.example`; dipendenza `PyJWT`. Frontend: `NEXT_PUBLIC_WEBSITE_URL` per il link di ritorno.
-- **Azienda di test in staging** nello schema `frontline`, stesso `id` di `website.companies` (MDK-137 OÜ, slug `mdk-137`) + riga `agent_configs`, per il test end-to-end del bottone "Open app".
+- **Azienda di test in staging** nello schema `frontline`, con una riga `agent_configs`, usata per il test end-to-end dell'SSO.
 
 ### Fixed
 
-- **Test end-to-end reale dell'SSO in staging**: risolti due problemi di configurazione emersi durante la prima prova con un click vero dal sito MDK-137 (nessuna modifica al codice). `website.products.web_app_url` puntava alla root del dominio invece che a `/sso/callback`, quindi il token non veniva mai letto da Frontline. Sul backend, i secret `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` erano stati creati in Secret Manager ma senza il ruolo `Secret Manager Secret Accessor` concesso al service account del servizio, causando `Permission denied` al deploy.
+- **Test end-to-end reale dell'SSO in staging**: risolti due problemi di configurazione emersi durante la prima prova con un click vero dal sito esterno (nessuna modifica al codice). L'URL di callback configurato sul sito esterno puntava alla root del dominio invece che a `/sso/callback`, quindi il token non veniva mai letto da Frontline. Sul backend, i secret `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` erano stati creati in Secret Manager ma senza il ruolo `Secret Manager Secret Accessor` concesso al service account del servizio, causando `Permission denied` al deploy.
 
 ### Changed
 
@@ -240,7 +240,7 @@
 
 ### Removed
 
-- **Dependabot** (`.github/dependabot.yml`): rimossa la configurazione degli aggiornamenti automatici delle dipendenze (backend `pip` e frontend `npm`). La gestione delle dipendenze dei progetti è affidata a MDK Devs, quindi Dependabot era ridondante. Gli alert di sicurezza di GitHub (indipendenti da questo file) restano invariati.
+- **Dependabot** (`.github/dependabot.yml`): rimossa la configurazione degli aggiornamenti automatici delle dipendenze (backend `pip` e frontend `npm`). Gli aggiornamenti di versione si gestiscono a mano. Gli alert di sicurezza di GitHub (indipendenti da questo file) restano invariati.
 
 ---
 

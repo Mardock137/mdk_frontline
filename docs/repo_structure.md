@@ -141,7 +141,7 @@
  │    │    │    ├── 📁 callback/
  │    │    │    │    └── 📄 route.ts                                     # Scambio sso_token → cookie di sessione, redirect a /dashboard.
  │    │    │    └── 📁 error/
- │    │    │         └── 📄 page.tsx                                     # Errore SSO con link di ritorno al sito MDK-137.
+ │    │    │         └── 📄 page.tsx                                     # Errore SSO con link di ritorno al sito esterno.
  │    │    ├── 📁 dashboard/                                             # Dashboard aziendale (admin area).
  │    │    │    ├── 📁 config/
  │    │    │    │    └── 📄 page.tsx                                     # Form modifica agent_name, colore, tono, lingua, welcome message.

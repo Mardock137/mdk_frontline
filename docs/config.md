@@ -85,7 +85,7 @@ L'elenco completo delle variabili è visibile nel file [backend/.env.example](..
 | `SUPABASE_SCHEMA`            | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas.   | No (default `frontline`) |
 | `ALLOW_DEV_COMPANY_FALLBACK` | Se `true`, le richieste senza `Authorization: Bearer` usano `DEV_COMPANY_ID`. Solo sviluppo locale: non impostarlo in staging o produzione.  | No (default `false`)     |
 | `DEV_COMPANY_ID`             | UUID dell'azienda usata quando il fallback di sviluppo è attivo.                                                                             | Solo in dev, col flag    |
-| `SSO_SHARED_SECRET`          | Secret condiviso col sito MDK-137. Serve a verificare il JWT di ingresso (`sso_token`). Stesso valore sui due progetti.                      | Sì in staging/prod       |
+| `SSO_SHARED_SECRET`          | Secret condiviso col sito esterno. Serve a verificare il JWT di ingresso (`sso_token`). Stesso valore sui due progetti.                      | Sì in staging/prod       |
 | `FRONTLINE_SESSION_SECRET`   | Secret solo di Frontline (mai condiviso col sito). Firma il token di sessione interno, durata 24 ore.                                        | Sì in staging/prod       |
 | `KV_REST_API_URL`            | URL REST del database Upstash di Frontline. Serve a registrare i `jti` dei token SSO già usati. Senza questo valore l'SSO viene rifiutato.   | Sì in staging/prod       |
 | `KV_REST_API_TOKEN`          | Token privato dello stesso database Upstash. Non committare il valore reale. Senza questo valore l'SSO viene rifiutato.                      | Sì in staging/prod       |

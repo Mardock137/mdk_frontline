@@ -22,7 +22,7 @@ Guida operativa al frontend di MDK Frontline: pagina di live chat pubblica e set
 Il frontend è un'applicazione **Next.js 16** con TypeScript e Tailwind CSS. Espone due aree principali:
 
 - **`/chat/[slug]`** — Live chat pubblica dedicata per ogni azienda cliente. Non richiede login.
-- **`/dashboard`** — Dashboard aziendale per la gestione di documenti, ticket, configurazione agente e statistiche. Si apre dal sito MDK-137 via `/sso/callback`.
+- **`/dashboard`** — Dashboard aziendale per la gestione di documenti, ticket, configurazione agente e statistiche. Si apre via SSO dal sito esterno (`/sso/callback`).
 - **`/sso/callback`** — Riceve `sso_token` dal sito, ottiene la sessione Frontline, redirect alla dashboard.
 - **`/sso/error`** — Pagina di errore se il token manca, è scaduto o non valido, con link di ritorno al sito.
 
@@ -71,7 +71,7 @@ Mostra risposta agente, salva conversation_id per i messaggi successivi
 |-----------------------------------------|----------------------------------------------------------------|
 | `app/dashboard/layout.tsx`              | Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats) |
 | `app/sso/callback/route.ts`             | Route handler: scambia `sso_token`, salva cookie `httpOnly`, redirect |
-| `app/sso/error/page.tsx`                | Errore SSO con link di ritorno al sito MDK-137                 |
+| `app/sso/error/page.tsx`                | Errore SSO con link di ritorno al sito esterno                 |
 | `app/api/[...path]/route.ts`            | Proxy: inoltra solo `documents` e `dashboard`, aggiunge il Bearer dal cookie. `POST`, `PATCH` e `DELETE` da un'altra origine rispondono `403` |
 | `app/dashboard/page.tsx`                | Redirect automatico a `/dashboard/documents`                   |
 | `lib/session.ts`                        | Nome e durata del cookie di sessione (niente lettura lato browser) |
@@ -134,7 +134,7 @@ Il frontend usa un file `.env.local` nella cartella `frontend/` (non va nel git)
 | Variabile                 | Descrizione                                      | Valore sviluppo         |
 |---------------------------|--------------------------------------------------|-------------------------|
 | `NEXT_PUBLIC_API_URL`     | URL base del backend FastAPI                     | `http://localhost:8000` |
-| `NEXT_PUBLIC_WEBSITE_URL` | URL del sito MDK-137 (link di ritorno da /sso/error) | `https://mdk137.com` |
+| `NEXT_PUBLIC_WEBSITE_URL` | URL del sito esterno (link di ritorno da /sso/error) | `https://example.com` |
 
 Copiare `frontend/.env.local.example` in `frontend/.env.local` e inserire i valori.
 
@@ -168,7 +168,7 @@ npm install
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_WEBSITE_URL=https://mdk137.com
+NEXT_PUBLIC_WEBSITE_URL=https://example.com
 ```
 
 3. **Avvia il server di sviluppo**:
@@ -207,7 +207,7 @@ npm run dev
 
 ## ⚠️ Note MVP
 
-- **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre dal sito MDK-137 (`/sso/callback`). In locale, senza cookie, il backend usa `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`.
+- **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre via SSO dal sito esterno (`/sso/callback`). In locale, senza cookie, il backend usa `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`.
 - **Upload documenti**: il file passa dal proxy Next.js. Su Vercel un file sopra 4,5 MB viene rifiutato con `413`.
 - **Conversazione in memoria**: il `conversation_id` vive nello stato React. Ricaricare la pagina azzera la conversazione.
 - **Nessun test automatico**: il frontend non ha test automatici nell'MVP. I test UI sono rimandati a post-MVP.
