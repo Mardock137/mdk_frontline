@@ -5,11 +5,13 @@
 
 ### Changed
 
-- **Fallback su `DEV_COMPANY_ID` disattivato di default** (`backend/utils/config.py`, `backend/utils/auth.py`, `backend/.env.example`): senza `Authorization: Bearer` le API rispondono `401`. In locale serve `ALLOW_DEV_COMPANY_FALLBACK=true` nel `.env`. In staging e produzione non vanno impostati né il flag né `DEV_COMPANY_ID`.
-- **Controllo di origine sul proxy** (`frontend/app/api/[...path]/route.ts`): `POST`, `PATCH` e `DELETE` rispondono `403` se l'origine non coincide con l'host della richiesta (`Origin`, oppure `Sec-Fetch-Site: same-origin` quando `Origin` manca). `GET` non cambia.
-- `docs/config.md`, `docs/deploy.md`, `docs/api_endpoints.md`, `docs/architecture.md`, `docs/frontend.md`, `docs/database.md`, `docs/rag.md`, `docs/repo_structure.md` e `README.md` (versione `0.14.0`).
+- **`DEV_COMPANY_ID` fallback off by default** (`backend/utils/config.py`, `backend/utils/auth.py`, `backend/.env.example`): without `Authorization: Bearer`, the APIs return `401`. Locally, set `ALLOW_DEV_COMPANY_FALLBACK=true` in `.env`. Do not set the flag or `DEV_COMPANY_ID` in staging or production.
+- **Origin check on the proxy** (`frontend/app/api/[...path]/route.ts`): `POST`, `PATCH`, and `DELETE` return `403` when the origin does not match the request host (`Origin`, or `Sec-Fetch-Site: same-origin` when `Origin` is missing). `GET` is unchanged.
+- `docs/config.md`, `docs/deploy.md`, `docs/api_endpoints.md`, `docs/architecture.md`, `docs/frontend.md`, `docs/database.md`, `docs/rag.md`, `docs/repo_structure.md`, and `README.md` (version `0.14.0`).
 
 ---
+
+> Releases before 0.14.0 are kept in Italian.
 
 ## 0.13.1 — 2026-10-09
 

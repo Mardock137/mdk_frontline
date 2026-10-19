@@ -1,221 +1,221 @@
 <!-- markdownlint-disable -->
 # Frontend
 
-Guida operativa al frontend di MDK Frontline: pagina di live chat pubblica e setup del progetto Next.js.
+MDK Frontline's frontend: the public live chat page and the Next.js project setup.
 
 ---
 
-## 📋 Indice
+## 📋 Contents
 
-- [📄 Panoramica](#-panoramica)
-- [⚙️ Come funziona](#️-come-funziona)
-- [🔧 Configurazione](#-configurazione)
-- [🚀 Avvio rapido](#-avvio-rapido)
+- [📄 Overview](#-overview)
+- [⚙️ How it works](#️-how-it-works)
+- [🔧 Configuration](#-configuration)
+- [🚀 Quick start](#-quick-start)
 - [🔍 Troubleshooting](#-troubleshooting)
-- [⚠️ Note MVP](#️-note-mvp)
-- [📚 Riferimenti](#-riferimenti)
+- [⚠️ MVP notes](#️-mvp-notes)
+- [📚 References](#-references)
 
 ---
 
-## 📄 Panoramica
+## 📄 Overview
 
-Il frontend è un'applicazione **Next.js 16** con TypeScript e Tailwind CSS. Espone due aree principali:
+The frontend is a **Next.js 16** application with TypeScript and Tailwind CSS. It has four entry points:
 
-- **`/chat/[slug]`** — Live chat pubblica dedicata per ogni azienda cliente. Non richiede login.
-- **`/dashboard`** — Dashboard aziendale per la gestione di documenti, ticket, configurazione agente e statistiche. Si apre via SSO dal sito esterno (`/sso/callback`).
-- **`/sso/callback`** — Riceve `sso_token` dal sito, ottiene la sessione Frontline, redirect alla dashboard.
-- **`/sso/error`** — Pagina di errore se il token manca, è scaduto o non valido, con link di ritorno al sito.
+- **`/chat/[slug]`** — public live chat for each customer company. No login.
+- **`/dashboard`** — company dashboard for documents, tickets, agent configuration, and statistics. It opens through SSO from the external site (`/sso/callback`).
+- **`/sso/callback`** — receives `sso_token` from the site, obtains the Frontline session, and redirects to the dashboard.
+- **`/sso/error`** — shown when the token is missing, expired, or invalid, with a link back to the site when `NEXT_PUBLIC_WEBSITE_URL` is set.
 
 ---
 
-## ⚙️ Come funziona
+## ⚙️ How it works
 
-### Flusso della pagina di chat
+### Chat page flow
 
 ```txt
-Cliente apre /chat/[slug]
+Customer opens /chat/[slug]
    │
    ▼
-GET /chat/{slug}/config  ──► carica branding (nome agente, colore, logo, welcome message)
+GET /chat/{slug}/config  ──► load branding (agent name, color, logo, welcome message)
    │
    ▼
-Mostra header con branding + welcome message come primo messaggio agente
+Show a header with the branding, and the welcome message as the first agent message
    │
    ▼
-Cliente scrive messaggio
+Customer types a message
    │
    ▼
-POST /chat/{slug}/message ──► invia al backend con conversation_id (null al primo messaggio)
+POST /chat/{slug}/message ──► send it to the backend with conversation_id (null on the first message)
    │
    ▼
-Backend esegue agente AI ──► risposta testuale
+Backend runs the AI agent ──► text reply
    │
    ▼
-Mostra risposta agente, salva conversation_id per i messaggi successivi
+Show the agent's reply, and keep conversation_id for later messages
 ```
 
-### Componenti — Chat
+### Components — chat
 
-| File                                  | Ruolo                                                                           |
-|---------------------------------------|---------------------------------------------------------------------------------|
-| `app/chat/[slug]/page.tsx`            | Pagina principale: carica config, gestisce stato messaggi e conversazione       |
-| `components/chat/ChatWindow.tsx`      | Contenitore messaggi con auto-scroll                                            |
-| `components/chat/MessageBubble.tsx`   | Singola bolla (cliente a destra, agente a sinistra)                             |
-| `components/chat/MessageInput.tsx`    | Input testo + pulsante invia (Enter per inviare, Shift+Enter per andare a capo) |
-| `components/chat/TypingIndicator.tsx` | Tre pallini animati mentre l'agente elabora                                     |
-| `lib/api.ts`                          | Chat sul backend pubblico; documenti e dashboard sul proxy `/api` (senza Bearer dal browser) |
+| File                                  | Role                                                                                 |
+|---------------------------------------|--------------------------------------------------------------------------------------|
+| `app/chat/[slug]/page.tsx`            | Main page: loads config, holds message and conversation state                        |
+| `components/chat/ChatWindow.tsx`      | Message list with auto-scroll                                                        |
+| `components/chat/MessageBubble.tsx`   | One bubble (customer on the right, agent on the left)                                |
+| `components/chat/MessageInput.tsx`    | Text input and send button (Enter to send, Shift+Enter for a new line)               |
+| `components/chat/TypingIndicator.tsx` | Three animated dots while the agent is working                                       |
+| `lib/api.ts`                          | Chat calls the public backend; documents and dashboard call the `/api` proxy (the browser never attaches a Bearer token) |
 
-### Componenti — Dashboard
+### Components — dashboard
 
-| File                                    | Ruolo                                                          |
-|-----------------------------------------|----------------------------------------------------------------|
-| `app/dashboard/layout.tsx`              | Layout con sidebar di navigazione (Documenti/Ticket/Config/Stats) |
-| `app/sso/callback/route.ts`             | Route handler: scambia `sso_token`, salva cookie `httpOnly`, redirect |
-| `app/sso/error/page.tsx`                | Errore SSO con link di ritorno al sito esterno                 |
-| `app/api/[...path]/route.ts`            | Proxy: inoltra solo `documents` e `dashboard`, aggiunge il Bearer dal cookie. `POST`, `PATCH` e `DELETE` da un'altra origine rispondono `403` |
-| `app/dashboard/page.tsx`                | Redirect automatico a `/dashboard/documents`                   |
-| `lib/session.ts`                        | Nome e durata del cookie di sessione (niente lettura lato browser) |
-| `app/dashboard/documents/page.tsx`      | Upload, lista e cancellazione documenti                        |
-| `app/dashboard/tickets/page.tsx`        | Lista ticket con badge stato/escalation e cambio stato         |
-| `app/dashboard/config/page.tsx`         | Form configurazione agente (nome, colore, tono, lingua, welcome) |
-| `app/dashboard/stats/page.tsx`          | Stat card + barre stato ticket                                 |
-| `components/ui/button.tsx`              | Componente Button con varianti (default/outline/ghost/etc.)    |
-| `components/ui/card.tsx`                | Card con Header, Title, Description, Content, Footer           |
-| `components/ui/badge.tsx`               | Badge colorato per stati (success/warning/error/info)          |
-| `components/ui/table.tsx`               | Table semantica con stile Tailwind                             |
-| `components/ui/input.tsx`               | Input testuale stilizzato                                      |
-| `components/ui/label.tsx`               | Label per form                                                 |
-| `components/ui/select.tsx`              | Select dropdown stilizzato con icona chevron                   |
-| `components/ui/textarea.tsx`            | Textarea stilizzata                                            |
-| `components/ui/dialog.tsx`              | Modal dialog con overlay, chiusura via ESC e click esterno     |
-| `components/ui/toast.tsx`               | Toast notification con `ToastProvider` e hook `useToast()`     |
+| File                                    | Role                                                                                          |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------|
+| `app/dashboard/layout.tsx`              | Layout with a navigation sidebar (Documents / Tickets / Config / Stats)                       |
+| `app/sso/callback/route.ts`             | Route handler: exchanges `sso_token`, stores the `httpOnly` cookie, redirects                 |
+| `app/sso/error/page.tsx`                | SSO error, with a return link to the external site when the URL is set                        |
+| `app/api/[...path]/route.ts`            | Proxy: forwards only `documents` and `dashboard`, and adds the Bearer token from the cookie. `POST`, `PATCH`, and `DELETE` from another origin return `403` |
+| `app/dashboard/page.tsx`                | Redirects to `/dashboard/documents`                                                           |
+| `lib/session.ts`                        | Session cookie name and lifetime (the browser never reads the cookie)                         |
+| `app/dashboard/documents/page.tsx`      | Upload, list, and delete documents                                                            |
+| `app/dashboard/tickets/page.tsx`        | Ticket list with status and escalation badges, and status changes                             |
+| `app/dashboard/config/page.tsx`         | Agent configuration form (name, color, tone, language, welcome message)                       |
+| `app/dashboard/stats/page.tsx`          | Stat cards and ticket-status bars                                                             |
+| `components/ui/button.tsx`              | Button with variants (default / outline / ghost / and so on)                                  |
+| `components/ui/card.tsx`                | Card with Header, Title, Description, Content, Footer                                         |
+| `components/ui/badge.tsx`               | Colored badge for states (success / warning / error / info)                                   |
+| `components/ui/table.tsx`               | Semantic table with Tailwind styling                                                          |
+| `components/ui/input.tsx`               | Styled text input                                                                             |
+| `components/ui/label.tsx`               | Form label                                                                                    |
+| `components/ui/select.tsx`              | Styled dropdown with a chevron icon                                                           |
+| `components/ui/textarea.tsx`            | Styled textarea                                                                               |
+| `components/ui/dialog.tsx`              | Modal dialog with an overlay; closes on Escape and on an outside click                        |
+| `components/ui/toast.tsx`               | Toast notifications, with `ToastProvider` and the `useToast()` hook                           |
 
-### Branding dinamico
+### Dynamic branding
 
-Ogni azienda ha il suo `primary_color` in `agent_configs`. La pagina applica questo colore su:
+Each company has its own `primary_color` in `agent_configs`. The page applies that color to:
 
-- Header (sfondo)
-- Bolle messaggi del cliente (sfondo)
-- Pulsante invia (sfondo)
-- Ring di focus sull'input (bordo)
+- the header background
+- the customer's message bubbles
+- the send button
+- the input focus ring
 
-Se l'azienda ha un `logo_url`, viene mostrato nell'header tramite `next/image`. Altrimenti appare la prima lettera del nome azienda.
+If the company has a `logo_url`, it is shown in the header through `next/image`. Otherwise the header shows the first letter of the company name.
 
-> `next.config.ts` è configurato con `images.remotePatterns` che consente URL di immagini da qualsiasi dominio esterno (`hostname: "**"`), necessario in un prodotto multi-tenant dove i domini dei loghi sono imprevedibili.
+> `next.config.ts` sets `images.remotePatterns` to allow image URLs from any external domain (`hostname: "**"`). A multi-tenant product cannot predict logo domains in advance.
 
-### Accessibilità
+### Accessibility
 
-I componenti della chat implementano le seguenti scelte per la compatibilità con screen reader e tecnologie assistive:
+The chat components are set up for screen readers and other assistive technology:
 
-| Componente            | Intervento                                                                                    |
-|-----------------------|-----------------------------------------------------------------------------------------------|
-| `ChatWindow.tsx`      | `role="log"`, `aria-live="polite"`, `aria-relevant="additions"` sul contenitore messaggi      |
-| `MessageBubble.tsx`   | Etichetta `sr-only` col mittente ("Assistente:" / "Tu:") prima del testo                      |
-| `TypingIndicator.tsx` | `role="status"` + `aria-live="polite"` + testo `sr-only`; pallini `aria-hidden="true"`        |
-| `MessageInput.tsx`    | `aria-label="Scrivi un messaggio"` sulla textarea                                             |
-| `dashboard/layout.tsx`| `aria-label="Navigazione principale"` sul `nav`; `aria-current="page"` sul link attivo       |
+| Component              | What was added                                                                                          |
+|------------------------|---------------------------------------------------------------------------------------------------------|
+| `ChatWindow.tsx`       | `role="log"`, `aria-live="polite"`, `aria-relevant="additions"` on the message list                     |
+| `MessageBubble.tsx`    | An `sr-only` label with the sender ("Assistant:" / "You:") before the text                              |
+| `TypingIndicator.tsx`  | `role="status"`, `aria-live="polite"`, and `sr-only` text; the dots are `aria-hidden="true"`             |
+| `MessageInput.tsx`     | `aria-label="Type a message"` on the textarea                                                           |
+| `dashboard/layout.tsx` | `aria-label="Main navigation"` on the `nav`; `aria-current="page"` on the active link                   |
 
-Tutti gli interventi aggiungono solo attributi ARIA (nessun cambiamento di logica o aspetto visivo).
+These are ARIA attributes only. They do not change behavior or how the page looks.
 
-### Gestione conversazione
+### Conversation handling
 
-Il `conversation_id` vive nello stato React (`useRef`). Al primo messaggio viene passato `null` al backend, che crea una nuova conversazione e ritorna l'id. Tutti i messaggi successivi riutilizzano lo stesso id. Se il cliente ricarica la pagina, la conversazione riparte da zero.
+During the visit, `conversation_id` lives in a React ref. The first message sends `null`. The backend creates a conversation and returns the id, and the page stores it in `localStorage` under `mdk:conversation:<slug>`. On a later visit the page reads that id and loads the message history, with the welcome message still first. If the stored conversation no longer exists (`404`), the saved id is removed and the chat starts again from the welcome message. A transient failure (network, `500`) leaves the saved id in place, so a later refresh can try again.
 
-Il caricamento della configurazione usa un `AbortController`: se l'utente naviga via prima che la risposta arrivi, la richiesta viene annullata e lo stato non viene aggiornato su un componente già smontato. La funzione `getConfig` in `lib/api.ts` accetta un `signal?: AbortSignal` opzionale per questo scopo.
+Config loading uses an `AbortController`. If the user navigates away before the response arrives, the request is cancelled and state is not updated on a component that has already unmounted. `getConfig` in `lib/api.ts` accepts an optional `signal?: AbortSignal` for this.
 
 ---
 
-## 🔧 Configurazione
+## 🔧 Configuration
 
-### Variabili d'ambiente
+### Environment variables
 
-Il frontend usa un file `.env.local` nella cartella `frontend/` (non va nel git):
+The frontend reads `.env.local` in the `frontend/` folder (it is not committed):
 
-| Variabile                 | Descrizione                                      | Valore sviluppo         |
-|---------------------------|--------------------------------------------------|-------------------------|
-| `NEXT_PUBLIC_API_URL`     | URL base del backend FastAPI                     | `http://localhost:8000` |
-| `NEXT_PUBLIC_WEBSITE_URL` | URL del sito esterno (link di ritorno da /sso/error) | `https://example.com` |
+| Variable                  | Description                                              | Development value       |
+|---------------------------|----------------------------------------------------------|-------------------------|
+| `NEXT_PUBLIC_API_URL`     | Base URL of the FastAPI backend                          | `http://localhost:8000` |
+| `NEXT_PUBLIC_WEBSITE_URL` | External site URL (return link on `/sso/error`). Optional. | `https://example.com` |
 
-Copiare `frontend/.env.local.example` in `frontend/.env.local` e inserire i valori.
+Copy `frontend/.env.local.example` to `frontend/.env.local` and fill in the values. Leave `NEXT_PUBLIC_WEBSITE_URL` empty to hide the return link.
 
-> Le variabili con prefisso `NEXT_PUBLIC_` sono visibili nel browser. Quelle senza prefisso rimangono lato server. Per questo progetto MVP tutte le variabili del frontend sono pubbliche.
+> Variables prefixed with `NEXT_PUBLIC_` are visible in the browser. Variables without that prefix stay on the server. In this MVP every frontend variable is public.
 
 ### Stack
 
-| Tecnologia              | Versione | Ruolo                              |
-|-------------------------|----------|------------------------------------|
-| Next.js                 | 16.x     | Framework React (App Router)       |
-| React                   | 19.x     | UI                                 |
-| TypeScript              | 5.x      | Tipizzazione                       |
-| Tailwind CSS            | 4.x      | Styling                            |
-| class-variance-authority| 0.7.x    | Varianti CSS per componenti UI     |
-| lucide-react            | 1.x      | Icone                              |
-| clsx + tailwind-merge   | —        | Utility composizione classi CSS    |
+| Technology               | Version | Role                                |
+|--------------------------|---------|-------------------------------------|
+| Next.js                  | 16.x    | React framework (App Router)        |
+| React                    | 19.x    | UI                                  |
+| TypeScript               | 5.x     | Types                               |
+| Tailwind CSS             | 4.x     | Styling                             |
+| class-variance-authority | 0.7.x   | CSS variants for UI components      |
+| lucide-react             | 1.x     | Icons                               |
+| clsx + tailwind-merge    | —       | Helpers for combining CSS classes   |
 
 ---
 
-## 🚀 Avvio rapido
+## 🚀 Quick start
 
-Tutti i comandi vanno eseguiti dalla cartella `frontend/`.
+Run every command from the `frontend/` folder.
 
-1. **Installa le dipendenze** (una volta sola):
+1. **Install dependencies** (once):
 
 ```bash
 npm install
 ```
 
-2. **Crea il file `.env.local`**:
+2. **Create `.env.local`**:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_WEBSITE_URL=https://example.com
 ```
 
-3. **Avvia il server di sviluppo**:
+3. **Start the development server**:
 
 ```bash
 npm run dev
 ```
 
-4. **Apri la chat** nel browser: `http://localhost:3000/chat/[slug]`
-5. **Apri la dashboard** nel browser: `http://localhost:3000/dashboard`
+4. **Open the chat** at `http://localhost:3000/chat/[slug]`
+5. **Open the dashboard** at `http://localhost:3000/dashboard`
 
-> Il backend deve essere avviato in parallelo dalla cartella `backend/` con `uvicorn main:app --reload`. Senza backend il frontend non può caricare la configurazione né inviare messaggi. La dashboard in locale richiede `ALLOW_DEV_COMPANY_FALLBACK=true` e `DEV_COMPANY_ID` nel file `backend/.env`.
+> The backend must be running at the same time, from the `backend/` folder, with `uvicorn main:app --reload`. Without it the frontend cannot load the configuration or send messages. Locally, the dashboard needs `ALLOW_DEV_COMPANY_FALLBACK=true` and `DEV_COMPANY_ID` in `backend/.env`.
 
 ---
 
 ## 🔍 Troubleshooting
 
-### Problema: "Chat not found" all'apertura della pagina
+### "Chat not found" when the page opens
 
-**Causa**: lo slug nell'URL non esiste nella tabella `companies` del database, oppure manca la riga in `agent_configs` per quella company.
-**Soluzione**: verificare in Supabase che esista una riga in `companies` con lo slug usato nell'URL e una riga corrispondente in `agent_configs`.
+**Cause**: the slug in the URL is not in the `companies` table, or that company has no row in `agent_configs`.
+**Fix**: in Supabase, check that `companies` has a row with the slug from the URL and that `agent_configs` has a matching row.
 
-### Problema: la pagina carica ma i messaggi non partono
+### The page loads, but messages do not send
 
-**Causa**: il backend non è avviato o `NEXT_PUBLIC_API_URL` non è configurato correttamente.
-**Soluzione**: verificare che il backend risponda su `http://localhost:8000/health` e che il file `.env.local` contenga l'URL corretto.
+**Cause**: the backend is not running, or `NEXT_PUBLIC_API_URL` is wrong.
+**Fix**: check that the backend responds at `http://localhost:8000/health` and that `.env.local` has the right URL.
 
-### Problema: errore CORS nel browser
+### A CORS error in the browser
 
-**Causa**: la chat pubblica chiama il backend cross-origin. Il backend non ha il `FRONTEND_URL` configurato o il middleware CORS non copre l'origine del frontend. La dashboard non manda più il token cross-origin: documenti e ticket passano da `/api/...` sullo stesso sito.
-**Soluzione**: verificare che `backend/.env` contenga `FRONTEND_URL=*` (sviluppo) o l'URL esatto del frontend (produzione), e riavviare il backend.
+**Cause**: the public chat calls the backend cross-origin. The backend's `FRONTEND_URL` is missing, or the CORS middleware does not cover the frontend origin. The dashboard no longer sends the token cross-origin: documents and tickets go through `/api/...` on the same site.
+**Fix**: set `FRONTEND_URL=*` (development) or the exact frontend URL (production) in `backend/.env`, then restart the backend.
 
-> **Nota**: con `FRONTEND_URL=*` il backend imposta `allow_credentials=False`. La chat resta cross-origin e senza cookie, quindi il wildcard resta adatto. La dashboard non fa più chiamate autenticate cross-origin.
-
----
-
-## ⚠️ Note MVP
-
-- **Chat pubblica, dashboard via SSO**: `/chat/[slug]` è pubblica; la dashboard si apre via SSO dal sito esterno (`/sso/callback`). In locale, senza cookie, il backend usa `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`.
-- **Upload documenti**: il file passa dal proxy Next.js. Su Vercel un file sopra 4,5 MB viene rifiutato con `413`.
-- **Conversazione in memoria**: il `conversation_id` vive nello stato React. Ricaricare la pagina azzera la conversazione.
-- **Nessun test automatico**: il frontend non ha test automatici nell'MVP. I test UI sono rimandati a post-MVP.
-- **Home page (`/`) vuota**: la root del sito mostra un placeholder. Non è ancora una landing page.
+> **Note**: with `FRONTEND_URL=*` the backend sets `allow_credentials=False`. The chat stays cross-origin and cookieless, so the wildcard is still appropriate. The dashboard no longer makes authenticated cross-origin calls.
 
 ---
 
-## 📚 Riferimenti
+## ⚠️ MVP notes
+
+- **Public chat, dashboard via SSO**: `/chat/[slug]` is public. The dashboard opens through SSO from the external site (`/sso/callback`). Locally, with no cookie, the backend uses `DEV_COMPANY_ID` only when `ALLOW_DEV_COMPANY_FALLBACK=true`.
+- **Document upload**: the file goes through the Next.js proxy. On Vercel, a file larger than 4.5 MB is rejected with `413`.
+- **Conversation id**: kept in a React ref during the visit and in `localStorage` (`mdk:conversation:<slug>`) so a reload can restore the history. A `404` clears the saved id.
+- **No automated tests**: the frontend has no automated tests in the MVP. UI tests are left for after the MVP.
+- **Empty home page (`/`)**: the site root shows a placeholder. It is not a landing page yet.
+
+---
+
+## 📚 References
 
 - **Chat**:
   - [frontend/app/chat/[slug]/page.tsx](../frontend/app/chat/%5Bslug%5D/page.tsx)
@@ -228,9 +228,9 @@ npm run dev
   - [frontend/lib/session.ts](../frontend/lib/session.ts)
   - [frontend/app/api/[...path]/route.ts](../frontend/app/api/%5B...path%5D/route.ts)
   - [frontend/app/sso/](../frontend/app/sso/)
-- **Backend correlato**:
+- **Related backend**:
   - [backend/api/config.py](../backend/api/config.py) — `GET /chat/{slug}/config`
   - [backend/api/agent.py](../backend/api/agent.py) — `POST /chat/{slug}/message`
-  - [backend/api/documents.py](../backend/api/documents.py) — documenti e RAG
-  - [backend/api/dashboard.py](../backend/api/dashboard.py) — ticket, config agente, stats
-- **Doc correlati**: [architecture.md](architecture.md), [api_endpoints.md](api_endpoints.md)
+  - [backend/api/documents.py](../backend/api/documents.py) — documents and RAG
+  - [backend/api/dashboard.py](../backend/api/dashboard.py) — tickets, agent config, stats
+- **Related docs**: [architecture.md](architecture.md), [api_endpoints.md](api_endpoints.md)
