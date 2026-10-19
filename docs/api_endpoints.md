@@ -1,36 +1,36 @@
-# Endpoint API
+# API endpoints
 
-Elenco degli endpoint HTTP esposti dal backend FastAPI.
-
----
-
-## 📋 Indice
-
-- [📄 Panoramica](#-panoramica)
-- [⭐ Endpoint](#-endpoint)
-- [📚 Riferimenti](#-riferimenti)
+HTTP endpoints exposed by the FastAPI backend.
 
 ---
 
-## 📄 Panoramica
+## 📋 Contents
 
-Il backend espone una REST API. Il browser della dashboard parla con `/api/...` di Next.js (documenti e dashboard). Il proxy aggiunge `Authorization: Bearer` letto dal cookie `httpOnly`; il backend identifica l'azienda da quell'header. Senza Bearer la risposta è `401`, salvo in sviluppo locale con `ALLOW_DEV_COMPANY_FALLBACK=true` (allora si usa `DEV_COMPANY_ID`). Il proxy risponde `403` senza body alle richieste `POST`, `PATCH` e `DELETE` la cui origine non coincide con l'host del sito. La live chat resta pubblica e chiama il backend direttamente, identificata dallo slug nell'URL. Tutte le risposte del backend sono JSON.
+- [📄 Overview](#-overview)
+- [⭐ Endpoints](#-endpoints)
+- [📚 References](#-references)
 
 ---
 
-## ⭐ Endpoint
+## 📄 Overview
+
+The backend exposes a REST API. The dashboard browser talks to Next.js at `/api/...` for documents and dashboard calls. The proxy adds an `Authorization: Bearer` header taken from the `httpOnly` cookie, and the backend identifies the company from that header. Without a Bearer token the response is `401`, except in local development when `ALLOW_DEV_COMPANY_FALLBACK=true`, in which case `DEV_COMPANY_ID` is used. The proxy returns `403` with an empty body for `POST`, `PATCH`, and `DELETE` requests whose origin does not match the site host. The live chat stays public and calls the backend directly, identified by the slug in the URL. Every backend response is JSON.
+
+---
+
+## ⭐ Endpoints
 
 ### `GET /health`
 
-Health check. Ritorna `{"status": "ok"}`.
+Health check. Returns `{"status": "ok"}`.
 
 ### `POST /documents/upload`
 
-Upload di un file e ingestion sincrona nella knowledge base (estrazione testo → chunking → embedding → salvataggio).
+Uploads a file and ingests it synchronously into the knowledge base (text extraction, then chunking, embedding, and storage).
 
-- **Body**: `multipart/form-data`, campo `file`
-- **Formati supportati**: PDF, DOCX, TXT, Markdown
-- **Risposta `201`**:
+- **Body**: `multipart/form-data`, field `file`
+- **Supported formats**: PDF, DOCX, TXT, Markdown
+- **`201` response**:
 
 ```json
 {
@@ -40,27 +40,27 @@ Upload di un file e ingestion sincrona nella knowledge base (estrazione testo �
 }
 ```
 
-- **Auth**: header `Authorization: Bearer <session_token>`. Senza Bearer la risposta è `401`, salvo `ALLOW_DEV_COMPANY_FALLBACK=true` in sviluppo locale. Dalla dashboard il Bearer lo aggiunge il proxy Next.js, che risponde `403` se l'origine della richiesta non coincide con l'host del sito.
-- **Tetto Vercel**: la dashboard carica il file tramite il proxy. Su Vercel un file sopra 4,5 MB viene rifiutato con `413` prima di arrivare al backend.
-- **Errori**: `400` file vuoto/senza nome, `415` formato non supportato, `401` sessione assente o non valida.
+- **Auth**: `Authorization: Bearer <session_token>` header. Without a Bearer token the response is `401`, except when `ALLOW_DEV_COMPANY_FALLBACK=true` in local development. From the dashboard, the Next.js proxy adds the Bearer token. The proxy returns `403` if the request origin does not match the site host.
+- **Vercel limit**: the dashboard uploads the file through the proxy. On Vercel, a file larger than 4.5 MB is rejected with `413` before it reaches the backend.
+- **Errors**: `400` empty file or missing filename, `415` unsupported format, `401` missing or invalid session.
 
 ### `GET /documents`
 
-Lista documenti della company corrente (più recenti prima).
+Lists documents for the current company, newest first.
 
-- **Risposta `200`**: array di `{ id, filename, content_type, status, created_at }`.
-- **Errori**: `401` sessione assente o non valida.
+- **`200` response**: array of `{ id, filename, content_type, status, created_at }`.
+- **Errors**: `401` missing or invalid session.
 
 ### `DELETE /documents/{document_id}`
 
-Cancella il documento, i chunk associati e il file da Supabase Storage.
+Deletes the document, its chunks, and the file in Supabase Storage.
 
-- **Risposta `204`** su successo, `404` se il documento non appartiene alla company.
-- **Errori**: `401` sessione assente o non valida. Dal proxy Next.js, `403` se l'origine non coincide con l'host del sito.
+- **`204`** on success, `404` if the document does not belong to the company.
+- **Errors**: `401` missing or invalid session. From the Next.js proxy, `403` if the origin does not match the site host.
 
 ### `POST /rag/search`
 
-Ricerca semantica sui chunk della knowledge base della company corrente.
+Semantic search over the current company's knowledge-base chunks.
 
 - **Body**:
 
@@ -71,7 +71,7 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 }
 ```
 
-- **Risposta `200`**:
+- **`200` response**:
 
 ```json
 {
@@ -87,133 +87,133 @@ Ricerca semantica sui chunk della knowledge base della company corrente.
 }
 ```
 
-- `similarity` è in `[0, 1]` (cosine similarity, più alto = più rilevante).
-- **Errori**: `401` sessione assente o non valida.
+- `similarity` is in `[0, 1]` (cosine similarity; higher means more relevant).
+- **Errors**: `401` missing or invalid session.
 
 ### `POST /auth/sso`
 
-Scambia il JWT del sito esterno con un token di sessione interno di Frontline (24h). Il token del sito è monouso.
+Exchanges the external site's JWT for an internal Frontline session token (24 hours). The site token is single-use.
 
 - **Body**: `{ "sso_token": "..." }`
-- Il JWT deve includere `jti` e `product` uguale a `mdk-frontline`, oltre a firma, issuer, audience e scadenza.
-- **Risposta `200`**: `{ "session_token": "..." }`
-- **Errori**: `401` se il token è scaduto, non valido, senza i claim richiesti o già usato; `503` se Redis non risponde o mancano `KV_REST_API_URL` / `KV_REST_API_TOKEN` (nessun token di sessione); `422` body vuoto.
+- The JWT must include `jti` and a `product` claim equal to `mdk-frontline`, along with a valid signature, issuer, audience, and expiry.
+- **`200` response**: `{ "session_token": "..." }`
+- **Errors**: `401` if the token is expired, invalid, missing the required claims, or already used; `503` if Redis does not respond or `KV_REST_API_URL` / `KV_REST_API_TOKEN` are missing (no session token is issued); `422` empty body.
 
 ### `GET /chat/{company_slug}/config`
 
-Ritorna i dati di branding e il messaggio di benvenuto per la pagina di live chat. Endpoint pubblico: nessuna autenticazione richiesta.
+Returns branding and the welcome message for the live chat page. Public endpoint: no authentication.
 
-- **Path param**: `company_slug` — lo slug dell'azienda (es. `acme`).
-- **Risposta `200`**:
+- **Path param**: `company_slug` — the company's slug (for example, `acme`).
+- **`200` response**:
 
 ```json
 {
     "agent_name": "Sofia",
-    "company_display_name": "Acme Srl",
+    "company_display_name": "Acme Inc.",
     "logo_url": null,
     "primary_color": "#FF5733",
-    "welcome_message": "Ciao! Come posso aiutarti?"
+    "welcome_message": "Hi! How can I help?"
 }
 ```
 
-- **Errori**: `404` company o agent_config non trovata.
+- **Errors**: `404` company or agent config not found.
 
 ### `GET /chat/{company_slug}/conversation/{conversation_id}/messages`
 
-Restituisce i messaggi di una conversazione esistente, in ordine cronologico. Endpoint pubblico di sola lettura (nessuna autenticazione, nessun rate limit) usato dalla live chat per ripristinare la cronologia dopo un refresh.
+Returns the messages of an existing conversation, in chronological order. Public read-only endpoint (no authentication, no rate limit), used by the live chat to restore history after a refresh.
 
-- **Path params**: `company_slug` — slug dell'azienda; `conversation_id` — UUID della conversazione.
-- **Risposta `200`**: array di `{ id, role, content }` (ruolo `system` escluso, lista vuota se non ci sono messaggi).
+- **Path params**: `company_slug` — the company's slug; `conversation_id` — the conversation UUID.
+- **`200` response**: array of `{ id, role, content }` (`system` messages are omitted; the list is empty when there are no messages).
 
 ```json
 [
-    { "id": "uuid", "role": "customer", "content": "Come resetto la password?" },
-    { "id": "uuid", "role": "agent",    "content": "Segui questi passi..." }
+    { "id": "uuid", "role": "customer", "content": "How do I reset my password?" },
+    { "id": "uuid", "role": "agent",    "content": "Follow these steps..." }
 ]
 ```
 
-- **Errori**: `404` company non trovata, `404` conversazione non trovata o appartenente a un'altra company (`"Conversation not found"`).
+- **Errors**: `404` company not found, `404` conversation not found or belonging to another company (`"Conversation not found"`).
 
 ### `POST /chat/{company_slug}/message`
 
-Invia un messaggio al chatbot AI dell'azienda identificata da `company_slug`. Se `conversation_id` è null viene creata una nuova conversazione. L'agente usa la knowledge base, può aprire ticket e scalare a operatori umani autonomamente.
+Sends a message to the AI chatbot of the company identified by `company_slug`. If `conversation_id` is null, a new conversation is created. The agent searches the knowledge base and can open tickets or escalate to a human on its own.
 
-- **Path param**: `company_slug` — lo slug dell'azienda (es. `acme`).
+- **Path param**: `company_slug` — the company's slug (for example, `acme`).
 - **Body**:
 
 ```json
 {
-    "conversation_id": "uuid-opzionale-o-null",
-    "content": "Come resetto la password?"
+    "conversation_id": "optional-uuid-or-null",
+    "content": "How do I reset my password?"
 }
 ```
 
-- **Risposta `200`**:
+- **`200` response**:
 
 ```json
 {
     "conversation_id": "uuid",
-    "reply": "Per resettare la password segui questi passi..."
+    "reply": "To reset your password, follow these steps..."
 }
 ```
 
-- **Errori**: `404` company o agent_config non trovata, `404` `conversation_id` fornito ma inesistente o appartenente a un'altra company (`"Conversation not found"`), `422` contenuto vuoto, `429` limite richieste per IP superato (configurabile via `CHAT_RATE_LIMIT`, default `20/minute`; dietro un reverse proxy fidato impostare `TRUST_PROXY_HEADERS=true` perché il limite conti il vero IP del client), `500` API key Anthropic non configurata.
+- **Errors**: `404` company or agent config not found, `404` when `conversation_id` is set but does not exist or belongs to another company (`"Conversation not found"`), `422` empty content, `429` per-IP rate limit exceeded (set with `CHAT_RATE_LIMIT`, default `20/minute`; behind a trusted reverse proxy set `TRUST_PROXY_HEADERS=true` so the limit uses the real client IP), `500` Anthropic API key not configured.
 
 ---
 
 ## 🖥️ Dashboard endpoints (`/dashboard`)
 
-Tutti gli endpoint `/dashboard` (e `/documents`, `/rag/search`) usano `get_current_company_id`. Senza Bearer la risposta è `401` (`Authentication required`), salvo il flag di sviluppo `ALLOW_DEV_COMPANY_FALLBACK` (allora si usa `DEV_COMPANY_ID`). Token presente ma non valido: `401` (`Invalid or expired session token`). Le modifiche che passano dal proxy Next.js (`POST`, `PATCH` e `DELETE` su documenti e dashboard) ricevono `403` se l'origine non coincide con l'host del sito.
+Every `/dashboard` endpoint, and also `/documents` and `/rag/search`, uses `get_current_company_id`. Without a Bearer token the response is `401` (`Authentication required`), unless the `ALLOW_DEV_COMPANY_FALLBACK` development flag is on, in which case `DEV_COMPANY_ID` is used. A token that is present but invalid returns `401` (`Invalid or expired session token`). Writes that go through the Next.js proxy (`POST`, `PATCH`, and `DELETE` on documents and dashboard) receive `403` if the origin does not match the site host.
 
 ### `GET /dashboard/tickets`
 
-Lista tutti i ticket della company corrente, ordinati dal più recente.
+Lists every ticket for the current company, newest first.
 
-- **Risposta `200`**: array di `{ id, conversation_id, subject, description, status, is_escalation, created_at, updated_at }`.
-- **Errori**: `401` sessione assente o non valida.
+- **`200` response**: array of `{ id, conversation_id, subject, description, status, is_escalation, created_at, updated_at }`.
+- **Errors**: `401` missing or invalid session.
 - `status`: `"open"` | `"in_progress"` | `"closed"`.
-- `is_escalation`: `true` se l'agente ha aperto il ticket come escalation.
+- `is_escalation`: `true` when the agent opened the ticket as an escalation.
 
 ### `PATCH /dashboard/tickets/{ticket_id}`
 
-Aggiorna lo stato di un ticket.
+Updates a ticket's status.
 
 - **Body**: `{ "status": "open" | "in_progress" | "closed" }`
-- **Risposta `200`**: oggetto ticket aggiornato.
-- **Errori**: `401` sessione assente o non valida, `404` se il ticket non esiste o non appartiene alla company. Dal proxy Next.js, `403` se l'origine non coincide con l'host del sito.
+- **`200` response**: the updated ticket.
+- **Errors**: `401` missing or invalid session, `404` if the ticket does not exist or does not belong to the company. From the Next.js proxy, `403` if the origin does not match the site host.
 
 ### `GET /dashboard/agent-config`
 
-Legge la configurazione dell'agente per la company corrente.
+Reads the agent configuration for the current company.
 
-- **Risposta `200`**:
+- **`200` response**:
 
 ```json
 {
     "agent_name": "Sofia",
-    "company_display_name": "Acme Srl",
+    "company_display_name": "Acme Inc.",
     "primary_color": "#FF5733",
     "tone": "formal",
-    "default_language": "it",
-    "welcome_message": "Ciao! Come posso aiutarti?"
+    "default_language": "en",
+    "welcome_message": "Hi! How can I help?"
 }
 ```
 
-- **Errori**: `401` sessione assente o non valida, `404` se la configurazione non esiste.
+- **Errors**: `401` missing or invalid session, `404` if the configuration does not exist.
 
 ### `PATCH /dashboard/agent-config`
 
-Aggiorna parzialmente la configurazione dell'agente. Solo i campi presenti nel body vengono modificati.
+Partially updates the agent configuration. Only fields present in the body are changed.
 
-- **Campi aggiornabili**: `agent_name`, `company_display_name`, `primary_color` (hex `#RRGGBB`), `tone` (`formal`|`informal`), `default_language`, `welcome_message`.
-- **Risposta `200`**: configurazione aggiornata.
-- **Errori**: `401` sessione assente o non valida, `422` se il body è vuoto, `404` se la configurazione non esiste. Dal proxy Next.js, `403` se l'origine non coincide con l'host del sito.
+- **Updatable fields**: `agent_name`, `company_display_name`, `primary_color` (hex `#RRGGBB`), `tone` (`formal`|`informal`), `default_language`, `welcome_message`.
+- **`200` response**: the updated configuration.
+- **Errors**: `401` missing or invalid session, `422` if the body is empty, `404` if the configuration does not exist. From the Next.js proxy, `403` if the origin does not match the site host.
 
 ### `GET /dashboard/stats`
 
-Ritorna statistiche aggregate per la company corrente.
+Returns aggregate statistics for the current company.
 
-- **Risposta `200`**:
+- **`200` response**:
 
 ```json
 {
@@ -227,17 +227,17 @@ Ritorna statistiche aggregate per la company corrente.
 }
 ```
 
-- **Errori**: `401` sessione assente o non valida.
+- **Errors**: `401` missing or invalid session.
 
 ---
 
-## 📚 Riferimenti
+## 📚 References
 
-- **Router documenti**: [backend/api/documents.py](../backend/api/documents.py)
-- **Router agente**: [backend/api/agent.py](../backend/api/agent.py)
-- **Router auth**: [backend/api/auth.py](../backend/api/auth.py)
-- **Router config**: [backend/api/config.py](../backend/api/config.py)
-- **Router dashboard**: [backend/api/dashboard.py](../backend/api/dashboard.py)
-- **Sessione / SSO**: [backend/utils/auth.py](../backend/utils/auth.py)
-- **Registrazione**: [backend/main.py](../backend/main.py)
-- **Doc correlati**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md), [frontend.md](frontend.md)
+- **Documents router**: [backend/api/documents.py](../backend/api/documents.py)
+- **Agent router**: [backend/api/agent.py](../backend/api/agent.py)
+- **Auth router**: [backend/api/auth.py](../backend/api/auth.py)
+- **Config router**: [backend/api/config.py](../backend/api/config.py)
+- **Dashboard router**: [backend/api/dashboard.py](../backend/api/dashboard.py)
+- **Session / SSO**: [backend/utils/auth.py](../backend/utils/auth.py)
+- **Router registration**: [backend/main.py](../backend/main.py)
+- **Related docs**: [rag.md](rag.md), [database.md](database.md), [architecture.md](architecture.md), [frontend.md](frontend.md)

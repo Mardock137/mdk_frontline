@@ -1,132 +1,132 @@
 <!-- markdownlint-disable -->
-# Sistema RAG
+# RAG system
 
-Guida operativa al sistema RAG (Retrieval-Augmented Generation) di MDK Frontline: come vengono processati i documenti caricati e come funziona la ricerca semantica.
+How MDK Frontline's RAG (retrieval-augmented generation) system processes uploaded documents and runs semantic search.
 
 ---
 
-## 📋 Indice
+## 📋 Contents
 
-- [📄 Panoramica](#-panoramica)
-- [⚙️ Come funziona](#️-come-funziona)
-- [🔧 Configurazione](#-configurazione)
-- [🚀 Avvio rapido](#-avvio-rapido)
+- [📄 Overview](#-overview)
+- [⚙️ How it works](#️-how-it-works)
+- [🔧 Configuration](#-configuration)
+- [🚀 Quick start](#-quick-start)
 - [🧪 Testing](#-testing)
 - [🔍 Troubleshooting](#-troubleshooting)
-- [⚠️ Note MVP](#️-note-mvp)
-- [📚 Riferimenti](#-riferimenti)
+- [⚠️ MVP notes](#️-mvp-notes)
+- [📚 References](#-references)
 
 ---
 
-## 📄 Panoramica
+## 📄 Overview
 
-Il sistema RAG permette a ogni azienda cliente di:
+The RAG system lets each customer company:
 
-1. **Caricare documenti** (PDF, DOCX, TXT, Markdown) tramite la dashboard.
-2. Averli **indicizzati automaticamente**: estrazione del testo, divisione in pezzi ("chunk"), calcolo degli embedding, salvataggio.
-3. Eseguire **ricerche semantiche** sulla knowledge base: data una domanda, il sistema ritorna i chunk più rilevanti.
+1. **Upload documents** (PDF, DOCX, TXT, Markdown) from the dashboard.
+2. Have them **indexed automatically**: text extraction, splitting into chunks, embedding, and storage.
+3. **Search the knowledge base by meaning**: given a question, the system returns the most relevant chunks.
 
-La ricerca semantica è già integrata come **tool** dell'agente AI (`search_knowledge`): quando un cliente fa una domanda, l'agente la usa autonomamente per trovare le risposte nella knowledge base. L'endpoint `/rag/search` rimane disponibile per testare la ricerca direttamente senza passare dall'agente.
+Semantic search is already a **tool** of the AI agent (`search_knowledge`). When a customer asks a question, the agent calls it on its own to look up answers in the knowledge base. The `/rag/search` endpoint stays available so you can test search directly, without going through the agent.
 
 ---
 
-## ⚙️ Come funziona
+## ⚙️ How it works
 
-### Flusso di ingestion
+### Ingestion flow
 
 ```txt
-File caricato
+Uploaded file
    │
    ▼
-[Supabase Storage] ──► salvataggio grezzo
+[Supabase Storage] ──► raw file saved
    │
    ▼
-[text_extraction] ──► estrazione del testo
+[text_extraction] ──► text extracted
    │
    ▼
-[chunking] ──────────► suddivisione in chunk da ~500 token con overlap
+[chunking] ──────────► split into chunks of about 500 tokens, with overlap
    │
    ▼
-[Voyage AI embed] ───► 1 embedding da 1024 dimensioni per chunk
+[Voyage AI embed] ───► one 1024-dimension embedding per chunk
    │
    ▼
-[document_chunks]  ── pgvector su Supabase
+[document_chunks]  ── pgvector on Supabase
 ```
 
-### Flusso di search
+### Search flow
 
 ```text
-"Come resetto la password?"
+"How do I reset my password?"
    │
    ▼
 [Voyage AI embed] (input_type=query)
    │
    ▼
-[frontline.match_document_chunks RPC] ── filtro per company_id + ORDER BY distance
+[frontline.match_document_chunks RPC] ── filter by company_id + ORDER BY distance
    │
    ▼
-Top K chunk con similarity score
+Top K chunks with a similarity score
 ```
 
-### Scelte tecniche
+### Technical choices
 
-| Aspetto              | Scelta MVP                               | Perché                                                             |
-|----------------------|------------------------------------------|--------------------------------------------------------------------|
-| Provider embedding   | **Voyage AI** (`voyage-3`, 1024 dim)     | Multilingua (come richiesto dalla live chat), qualità top.         |
-| SDK                  | REST via `httpx`                         | L'SDK ufficiale non supporta Python 3.14 → chiamata diretta.       |
-| Dimensione chunk     | ~2000 caratteri (~500 token)             | Sweet spot per FAQ/manuali, standard di settore.                   |
-| Overlap              | ~200 caratteri                           | Evita di spezzare a metà concetti chiave.                          |
-| Batching embeddings  | 128 chunk per chiamata a Voyage          | Limite massimo consentito dall'API, spezzato automaticamente.      |
-| Indice vettoriale    | HNSW + cosine distance                   | Default moderno di pgvector, ottimo rapporto qualità/velocità.     |
-| Elaborazione         | **Sincrona** dentro l'endpoint di upload | Semplice. Code asincrone in una fase successiva.                   |
-| Tabella              | `document_chunks` separata               | Più chunk per documento → non sta in una colonna su `documents`.   |
-| Path Storage         | `<company_id>/<document_id>/<filename>`  | UUID nel path evita collisioni se due upload hanno lo stesso nome. |
-
----
-
-## 🔧 Configurazione
-
-### Variabili d'ambiente
-
-| Variabile                   | Dove                  | Descrizione                                              |
-|-----------------------------|-----------------------|----------------------------------------------------------|
-| `VOYAGE_API_KEY`            | `backend/.env`        | Chiave API di Voyage AI (ottenibile su voyageai.com).    |
-| `SUPABASE_URL`              | `backend/.env`        | URL progetto Supabase.                                   |
-| `SUPABASE_SERVICE_ROLE_KEY` | `backend/.env`        | Service role key (bypassa RLS, solo backend).            |
-| `SUPABASE_SCHEMA`           | `backend/.env`        | Schema del DB (default `frontline`); ospita `document_chunks` e `match_document_chunks`. |
-| `ALLOW_DEV_COMPANY_FALLBACK` | `backend/.env`       | Se `true`, senza sessione si usa `DEV_COMPANY_ID`. Solo sviluppo locale (default `false`). |
-| `DEV_COMPANY_ID`            | `backend/.env`        | UUID della company di sviluppo. Usato solo se il flag qui sopra è attivo. |
-
-### Migration
-
-Le migration della fase 3 (`010`, `011`, `012`) vanno eseguite nel SQL Editor di Supabase **dopo** quelle della fase 2. Vedi [database.md](database.md#-avvio-rapido-applicare-le-migration).
+| Topic                | MVP choice                               | Why                                                                                  |
+|----------------------|------------------------------------------|--------------------------------------------------------------------------------------|
+| Embedding provider   | **Voyage AI** (`voyage-3`, 1024 dims)    | Multilingual, which the live chat needs, and strong quality.                         |
+| SDK                  | REST via `httpx`                         | The official SDK does not support Python 3.14, so the call is made directly.         |
+| Chunk size           | ~2000 characters (~500 tokens)           | A practical size for FAQs and manuals, and a common default.                         |
+| Overlap              | ~200 characters                          | Keeps a key idea from being cut in half.                                             |
+| Embedding batches    | 128 chunks per Voyage call               | The API maximum, split automatically.                                                |
+| Vector index         | HNSW + cosine distance                   | pgvector's current default, a good balance of quality and speed.                     |
+| Processing           | **Synchronous**, inside the upload endpoint | Simple. An async queue can come later.                                            |
+| Table                | Separate `document_chunks`               | A document has many chunks, so they do not belong in one column on `documents`.      |
+| Storage path         | `<company_id>/<document_id>/<filename>`  | A UUID in the path avoids collisions when two uploads share a filename.              |
 
 ---
 
-## 🚀 Avvio rapido
+## 🔧 Configuration
 
-1. **Imposta `VOYAGE_API_KEY`** in `backend/.env`.
-2. **Applica le migration** `010`, `011`, `012`, `013` su Supabase.
-3. **Avvia il backend**:
+### Environment variables
+
+| Variable                     | Where            | Description                                                                                          |
+|------------------------------|------------------|------------------------------------------------------------------------------------------------------|
+| `VOYAGE_API_KEY`             | `backend/.env`   | Voyage AI API key (from voyageai.com).                                                               |
+| `SUPABASE_URL`               | `backend/.env`   | Supabase project URL.                                                                                 |
+| `SUPABASE_SERVICE_ROLE_KEY`  | `backend/.env`   | Service role key (bypasses RLS; backend only).                                                        |
+| `SUPABASE_SCHEMA`            | `backend/.env`   | Database schema (default `frontline`). Holds `document_chunks` and `match_document_chunks`.           |
+| `ALLOW_DEV_COMPANY_FALLBACK` | `backend/.env`   | When `true`, a request with no session uses `DEV_COMPANY_ID`. Local development only (default `false`). |
+| `DEV_COMPANY_ID`             | `backend/.env`   | UUID of the development company. Used only when the flag above is on.                                |
+
+### Migrations
+
+Run migrations `010`, `011`, and `012` in the Supabase SQL Editor **after** the earlier ones. See [database.md](database.md#-quick-start-applying-migrations).
+
+---
+
+## 🚀 Quick start
+
+1. **Set `VOYAGE_API_KEY`** in `backend/.env`.
+2. **Apply migrations** `010`, `011`, `012`, and `013` on Supabase.
+3. **Start the backend**:
 
 ```bash
 cd backend
 uvicorn main:app --reload
 ```
 
-4. **Carica un documento** (in locale serve `ALLOW_DEV_COMPANY_FALLBACK=true`, altrimenti la risposta è `401`):
+4. **Upload a document** (locally this needs `ALLOW_DEV_COMPANY_FALLBACK=true`, otherwise the response is `401`):
 
 ```bash
 curl -X POST http://localhost:8000/documents/upload \
-     -F "file=@manuale.pdf"
+     -F "file=@manual.pdf"
 ```
 
-5. **Prova una ricerca** (anche qui, senza il flag la risposta è `401`):
+5. **Try a search** (again, without the flag the response is `401`):
 
 ```bash
 curl -X POST http://localhost:8000/rag/search \
      -H "Content-Type: application/json" \
-     -d '{"query": "Come contattare il supporto?", "top_k": 5}'
+     -d '{"query": "How do I contact support?", "top_k": 5}'
 ```
 
 ---
@@ -138,60 +138,60 @@ cd backend
 pytest tests/rag tests/api/test_documents.py tests/integrations/embedding_interfaces -v
 ```
 
-Tutti i test usano mock: nessuna chiamata reale a Voyage, Supabase o allo storage. Il chunker e l'estrattore sono testati end-to-end con input veri (testo inline, DOCX generato al volo).
+Every test uses mocks. There are no real calls to Voyage, Supabase, or storage. The chunker and the extractor are tested end to end with real input (inline text, and a DOCX generated on the fly).
 
 ---
 
 ## 🔍 Troubleshooting
 
-### Problema: `RuntimeError: Voyage is not configured`
+### `RuntimeError: Voyage is not configured`
 
-**Causa**: `VOYAGE_API_KEY` non è in `backend/.env`.
-**Soluzione**: aggiungila e riavvia il backend.
+**Cause**: `VOYAGE_API_KEY` is missing from `backend/.env`.
+**Fix**: add it and restart the backend.
 
-### Problema: upload lento per PDF grossi
+### Uploads are slow for large PDFs
 
-**Causa**: nell'MVP l'elaborazione è sincrona dentro l'endpoint. Un PDF da 100 pagine può richiedere qualche secondo (parsing + N chiamate embedding).
-**Soluzione**: per l'MVP accettare l'attesa. Post-MVP si può spostare l'elaborazione su una coda asincrona.
+**Cause**: in the MVP, processing happens synchronously inside the endpoint. A 100-page PDF can take a few seconds (parsing plus N embedding calls).
+**Fix**: for the MVP, wait it out. After the MVP, processing can move to an async queue.
 
-### Problema: `UnsupportedDocumentError`
+### `UnsupportedDocumentError`
 
-**Causa**: formato non tra PDF/DOCX/TXT/Markdown.
-**Soluzione**: converti il file in uno dei formati supportati. Altri formati (CSV, XLSX, HTML) sono rimandati a post-MVP.
+**Cause**: the format is not PDF, DOCX, TXT, or Markdown.
+**Fix**: convert the file to a supported format. Other formats (CSV, XLSX, HTML) are left for after the MVP.
 
-### Problema: `/rag/search` ritorna una lista vuota
+### `/rag/search` returns an empty list
 
-**Cause possibili**:
+Possible causes:
 
-- Nessun documento caricato per quella `company_id`.
-- Documenti caricati per un'altra azienda (un altro `DEV_COMPANY_ID`, se il fallback locale è attivo, oppure un'altra sessione).
-- Lo `status` dei documenti è `error` (problema in fase di ingestion — controlla i log del backend).
+- No document has been uploaded for that `company_id`.
+- Documents were uploaded for a different company (another `DEV_COMPANY_ID`, if the local fallback is on, or another session).
+- The documents' `status` is `error` (ingestion failed — check the backend logs).
 
-### Problema: `extension "vector" is not available` o errore sull'indice HNSW
+### `extension "vector" is not available`, or an error on the HNSW index
 
-**Causa**: la migration `001_enable_extensions.sql` non è stata applicata, oppure la versione di pgvector sul progetto Supabase è troppo vecchia.
-**Soluzione**: in Supabase → Database → Extensions, verifica che `vector` sia abilitato e aggiornato.
-
----
-
-## ⚠️ Note MVP
-
-- **Sincrono**: nessuna coda di background. Upload = attesa fino a fine ingestion.
-- **Nessun re-indexing automatico**: se cambi parametri di chunking, i chunk vecchi restano come sono. Per rigenerarli cancella e ricarica il documento.
-- **Chunking a caratteri**: approssimazione semplice. Un token splitter "vero" (es. `tiktoken`) è un miglioramento post-MVP.
+**Cause**: migration `001_enable_extensions.sql` was not applied, or the Supabase project's pgvector version is too old.
+**Fix**: in Supabase, under Database → Extensions, check that `vector` is enabled and up to date.
 
 ---
 
-## 📚 Riferimenti
+## ⚠️ MVP notes
 
-- **Codice**:
+- **Synchronous**: there is no background queue. An upload waits until ingestion finishes.
+- **No automatic re-indexing**: if you change the chunking settings, existing chunks stay as they are. Delete the document and upload it again to regenerate them.
+- **Character-based chunking**: a simple approximation. A real token splitter (for example, `tiktoken`) is an improvement for after the MVP.
+
+---
+
+## 📚 References
+
+- **Code**:
   - [backend/rag/text_extraction.py](../backend/rag/text_extraction.py)
   - [backend/rag/chunking.py](../backend/rag/chunking.py)
   - [backend/rag/ingestion.py](../backend/rag/ingestion.py)
   - [backend/rag/search.py](../backend/rag/search.py)
   - [backend/integrations/embedding_interfaces/](../backend/integrations/embedding_interfaces/)
   - [backend/api/documents.py](../backend/api/documents.py)
-- **Migration**: [010](../backend/database/migrations/010_document_chunks.sql), [011](../backend/database/migrations/011_drop_documents_embedding.sql), [012](../backend/database/migrations/012_search_function.sql), [013](../backend/database/migrations/013_documents_with_counts_view.sql)
-- **Test**: [backend/tests/rag/](../backend/tests/rag/), [backend/tests/api/test_documents.py](../backend/tests/api/test_documents.py)
-- **Doc correlati**: [architecture.md](architecture.md), [database.md](database.md), [api_endpoints.md](api_endpoints.md)
-- **Risorse esterne**: [Voyage AI docs](https://docs.voyageai.com/), [pgvector](https://github.com/pgvector/pgvector)
+- **Migrations**: [010](../backend/database/migrations/010_document_chunks.sql), [011](../backend/database/migrations/011_drop_documents_embedding.sql), [012](../backend/database/migrations/012_search_function.sql), [013](../backend/database/migrations/013_documents_with_counts_view.sql)
+- **Tests**: [backend/tests/rag/](../backend/tests/rag/), [backend/tests/api/test_documents.py](../backend/tests/api/test_documents.py)
+- **Related docs**: [architecture.md](architecture.md), [database.md](database.md), [api_endpoints.md](api_endpoints.md)
+- **External**: [Voyage AI docs](https://docs.voyageai.com/), [pgvector](https://github.com/pgvector/pgvector)

@@ -40,6 +40,7 @@ logs/
 Thumbs.db
 Desktop.ini
 
+docs/TEMPLATE.md
 dev_support/
 .antigravity/
 .cursor/

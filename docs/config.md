@@ -1,35 +1,35 @@
-# Configurazione
+# Configuration
 
-Documento di riferimento per il sistema di configurazione del backend: variabili d'ambiente, file `.env`, classe `Settings` e cartella `config/` per configurazioni statiche.
-
----
-
-## 📋 Indice
-
-- [📄 Panoramica](#-panoramica)
-- [⚙️ Come funziona](#️-come-funziona)
-- [🔧 Variabili d'ambiente](#-variabili-dambiente)
-- [🚀 Setup iniziale](#-setup-iniziale)
-- [📚 Riferimenti](#-riferimenti)
+Reference for the backend configuration system: environment variables, the `.env` file, the `Settings` class, and the `config/` folder for static settings.
 
 ---
 
-## 📄 Panoramica
+## 📋 Contents
 
-La configurazione del backend è divisa in due categorie:
-
-- **Segreta / per ambiente** (chiavi API, URL di servizi, identità di sviluppo): gestita tramite variabili d'ambiente caricate dal file `.env`, mai committata su git.
-- **Statica / non sensibile** (configurazione dei modelli LLM, prompt di sistema, ecc.): gestita tramite file dentro la cartella `backend/config/`, versionata insieme al codice.
+- [📄 Overview](#-overview)
+- [⚙️ How it works](#️-how-it-works)
+- [🔧 Environment variables](#-environment-variables)
+- [🚀 Initial setup](#-initial-setup)
+- [📚 References](#-references)
 
 ---
 
-## ⚙️ Come funziona
+## 📄 Overview
 
-### Variabili d'ambiente
+Backend configuration falls into two groups:
 
-Le variabili d'ambiente sono caricate dal file `backend/.env` tramite [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). La classe `Settings` definita in [backend/utils/config.py](../backend/utils/config.py) espone ogni variabile come attributo tipizzato.
+- **Secret / per environment** (API keys, service URLs, development identity): environment variables loaded from the `.env` file. This file is never committed.
+- **Static / non-sensitive** (LLM model settings, system prompts, and so on): files inside `backend/config/`, versioned with the code.
 
-Per accedere alla configurazione dal codice si usa la funzione `get_settings()`, che restituisce un'istanza singleton (cacheata con `lru_cache`):
+---
+
+## ⚙️ How it works
+
+### Environment variables
+
+Environment variables are loaded from `backend/.env` with [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/). The `Settings` class in [backend/utils/config.py](../backend/utils/config.py) exposes each variable as a typed attribute.
+
+Code reads the configuration through `get_settings()`, which returns a singleton cached with `lru_cache`:
 
 ```python
 from utils.config import get_settings
@@ -38,28 +38,28 @@ settings = get_settings()
 api_key = settings.ANTHROPIC_API_KEY
 ```
 
-### Cartella `config/`
+### The `config/` folder
 
-La cartella [backend/config/](../backend/config/) ospita configurazioni statiche non sensibili, organizzate in sottocartelle per area:
+[backend/config/](../backend/config/) holds static, non-sensitive settings, split into folders by area:
 
-- `llm_models/` — parametri dei modelli LLM (nome modello, temperature, max tokens, ecc.)
-- `prompts/` — prompt di sistema per l'agente AI e i suoi tool
+- `llm_models/` — LLM parameters (model name, temperature, max tokens, and so on)
+- `prompts/` — system prompts for the AI agent and its tools
 
-Entrambe le sottocartelle sono già popolate.
+Both folders are already populated.
 
-#### Configurazione modelli LLM (`llm_models/`)
+#### LLM model configuration (`llm_models/`)
 
-Ogni agente ha il proprio file YAML in `backend/config/llm_models/`. Il loader (`loader.py`) legge il file, valida i campi e restituisce una dataclass immutabile `LLMModelConfig`.
+Each agent has its own YAML file in `backend/config/llm_models/`. The loader (`loader.py`) reads the file, validates the fields, and returns an immutable `LLMModelConfig` dataclass.
 
-Campi supportati:
+Supported fields:
 
-| Campo        | Tipo     | Obbligatorio | Default  | Descrizione                                                                                                                                                                                                                                                                    |
-|--------------|----------|--------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `model`      | `str`    | Sì           | —        | Identificatore del modello Claude (es. `claude-sonnet-5`).                                                                                                                                                                                                                     |
-| `max_tokens` | `int`    | Sì           | —        | Numero massimo di token che il modello può generare per risposta.                                                                                                                                                                                                              |
-| `effort`     | `str`    | No           | `high`   | Quanti token Claude spende per la risposta (testo, tool call ed eventuale thinking; non richiede il thinking attivo). Valori validi: `low`, `medium`, `high`, `xhigh`, `max`. Valori più bassi riducono latenza e costo; `high` equivale al comportamento di default dell'API. |
+| Field        | Type  | Required | Default | Description                                                                                                                                                                                                                                         |
+|--------------|-------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `model`      | `str` | Yes      | —       | Claude model id (for example, `claude-sonnet-5`).                                                                                                                                                                                                   |
+| `max_tokens` | `int` | Yes      | —       | Maximum number of tokens the model may generate in one reply.                                                                                                                                                                                       |
+| `effort`     | `str` | No       | `high`  | How many tokens Claude spends on the reply (text, tool calls, and any thinking). Thinking does not have to be enabled. Valid values: `low`, `medium`, `high`, `xhigh`, `max`. Lower values reduce latency and cost. `high` matches the API default. |
 
-Esempio (`support_agent.yaml`):
+Example (`support_agent.yaml`):
 
 ```yaml
 model: claude-sonnet-5
@@ -67,61 +67,61 @@ max_tokens: 4096
 effort: low
 ```
 
-Per customer support ad alto volume, `effort: low` è la scelta consigliata: riduce latenza e costo senza impatto significativo sulla qualità delle risposte.
+For high-volume customer support, `effort: low` is the recommended setting. It cuts latency and cost without a meaningful drop in answer quality.
 
 ---
 
-## 🔧 Variabili d'ambiente
+## 🔧 Environment variables
 
-L'elenco completo delle variabili è visibile nel file [backend/.env.example](../backend/.env.example), che va copiato in `.env` e compilato con i valori reali.
+The full list is in [backend/.env.example](../backend/.env.example). Copy it to `.env` and fill in the real values.
 
-| Variabile                    | Descrizione                                                                                                                                  | Obbligatoria             |
-|------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
-| `ANTHROPIC_API_KEY`          | Chiave API per il provider LLM (Anthropic Claude).                                                                                           | Sì                       |
-| `VOYAGE_API_KEY`             | Chiave API per Voyage AI (embedding RAG).                                                                                                    | Sì                       |
-| `SUPABASE_URL`               | URL del progetto Supabase.                                                                                                                   | Sì                       |
-| `SUPABASE_ANON_KEY`          | Chiave pubblica di Supabase, usata dal client frontend.                                                                                      | Sì                       |
-| `SUPABASE_SERVICE_ROLE_KEY`  | Chiave privata di Supabase, usata dal backend per operazioni privilegiate.                                                                   | Sì                       |
-| `SUPABASE_SCHEMA`            | Schema del database in cui vivono tabelle, funzioni e view di Frontline. Va anche aggiunto in Supabase → Settings → API → Exposed schemas.   | No (default `frontline`) |
-| `ALLOW_DEV_COMPANY_FALLBACK` | Se `true`, le richieste senza `Authorization: Bearer` usano `DEV_COMPANY_ID`. Solo sviluppo locale: non impostarlo in staging o produzione.  | No (default `false`)     |
-| `DEV_COMPANY_ID`             | UUID dell'azienda usata quando il fallback di sviluppo è attivo.                                                                             | Solo in dev, col flag    |
-| `SSO_SHARED_SECRET`          | Secret condiviso col sito esterno. Serve a verificare il JWT di ingresso (`sso_token`). Stesso valore sui due progetti.                      | Sì in staging/prod       |
-| `FRONTLINE_SESSION_SECRET`   | Secret solo di Frontline (mai condiviso col sito). Firma il token di sessione interno, durata 24 ore.                                        | Sì in staging/prod       |
-| `KV_REST_API_URL`            | URL REST del database Upstash di Frontline. Serve a registrare i `jti` dei token SSO già usati. Senza questo valore l'SSO viene rifiutato.   | Sì in staging/prod       |
-| `KV_REST_API_TOKEN`          | Token privato dello stesso database Upstash. Non committare il valore reale. Senza questo valore l'SSO viene rifiutato.                      | Sì in staging/prod       |
-| `FRONTEND_URL`               | Origine CORS permessa. Usare `*` in sviluppo; in produzione inserire l'URL esatto del frontend. Default: `*`.                                | No                       |
-| `CHAT_RATE_LIMIT`            | Tetto richieste per IP sull'endpoint chat, formato `<numero>/<periodo>` (es. `20/minute`, `200/hour`).                                       | No (default `20/minute`) |
-| `TRUST_PROXY_HEADERS`        | Se `true`, l'IP usato per il rate limiting è letto da `X-Forwarded-For`. Attivare solo dietro un reverse proxy fidato.                       | No (default `false`)     |
-| `LOG_LEVEL`                  | Livello minimo di log (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                                                     | No (default `INFO`)      |
+| Variable                     | Description                                                                                                                                   | Required                 |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|
+| `ANTHROPIC_API_KEY`          | API key for the LLM provider (Anthropic Claude).                                                                                              | Yes                      |
+| `VOYAGE_API_KEY`             | API key for Voyage AI (RAG embeddings).                                                                                                       | Yes                      |
+| `SUPABASE_URL`               | Supabase project URL.                                                                                                                         | Yes                      |
+| `SUPABASE_ANON_KEY`          | Supabase public key, used by the frontend client.                                                                                             | Yes                      |
+| `SUPABASE_SERVICE_ROLE_KEY`  | Supabase private key, used by the backend for privileged operations.                                                                          | Yes                      |
+| `SUPABASE_SCHEMA`            | Database schema that holds Frontline's tables, functions, and views. Also add it in Supabase under Settings, API, Exposed schemas.            | No (default `frontline`) |
+| `ALLOW_DEV_COMPANY_FALLBACK` | When `true`, requests without `Authorization: Bearer` use `DEV_COMPANY_ID`. Local development only: do not set it in staging or production.   | No (default `false`)     |
+| `DEV_COMPANY_ID`             | UUID of the company used when the development fallback is on.                                                                                 | Dev only, with the flag  |
+| `SSO_SHARED_SECRET`          | Secret shared with the external site. Verifies the incoming JWT (`sso_token`). The same value on both sides.                                  | Yes in staging/prod      |
+| `FRONTLINE_SESSION_SECRET`   | Frontline-only secret (never shared with the site). Signs the internal session token, which lasts 24 hours.                                   | Yes in staging/prod      |
+| `KV_REST_API_URL`            | REST URL of Frontline's Upstash database. Used to record `jti` values of SSO tokens that have already been used. Without it, SSO is rejected. | Yes in staging/prod      |
+| `KV_REST_API_TOKEN`          | Private token for the same Upstash database. Do not commit the real value. Without it, SSO is rejected.                                       | Yes in staging/prod      |
+| `FRONTEND_URL`               | Allowed CORS origin. Use `*` in development; in production set the exact frontend URL. Default: `*`.                                          | No                       |
+| `CHAT_RATE_LIMIT`            | Per-IP request cap on the chat endpoint, in the form `<number>/<period>` (for example, `20/minute`, `200/hour`).                              | No (default `20/minute`) |
+| `TRUST_PROXY_HEADERS`        | When `true`, the IP used for rate limiting is read from `X-Forwarded-For`. Enable it only behind a trusted reverse proxy.                     | No (default `false`)     |
+| `LOG_LEVEL`                  | Minimum log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).                                                                          | No (default `INFO`)      |
 
-> **Attenzione**: il file `.env` contiene dati sensibili e non deve mai essere committato. È escluso dal controllo versione tramite `.gitignore`.
+> **Warning**: the `.env` file holds secrets and must never be committed. `.gitignore` keeps it out of version control.
 
 ---
 
-## 🚀 Setup iniziale
+## 🚀 Initial setup
 
-1. Dalla cartella `backend/`, copiare il template:
+1. From the `backend/` folder, copy the template:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Aprire `.env` con un editor e sostituire i valori placeholder con le chiavi reali.
+2. Open `.env` in an editor and replace the placeholder values with the real keys.
 
-3. Verificare il caricamento avviando l'applicazione (i valori vengono validati all'avvio):
+3. Check that loading works by starting the application (values are validated at startup):
 
    ```bash
    uvicorn main:app --reload
    ```
 
-Se una variabile obbligatoria è assente o malformata, l'avvio fallisce con un messaggio d'errore esplicito.
+If a required variable is missing or malformed, startup fails with an explicit error.
 
 ---
 
-## 📚 Riferimenti
+## 📚 References
 
-- **Codice**: [backend/utils/config.py](../backend/utils/config.py)
-- **Test**: [backend/tests/utils/test_config.py](../backend/tests/utils/test_config.py)
-- **Template `.env`**: [backend/.env.example](../backend/.env.example)
-- **Doc correlati**: [Sistema di logging](observability.md), [Struttura della repo](repo_structure.md)
-- **Risorse esterne**: [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
+- **Code**: [backend/utils/config.py](../backend/utils/config.py)
+- **Tests**: [backend/tests/utils/test_config.py](../backend/tests/utils/test_config.py)
+- **`.env` template**: [backend/.env.example](../backend/.env.example)
+- **Related docs**: [Logging](observability.md), [Repository structure](repo_structure.md)
+- **External**: [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)

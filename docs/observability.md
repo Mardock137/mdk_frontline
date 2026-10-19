@@ -1,98 +1,98 @@
-# Sistema di logging
+# Logging
 
-Documento di riferimento per il sistema di logging centralizzato del backend: output, rotazione dei file, livelli e configurazione.
+Reference for the backend's centralized logging: where messages go, how files rotate, log levels, and configuration.
 
 ---
 
-## 📋 Indice
+## 📋 Contents
 
-- [📄 Panoramica](#-panoramica)
-- [⚙️ Come funziona](#️-come-funziona)
-- [🔧 Configurazione](#-configurazione)
+- [📄 Overview](#-overview)
+- [⚙️ How it works](#️-how-it-works)
+- [🔧 Configuration](#-configuration)
 - [🧪 Testing](#-testing)
-- [📚 Riferimenti](#-riferimenti)
+- [📚 References](#-references)
 
 ---
 
-## 📄 Panoramica
+## 📄 Overview
 
-Il backend utilizza il modulo `logging` della libreria standard Python con una configurazione centralizzata definita in [backend/utils/logging_config.py](../backend/utils/logging_config.py). La configurazione è applicata all'avvio dell'applicazione tramite l'evento `lifespan` di FastAPI in [backend/main.py](../backend/main.py).
+The backend uses Python's standard `logging` module, configured in one place: [backend/utils/logging_config.py](../backend/utils/logging_config.py). FastAPI applies that configuration at startup, from the `lifespan` event in [backend/main.py](../backend/main.py).
 
-Caratteristiche principali:
+What it does:
 
-- Output simultaneo a **console** e a **file**.
-- **Rotazione automatica** dei file di log per evitare che crescano indefinitamente.
-- **Idempotenza**: chiamate ripetute a `setup_logging()` non duplicano gli handler.
-- Livello di log configurabile tramite variabile d'ambiente `LOG_LEVEL`.
+- Writes to the **console** and to a **file** at the same time.
+- **Rotates** log files so they do not grow without a limit.
+- **Does not duplicate handlers**: calling `setup_logging()` again does not add a second copy.
+- Takes the log level from the `LOG_LEVEL` environment variable.
 
 ---
 
-## ⚙️ Come funziona
+## ⚙️ How it works
 
-All'avvio del backend, la funzione `setup_logging()` configura il root logger con due handler:
+When the backend starts, `setup_logging()` configures the root logger with two handlers:
 
-1. **`StreamHandler`** — scrive i messaggi sulla console (stdout).
-2. **`RotatingFileHandler`** — scrive i messaggi su file, ruotandoli al raggiungimento della dimensione massima.
+1. **`StreamHandler`** — writes messages to the console (stdout).
+2. **`RotatingFileHandler`** — writes messages to a file and rotates the file when it reaches the size limit.
 
-### File di log
+### Log file
 
-- **Percorso**: `backend/logs/backend.log`
-- **Dimensione massima per file**: 5 MB
-- **Numero di backup mantenuti**: 5 (i file ruotati vengono rinominati in `backend.log.1`, `backend.log.2`, ecc.)
+- **Path**: `backend/logs/backend.log`
+- **Maximum size per file**: 5 MB
+- **Backups kept**: 5 (rotated files are renamed `backend.log.1`, `backend.log.2`, and so on)
 
-La cartella [backend/logs/](../backend/logs/) viene creata automaticamente se non esiste.
+The [backend/logs/](../backend/logs/) folder is created automatically if it does not exist.
 
-### Formato dei messaggi
+### Message format
 
 ```text
-2026-04-17 10:23:45 | INFO     | nome.del.modulo | Messaggio di log
+2026-04-17 10:23:45 | INFO     | module.name | Log message
 ```
 
-I campi sono: timestamp, livello, nome del logger (di solito il modulo Python), messaggio.
+The fields are: timestamp, level, logger name (usually the Python module), and message.
 
-### Uso nel codice
+### Use in code
 
-Ogni modulo recupera il proprio logger con il nome standard `__name__`:
+Each module gets its own logger with the usual `__name__`:
 
 ```python
 import logging
 
 logger = logging.getLogger(__name__)
 
-logger.info("Operazione completata")
-logger.warning("Attenzione: valore inatteso")
-logger.error("Errore durante l'elaborazione")
+logger.info("Operation completed")
+logger.warning("Unexpected value")
+logger.error("Processing failed")
 ```
 
-Non serve configurare nulla nei singoli moduli: ereditano la configurazione dal root logger.
+Individual modules do not configure logging themselves. They inherit it from the root logger.
 
-`utils.replay_guard` scrive nel log quando il controllo monouso del token SSO non può parlare con Redis (variabili mancanti, timeout, risposta non valida). Il messaggio non contiene il token SSO né il valore di `KV_REST_API_TOKEN`. `api.auth` registra `SSO replay guard unavailable` e rifiuta il login.
+`utils.replay_guard` logs when the SSO single-use check cannot reach Redis (missing variables, timeout, or an invalid response). The message does not include the SSO token or the value of `KV_REST_API_TOKEN`. `api.auth` logs `SSO replay guard unavailable` and rejects the sign-in.
 
-### Librerie di terze parti silenziate
+### Third-party libraries kept quiet
 
-Le librerie HTTP di basso livello usate sotto il cofano (`httpx`, `httpcore`, `hpack`) a livello `DEBUG` stampano le intestazioni HTTP grezze delle richieste — comprese `Authorization` e `apikey`, cioè la `SUPABASE_SERVICE_ROLE_KEY`. Per evitare che finiscano nel file di log, `setup_logging()` forza questi tre logger a `WARNING` **indipendentemente** dal `LOG_LEVEL` scelto per il resto dell'app: puoi quindi usare `LOG_LEVEL=DEBUG` per debuggare la tua logica applicativa senza rischiare di scrivere segreti su disco.
+The low-level HTTP libraries used underneath (`httpx`, `httpcore`, `hpack`) print raw HTTP headers at `DEBUG`, including `Authorization` and `apikey`, which is the `SUPABASE_SERVICE_ROLE_KEY`. To keep those out of the log file, `setup_logging()` forces those three loggers to `WARNING` **regardless** of the `LOG_LEVEL` chosen for the rest of the app. You can set `LOG_LEVEL=DEBUG` to debug application logic without writing secrets to disk.
 
 ---
 
-## 🔧 Configurazione
+## 🔧 Configuration
 
-Il livello di log è controllato dalla variabile d'ambiente `LOG_LEVEL` definita in [backend/.env](../backend/.env) (o [backend/.env.example](../backend/.env.example) come riferimento).
+The log level is the `LOG_LEVEL` environment variable in [backend/.env](../backend/.env) (see [backend/.env.example](../backend/.env.example) for the template).
 
-Valori accettati (dal più verboso al meno verboso):
+Accepted values, from the most verbose to the least:
 
-- `DEBUG` — ogni dettaglio, utile durante lo sviluppo.
-- `INFO` — eventi rilevanti del flusso normale (default).
-- `WARNING` — situazioni sospette ma non bloccanti.
-- `ERROR` — errori gestiti.
-- `CRITICAL` — errori gravi che possono compromettere il funzionamento.
+- `DEBUG` — every detail, useful while developing.
+- `INFO` — meaningful events in the normal flow (the default).
+- `WARNING` — suspicious situations that do not stop the process.
+- `ERROR` — handled errors.
+- `CRITICAL` — severe errors that can break the application.
 
-Esempio in `.env`:
+Example in `.env`:
 
 ```env
 LOG_LEVEL=DEBUG
 ```
 
-Per override temporanei (utile nei test), `setup_logging()` accetta parametri opzionali:
+For a temporary override (useful in tests), `setup_logging()` takes optional arguments:
 
 ```python
 from pathlib import Path
@@ -105,13 +105,13 @@ setup_logging(log_level="DEBUG", log_file=Path("/tmp/custom.log"))
 
 ## 🧪 Testing
 
-I test del sistema di logging si trovano in [backend/tests/utils/test_logging_config.py](../backend/tests/utils/test_logging_config.py) e verificano:
+Logging tests live in [backend/tests/utils/test_logging_config.py](../backend/tests/utils/test_logging_config.py). They check:
 
-- Creazione corretta dei file di log e degli handler.
-- Scrittura effettiva dei messaggi.
-- Idempotenza della funzione di setup.
+- that log files and handlers are created correctly
+- that messages are actually written
+- that setup is idempotent
 
-Per eseguirli, dalla cartella `backend/`:
+From the `backend/` folder:
 
 ```bash
 pytest tests/utils/test_logging_config.py -v
@@ -119,9 +119,9 @@ pytest tests/utils/test_logging_config.py -v
 
 ---
 
-## 📚 Riferimenti
+## 📚 References
 
-- **Codice**: [backend/utils/logging_config.py](../backend/utils/logging_config.py)
-- **Test**: [backend/tests/utils/test_logging_config.py](../backend/tests/utils/test_logging_config.py)
-- **Doc correlati**: [Configurazione](config.md), [Struttura della repo](repo_structure.md)
-- **Risorse esterne**: [Python logging HOWTO](https://docs.python.org/3/howto/logging.html), [RotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#logging.handlers.RotatingFileHandler)
+- **Code**: [backend/utils/logging_config.py](../backend/utils/logging_config.py)
+- **Tests**: [backend/tests/utils/test_logging_config.py](../backend/tests/utils/test_logging_config.py)
+- **Related docs**: [Configuration](config.md), [Repository structure](repo_structure.md)
+- **External**: [Python logging HOWTO](https://docs.python.org/3/howto/logging.html), [RotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#logging.handlers.RotatingFileHandler)

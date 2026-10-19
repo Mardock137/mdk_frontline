@@ -1,40 +1,40 @@
-# Architettura
+# Architecture
 
-Panoramica dell'architettura tecnica di MDK Frontline: componenti principali, stack tecnologico e schema del database.
-
----
-
-## 📋 Indice
-
-- [📄 Panoramica](#-panoramica)
-- [⚙️ Come funziona](#️-come-funziona)
-- [🗄️ Schema del database](#️-schema-del-database)
-- [🔒 Sicurezza e isolamento multi-tenant](#-sicurezza-e-isolamento-multi-tenant)
-- [🔑 Autenticazione (SSO da un sito esterno)](#-autenticazione-sso-da-un-sito-esterno)
-- [📚 Riferimenti](#-riferimenti)
+Technical overview of MDK Frontline: main components, technology stack, and database schema.
 
 ---
 
-## 📄 Panoramica
+## 📋 Contents
 
-MDK Frontline è un SaaS multi-tenant di customer support AI. Ogni azienda cliente è un **tenant** isolato: i suoi documenti, le conversazioni e i ticket non sono mai visibili ad altri tenant.
-
-Componenti principali:
-
-- **Backend (Python + FastAPI)** — API REST, orchestratore dell'agente AI, sistema RAG, integrazione con Claude (Anthropic).
-- **Frontend (Next.js + shadcn/ui)** — dashboard aziendale in inglese e pagina di live chat pubblica.
-- **Database (Supabase)** — PostgreSQL con estensione `pgvector` per gli embedding, Supabase Storage per i file, Row Level Security per l'isolamento multi-tenant. Tutti gli oggetti applicativi vivono nello schema dedicato `frontline`; l'estensione `pgvector` vive nello schema dedicato `extensions`. Lo schema `public` è vuoto.
-- **LLM esterno** — Anthropic Claude.
+- [📄 Overview](#-overview)
+- [⚙️ How it works](#️-how-it-works)
+- [🗄️ Database schema](#️-database-schema)
+- [🔒 Multi-tenant security and isolation](#-multi-tenant-security-and-isolation)
+- [🔑 Authentication (SSO from an external site)](#-authentication-sso-from-an-external-site)
+- [📚 References](#-references)
 
 ---
 
-## ⚙️ Come funziona
+## 📄 Overview
+
+MDK Frontline is a multi-tenant AI customer-support SaaS. Each customer company is an isolated **tenant**: its documents, conversations, and tickets are never visible to other tenants.
+
+Main components:
+
+- **Backend (Python + FastAPI)** — REST API, AI agent orchestrator, RAG system, and the Claude (Anthropic) integration.
+- **Frontend (Next.js + shadcn/ui)** — company dashboard in English and a public live chat page.
+- **Database (Supabase)** — PostgreSQL with the `pgvector` extension for embeddings, Supabase Storage for files, and Row Level Security for multi-tenant isolation. All application objects live in the dedicated `frontline` schema; the `pgvector` extension lives in the dedicated `extensions` schema. The `public` schema is empty.
+- **External LLM** — Anthropic Claude.
+
+---
+
+## ⚙️ How it works
 
 ```txt
-[Cliente finale]
+[End customer]
       │
       ▼  POST /chat/{slug}/message
-[Live chat] ──► [Backend FastAPI]
+[Live chat] ──► [FastAPI backend]
                         │
                         ▼
                [SupportAgent loop]
@@ -49,37 +49,37 @@ Componenti principali:
           + pgvector)        claude-sonnet-5)
 ```
 
-Il backend si connette a Supabase tramite **service role key** (chiave privata). Il service role **bypassa la Row Level Security**: l'isolamento tra tenant è garantito a livello applicativo, filtrando sempre per `company_id` nelle query.
+The backend connects to Supabase with the **service role key** (a private key). The service role **bypasses Row Level Security**: tenant isolation is enforced in application code, by filtering every query on `company_id`.
 
-### Loop dell'agente
+### Agent loop
 
-1. Carica lo storico della conversazione dal DB.
-2. Costruisce il system prompt da `agent_config` (nome agente, azienda, tono, lingua).
-3. Chiama Claude con i tre tool definiti (`search_knowledge`, `create_ticket`, `escalate`).
-4. Se Claude invoca un tool → lo esegue, invia il risultato a Claude, ripete.
-5. Quando Claude produce una risposta finale (`stop_reason = "end_turn"`) → salva i messaggi nel DB e ritorna la risposta al client.
+1. Load the conversation history from the database.
+2. Build the system prompt from `agent_config` (agent name, company, tone, language).
+3. Call Claude with the three defined tools (`search_knowledge`, `create_ticket`, `escalate`).
+4. If Claude calls a tool, run it, send the result back to Claude, and repeat.
+5. When Claude produces a final answer (`stop_reason = "end_turn"`), save the messages to the database and return the answer to the client.
 
 ---
 
-## 🗄️ Schema del database
+## 🗄️ Database schema
 
-Lo schema è definito da migration SQL in [backend/database/migrations/](../backend/database/migrations/). Vanno eseguite manualmente nel SQL Editor di Supabase **in ordine numerico**.
+The schema is defined by SQL migrations in [backend/database/migrations/](../backend/database/migrations/). Run them manually in the Supabase SQL Editor, **in numeric order**.
 
-Tabelle, funzioni e view vivono in uno schema dedicato **`frontline`** (lo schema `public` resta libero per un futuro secondo prodotto). L'estensione `vector` (pgvector) vive in un secondo schema dedicato, **`extensions`**: `public` è quindi completamente vuoto. Il backend punta allo schema applicativo giusto tramite la variabile `SUPABASE_SCHEMA` (default `frontline`); lo schema `extensions` non è mai interrogato direttamente dal backend.
+Tables, functions, and views live in a dedicated **`frontline`** schema (the `public` schema is left free for a possible second product later). The `vector` extension (pgvector) lives in a second dedicated schema, **`extensions`**, so `public` is completely empty. The backend selects the application schema through the `SUPABASE_SCHEMA` variable (default `frontline`). The backend never queries the `extensions` schema directly.
 
-### Tabelle
+### Tables
 
-| Tabella           | Scopo                                                                                           |
-|-------------------|-------------------------------------------------------------------------------------------------|
-| `companies`       | Aziende clienti (tenant). Ogni azienda ha uno `slug` usato nell'URL chat.                       |
-| `agent_configs`   | Configurazione dell'agente per ogni azienda (nome, logo, tono, ecc.).                           |
-| `documents`       | Documenti della knowledge base (metadata + riferimento allo Storage).                           |
-| `document_chunks` | Pezzi di documento con embedding (vector 1024) per la ricerca semantica.                        |
-| `conversations`   | Conversazioni della live chat. Status: `active`, `closed`, `escalated`.                         |
-| `messages`        | Singoli messaggi dentro ogni conversazione (ruoli: `customer`, `agent`, `system`).              |
-| `tickets`         | Ticket aperti dall'agente. `is_escalation=false` → supporto normale; `true` → escalation umana. |
+| Table             | Purpose                                                                                                      |
+|-------------------|--------------------------------------------------------------------------------------------------------------|
+| `companies`       | Customer companies (tenants). Each company has a `slug` used in the chat URL.                                |
+| `agent_configs`   | Agent configuration for each company (name, logo, tone, and so on).                                          |
+| `documents`       | Knowledge-base documents (metadata plus a reference to Storage).                                             |
+| `document_chunks` | Document chunks with an embedding (1024-dimension vector) for semantic search.                               |
+| `conversations`   | Live chat conversations. Status: `active`, `closed`, `escalated`.                                            |
+| `messages`        | Individual messages inside a conversation (roles: `customer`, `agent`, `system`).                            |
+| `tickets`         | Tickets opened by the agent. `is_escalation=false` is a normal support ticket; `true` is a human escalation. |
 
-### Diagramma ER
+### ER diagram
 
 ```mermaid
 erDiagram
@@ -93,48 +93,48 @@ erDiagram
     conversations ||--o{ tickets : creates
 ```
 
-### Estensioni PostgreSQL
+### PostgreSQL extensions
 
-- `vector` (pgvector) — installata nello schema `extensions`, usata per la ricerca semantica (colonna `document_chunks.embedding`, vettori da 1024 dimensioni, indice HNSW con cosine distance).
-- `pgcrypto` — usata per `gen_random_uuid()` nelle primary key.
+- `vector` (pgvector) — installed in the `extensions` schema and used for semantic search (the `document_chunks.embedding` column, 1024-dimension vectors, HNSW index with cosine distance).
+- `pgcrypto` — used for `gen_random_uuid()` on primary keys.
 
 ### Storage
 
-Il bucket Supabase `documents` è **privato**: solo il backend (service role) può leggere/scrivere. Gli oggetti sono organizzati come `<company_id>/<document_id>/<filename>` per separare i tenant e prevenire collisioni tra file con lo stesso nome.
+The Supabase `documents` bucket is **private**: only the backend (service role) can read and write. Objects are stored as `<company_id>/<document_id>/<filename>`, which separates tenants and avoids collisions between files that share a name.
 
 ---
 
-## 🔒 Sicurezza e isolamento multi-tenant
+## 🔒 Multi-tenant security and isolation
 
-- **Row Level Security (RLS)** attivata su tutte le tabelle. Nell'MVP non ci sono policy per `anon`/`authenticated` (quindi: nessun accesso diretto dal frontend al DB). Tutto il traffico passa dal backend, che usa il service role e bypassa RLS.
-- **Isolamento applicativo**: ogni query backend filtra per `company_id`. Dashboard e documenti lo ricavano dal token di sessione Frontline (`Authorization: Bearer`). Se l'header manca la risposta è `401`, salvo `ALLOW_DEV_COMPANY_FALLBACK=true` in sviluppo locale (allora si usa `DEV_COMPANY_ID`). La live chat pubblica usa lo slug nell'URL.
-- **Storage**: bucket privato, oggetti namespaciati per `company_id`.
-- **Segreti**: `SUPABASE_SERVICE_ROLE_KEY` e `ANTHROPIC_API_KEY` vivono solo in `backend/.env`, mai esposti al frontend.
-
----
-
-## 🔑 Autenticazione (SSO da un sito esterno)
-
-La dashboard non ha un login proprio. Si apre con un JWT firmato da un sito esterno, scambiato in `POST /auth/sso` con una sessione interna.
-
-### Flusso
-
-1. L'azienda cliente effettua il login **sul sito esterno**.
-2. Dal sito apre Frontline. Il sito esterno reindirizza a `/sso/callback?sso_token=...` (JWT HS256, durata 60 secondi, `sub` = `company_id`, `jti` univoco, `product` = `mdk-frontline`).
-3. Il frontend chiede al backend `POST /auth/sso`. Il backend verifica firma (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline`, scadenza (leeway 10s), `jti` presente e `product` uguale a `mdk-frontline`. Poi registra il `jti` su Upstash Redis per 90 secondi: se è già presente risponde `401`; se Redis non risponde o le variabili mancano risponde `503` e non emette la sessione.
-4. Il backend emette un token di sessione interno (24h, `FRONTLINE_SESSION_SECRET`, mai condiviso col sito). Il frontend lo salva nel cookie `frontline_session` con `httpOnly`: JavaScript non può leggerlo e il browser non allega `Authorization: Bearer`. Lo allega il proxy Next.js (`/api/...`) alle chiamate dashboard/documenti. Su `POST`, `PATCH` e `DELETE` il proxy risponde `403` se l'origine non coincide con l'host del sito.
-5. Token mancante, scaduto, già usato o non valido → pagina `/sso/error` con link di ritorno al sito. Se il controllo anti-riuso non è disponibile, la stessa pagina: il frontend tratta `401` e `503` allo stesso modo.
-
-In locale, senza header di sessione, gli endpoint usano `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`. Senza quel flag rispondono `401`.
+- **Row Level Security (RLS)** is enabled on every table. The MVP has no policies for `anon` or `authenticated`, so the frontend cannot reach the database directly. All traffic goes through the backend, which uses the service role and bypasses RLS.
+- **Application isolation**: every backend query filters on `company_id`. Dashboard and document routes take it from the Frontline session token (`Authorization: Bearer`). If the header is missing the response is `401`, unless `ALLOW_DEV_COMPANY_FALLBACK=true` in local development, in which case `DEV_COMPANY_ID` is used. The public live chat uses the slug in the URL.
+- **Storage**: private bucket, objects namespaced by `company_id`.
+- **Secrets**: `SUPABASE_SERVICE_ROLE_KEY` and `ANTHROPIC_API_KEY` live only in `backend/.env` and are never exposed to the frontend.
 
 ---
 
-## 📚 Riferimenti
+## 🔑 Authentication (SSO from an external site)
 
-- **Migration SQL**: [backend/database/migrations/](../backend/database/migrations/)
-- **Client Supabase**: [backend/database/supabase_client.py](../backend/database/supabase_client.py)
-- **Modelli Pydantic**: [backend/database/models.py](../backend/database/models.py)
-- **Test**: [backend/tests/database/](../backend/tests/database/)
-- **SSO / sessione**: [backend/utils/auth.py](../backend/utils/auth.py), [backend/utils/replay_guard.py](../backend/utils/replay_guard.py), [backend/api/auth.py](../backend/api/auth.py)
-- **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md), [api_endpoints.md](api_endpoints.md)
-- **Whiteboard di prodotto**: [dev_support/whiteboard.md](../dev_support/whiteboard.md)
+The dashboard has no login of its own. It opens with a JWT signed by an external site, exchanged at `POST /auth/sso` for an internal session.
+
+### Flow
+
+1. The customer company signs in **on the external site**.
+2. From that site they open Frontline. The external site redirects to `/sso/callback?sso_token=...` (HS256 JWT, valid for 60 seconds, `sub` = `company_id`, a unique `jti`, `product` = `mdk-frontline`).
+3. The frontend calls `POST /auth/sso`. The backend checks the signature (`SSO_SHARED_SECRET`), issuer `mdk-137-website`, audience `mdk-frontline`, expiry (10-second leeway), that `jti` is present, and that `product` equals `mdk-frontline`. It then stores the `jti` in Upstash Redis for 90 seconds. If the `jti` is already there, the response is `401`. If Redis does not respond, or the variables are missing, the response is `503` and no session is issued.
+4. The backend issues an internal session token (24 hours, `FRONTLINE_SESSION_SECRET`, never shared with the site). The frontend stores it in the `frontline_session` cookie with `httpOnly`: JavaScript cannot read it, and the browser does not attach `Authorization: Bearer`. The Next.js proxy (`/api/...`) attaches it on dashboard and document calls. On `POST`, `PATCH`, and `DELETE`, the proxy returns `403` if the origin does not match the site host.
+5. A missing, expired, already used, or invalid token leads to the `/sso/error` page, with a link back to the site when that URL is configured. If the replay check is unavailable, the same page is shown: the frontend treats `401` and `503` the same way.
+
+Locally, without a session header, endpoints use `DEV_COMPANY_ID` only when `ALLOW_DEV_COMPANY_FALLBACK=true`. Without that flag they return `401`.
+
+---
+
+## 📚 References
+
+- **SQL migrations**: [backend/database/migrations/](../backend/database/migrations/)
+- **Supabase client**: [backend/database/supabase_client.py](../backend/database/supabase_client.py)
+- **Pydantic models**: [backend/database/models.py](../backend/database/models.py)
+- **Tests**: [backend/tests/database/](../backend/tests/database/)
+- **SSO / session**: [backend/utils/auth.py](../backend/utils/auth.py), [backend/utils/replay_guard.py](../backend/utils/replay_guard.py), [backend/api/auth.py](../backend/api/auth.py)
+- **Related docs**: [config.md](config.md), [repo_structure.md](repo_structure.md), [api_endpoints.md](api_endpoints.md)
+- **Product whiteboard**: [dev_support/whiteboard.md](../dev_support/whiteboard.md)

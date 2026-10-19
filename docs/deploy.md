@@ -1,81 +1,81 @@
 # Deploy
 
-Guida operativa al deploy di MDK Frontline in staging: containerizzazione del backend, hosting su Google Cloud Run e Vercel.
+How to deploy MDK Frontline to staging: packaging the backend, then hosting it on Google Cloud Run and Vercel.
 
 ---
 
-## 📋 Indice
+## 📋 Contents
 
-- [📄 Panoramica](#-panoramica)
-- [⚙️ Come funziona](#️-come-funziona)
+- [📄 Overview](#-overview)
+- [⚙️ How it works](#️-how-it-works)
 - [🧪 Testing](#-testing)
-- [📚 Riferimenti](#-riferimenti)
+- [📚 References](#-references)
 
 ---
 
-## 📄 Panoramica
+## 📄 Overview
 
-Per adesso il progetto viene deployato **solo in staging**, non in produzione. I due pezzi da ospitare sono:
+For now the project is deployed **to staging only**, not to production. Two pieces need hosting:
 
-- **Backend** (FastAPI) → containerizzato con Docker, ospitato su **Google Cloud Run**.
-- **Frontend** (Next.js) → ospitato su **Vercel**.
+- **Backend** (FastAPI) → packaged with Docker and hosted on **Google Cloud Run**.
+- **Frontend** (Next.js) → hosted on **Vercel**.
 
-Il database (Supabase) è già un servizio gestito esternamente: non richiede deploy da parte nostra. In questa fase si riusa il progetto Supabase già esistente, usato anche in sviluppo locale.
+The database (Supabase) is already a managed service, so it does not need a deploy of its own. This stage reuses the existing Supabase project, the same one used for local development.
 
-Non è ancora configurato un dominio custom: sia il backend che il frontend usano gli URL automatici forniti rispettivamente da Cloud Run (`*.run.app`) e Vercel (`*.vercel.app`).
+There is no custom domain yet. The backend and the frontend use the automatic URLs from Cloud Run (`*.run.app`) and Vercel (`*.vercel.app`).
 
-**Stato attuale**: backend e frontend sono entrambi online in staging e collegati tra loro. Dashboard e live chat sono state testate end-to-end.
+**Current state**: backend and frontend are both online in staging and wired together. The dashboard and the live chat have been tested end to end.
 
-- **URL backend staging**: `https://<backend-staging>.run.app`
-- **URL frontend staging**: `https://<frontend-staging>.vercel.app`
+- **Staging backend URL**: `https://<backend-staging>.run.app`
+- **Staging frontend URL**: `https://<frontend-staging>.vercel.app`
 
 ---
 
-## ⚙️ Come funziona
+## ⚙️ How it works
 
-### Containerizzazione del backend
+### Packaging the backend
 
-Il backend viene impacchettato in un'immagine Docker tramite [backend/Dockerfile](../backend/Dockerfile):
+The backend is packed into a Docker image by [backend/Dockerfile](../backend/Dockerfile):
 
-- Immagine base: `python:3.14-slim`.
-- Le dipendenze (`requirements.txt`) vengono installate in un layer separato dal codice applicativo, per riusare la cache Docker quando cambia solo il codice.
-- Il server (`uvicorn`) si avvia sulla porta indicata dalla variabile d'ambiente `PORT` (default `8080`), lo standard richiesto da Cloud Run per instradare il traffico verso il container.
-- [backend/.dockerignore](../backend/.dockerignore) esclude dal contesto di build file non necessari nell'immagine (ambiente virtuale, test, log, segreti, cache).
+- Base image: `python:3.14-slim`.
+- Dependencies (`requirements.txt`) are installed in a layer separate from the application code, so the Docker cache is reused when only the code changes.
+- The server (`uvicorn`) listens on the port in the `PORT` environment variable (default `8080`), which is what Cloud Run expects when it routes traffic to the container.
+- [backend/.dockerignore](../backend/.dockerignore) keeps unnecessary files out of the build context (virtualenv, tests, logs, secrets, caches).
 
-### Build e run locali
+### Local build and run
 
-Dalla cartella `backend/`:
+From the `backend/` folder:
 
 ```bash
 docker build -t mdk-frontline-backend:test .
 ```
 
-Per far girare il container in locale con le variabili del proprio `.env`:
+To run the container locally with the variables from your own `.env`:
 
 ```bash
 docker run --rm -p 8080:8080 --env-file .env -e PORT=8080 mdk-frontline-backend:test
 ```
 
-Verifica che il backend risponda aprendo [http://localhost:8080/health](http://localhost:8080/health): deve restituire `{"status": "ok"}`.
+Check that the backend responds by opening [http://localhost:8080/health](http://localhost:8080/health). It should return `{"status": "ok"}`.
 
-### Deploy del backend su Google Cloud Run
+### Deploying the backend to Google Cloud Run
 
-Il servizio Cloud Run **`frontline-backend-staging`** (regione `europe-west1`) è configurato per il **deploy continuo da GitHub tramite Cloud Build**:
+The Cloud Run service **`frontline-backend-staging`** (region `europe-west1`) is set up for **continuous deploy from GitHub through Cloud Build**:
 
 - **Repository**: `Mardock137/mdk_frontline`
-- **Branch**: `staging` (espressione `^staging$`)
-- **Dockerfile**: `/backend/Dockerfile` (la cartella `backend/` viene usata anche come contesto della build Docker)
-- **Accesso**: pubblico non autenticato (il backend deve rispondere direttamente al browser dei clienti finali)
-- **Scalabilità**: automatica, minimo `0` istanze (nessun costo quando non c'è traffico)
-- **Fatturazione**: basata sulle richieste
+- **Branch**: `staging` (expression `^staging$`)
+- **Dockerfile**: `/backend/Dockerfile` (the `backend/` folder is also the Docker build context)
+- **Access**: public, unauthenticated (the backend has to answer the end customer's browser directly)
+- **Scaling**: automatic, minimum `0` instances (no cost when there is no traffic)
+- **Billing**: per request
 
-Ad ogni push sul branch `staging`, Cloud Build ricostruisce l'immagine e Cloud Run pubblica automaticamente una nuova revisione.
+Every push to the `staging` branch makes Cloud Build rebuild the image, and Cloud Run publishes a new revision.
 
-### Segreti e configurazione su Cloud Run
+### Secrets and configuration on Cloud Run
 
-Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google Secret Manager**, seguendo il criterio: *le credenziali sono secret, la configurazione è una variabile d'ambiente normale*.
+Sensitive credentials do not live in a `.env` file on the server. They live in **Google Secret Manager**, under this rule: *credentials are secrets, configuration is an ordinary environment variable*.
 
-**Secret** (letti da Secret Manager, ruolo `Secret Manager Secret Accessor` concesso al service account del servizio):
+**Secrets** (read from Secret Manager; the service account has the `Secret Manager Secret Accessor` role):
 
 - `ANTHROPIC_API_KEY`
 - `VOYAGE_API_KEY`
@@ -85,59 +85,59 @@ Le credenziali sensibili non vivono in un file `.env` sul server, ma su **Google
 - `FRONTLINE_SESSION_SECRET`
 - `KV_REST_API_TOKEN`
 
-**Variabili d'ambiente semplici** (nessun dato sensibile: URL pubblici o parametri di comportamento):
+**Plain environment variables** (nothing sensitive: public URLs or behavior settings):
 
-| Variabile             | Valore in staging                                             |
+| Variable              | Staging value                                                 |
 |-----------------------|---------------------------------------------------------------|
-| `SUPABASE_URL`        | URL del progetto Supabase (riusato da dev/locale)             |
+| `SUPABASE_URL`        | Supabase project URL (reused from dev/local)                  |
 | `SUPABASE_SCHEMA`     | `frontline`                                                   |
 | `FRONTEND_URL`        | `https://<frontend-staging>.vercel.app`                       |
 | `CHAT_RATE_LIMIT`     | `20/minute`                                                   |
 | `TRUST_PROXY_HEADERS` | `true`                                                        |
 | `LOG_LEVEL`           | `INFO`                                                        |
-| `KV_REST_API_URL`     | URL REST del database Upstash di Frontline                    |
+| `KV_REST_API_URL`     | REST URL of Frontline's Upstash database                      |
 
-In staging e produzione non vanno impostati né `DEV_COMPANY_ID` né `ALLOW_DEV_COMPANY_FALLBACK`. Senza sessione le API rispondono `401`.
+Do not set `DEV_COMPANY_ID` or `ALLOW_DEV_COMPANY_FALLBACK` in staging or production. Without a session, the APIs return `401`.
 
-> **Nota su `TRUST_PROXY_HEADERS`**: in locale resta `false` (valore di default), ma su Cloud Run è impostato a `true` in sicurezza, perché l'header `X-Forwarded-For` viene scritto dall'infrastruttura di Google davanti al container e non è falsificabile da un client esterno.
-> **Attenzione — permesso IAM per ogni singolo secret**: creare un secret in Secret Manager non basta per renderlo leggibile dal servizio. Ogni secret richiede il ruolo `Secret Manager Secret Accessor` concesso esplicitamente (Secret Manager → apri il secret → scheda **Autorizzazioni** → Concedi accesso) al service account del servizio (es. `<project-number>-compute@developer.gserviceaccount.com`). Dimenticarlo per un secret nuovo fa fallire il deploy con un errore `Permission denied on secret: ...` — è capitato con `SSO_SHARED_SECRET` e `FRONTLINE_SESSION_SECRET` alla loro prima introduzione.
+> **Note on `TRUST_PROXY_HEADERS`**: locally it stays `false` (the default). On Cloud Run it is set to `true`, which is safe there because Google's infrastructure writes `X-Forwarded-For` in front of the container and an outside client cannot forge it.
+> **Warning — an IAM grant for every secret**: creating a secret in Secret Manager does not make it readable by the service. Each secret needs the `Secret Manager Secret Accessor` role granted explicitly (Secret Manager → open the secret → **Permissions** → Grant access) to the service account (for example, `<project-number>-compute@developer.gserviceaccount.com`). Forgetting it on a new secret fails the deploy with `Permission denied on secret: ...`. That happened the first time `SSO_SHARED_SECRET` and `FRONTLINE_SESSION_SECRET` were added.
 
-### Deploy del frontend su Vercel
+### Deploying the frontend to Vercel
 
-Il progetto Vercel **`mdk-frontline`** è collegato allo stesso repository GitHub, con **Root Directory** impostata su `frontend` (Vercel rileva automaticamente Next.js da lì).
+The Vercel project **`mdk-frontline`** is connected to the same GitHub repository, with **Root Directory** set to `frontend` (Vercel detects Next.js from there).
 
 - **Repository**: `Mardock137/mdk_frontline`
-- **Branch usato in staging**: `staging`, pubblicato come **Preview Deployment** (non come "Production" di Vercel, che resta associato a `main` e libero per una futura vera produzione).
-- **Variabile d'ambiente** `NEXT_PUBLIC_API_URL`: puntata all'URL del backend su Cloud Run, impostata sia per l'ambiente Production che Preview di Vercel (Development resta escluso, usa `frontend/.env.local` in locale). La usano la chat pubblica, il callback SSO e il proxy `/api` (documenti e dashboard). Il browser della dashboard non chiama più Cloud Run direttamente.
-- **Variabile d'ambiente** `NEXT_PUBLIC_WEBSITE_URL`: URL del sito esterno (link di ritorno dalla pagina `/sso/error`).
-- **Upload documenti**: il file passa da Vercel (`/api/documents/upload`). Sopra 4,5 MB Vercel risponde `413` e il backend non riceve il file.
+- **Staging branch**: `staging`, published as a **Preview Deployment** (not as Vercel's "Production", which stays tied to `main` and free for a real production later).
+- **`NEXT_PUBLIC_API_URL`**: points at the Cloud Run backend URL, set for both Vercel's Production and Preview environments (Development is left out; locally it uses `frontend/.env.local`). The public chat, the SSO callback, and the `/api` proxy (documents and dashboard) all use it. The dashboard browser no longer calls Cloud Run directly.
+- **`NEXT_PUBLIC_WEBSITE_URL`**: URL of the external site (the return link on `/sso/error`). Leave it empty to hide the link.
+- **Document upload**: the file goes through Vercel (`/api/documents/upload`). Above 4.5 MB, Vercel responds `413` and the backend never receives the file.
 
-Ad ogni push sul branch `staging`, Vercel ricostruisce e ripubblica automaticamente un nuovo Preview Deployment sullo stesso URL.
+Every push to `staging` makes Vercel rebuild and republish a Preview Deployment on the same URL.
 
-> **Nota terminologica**: "Production"/"Preview" sono nomi interni di Vercel per i tipi di deployment, non corrispondono agli ambienti di business (staging/produzione del progetto). In questa fase usiamo un Preview Deployment di Vercel come nostro ambiente di staging.
+> **A note on the names**: "Production" and "Preview" are Vercel's names for deployment types. They are not the project's business environments (staging and production). At this stage a Vercel Preview Deployment is our staging environment.
 
-### Collegamento con il sito esterno (SSO)
+### Connecting the external site (SSO)
 
-Il sito esterno deve reindirizzare a un indirizzo che finisce con `/sso/callback`.
+The external site must redirect to an address that ends with `/sso/callback`.
 
-> **Attenzione — l'URL deve finire con `/sso/callback`**, non con la sola root del dominio. Se punta solo a `https://<dominio>` il token SSO arriva sulla home page di Frontline (che non lo legge) e il login automatico non parte mai, senza nessun errore visibile lato Frontline.
+> **Warning — the URL must end with `/sso/callback`**, not with the bare domain root. If it points only at `https://<domain>`, the SSO token lands on Frontline's home page, which does not read it, and the automatic sign-in never starts. Frontline shows no error.
 
-Vedi anche [architecture.md](architecture.md#-autenticazione-sso-da-un-sito-esterno) per il flusso completo del token.
+See [architecture.md](architecture.md#-authentication-sso-from-an-external-site) for the full token flow.
 
 ---
 
 ## 🧪 Testing
 
-- `docker build` deve completare senza errori.
-- Il container avviato con `docker run` deve rispondere `200 {"status": "ok"}` su `/health`.
-- In staging, il servizio Cloud Run deve rispondere `200 {"status": "ok"}` su `/health` dopo ogni nuova revisione (vedi URL nella sezione Panoramica).
-- In staging, verificare end-to-end aprendo `/dashboard` (documenti, ticket, config, stats) e `/chat/<slug>` sul frontend, con dati reali provenienti dal backend su Cloud Run.
+- `docker build` must finish without errors.
+- A container started with `docker run` must respond `200 {"status": "ok"}` on `/health`.
+- In staging, the Cloud Run service must respond `200 {"status": "ok"}` on `/health` after each new revision (see the URL in Overview).
+- In staging, check the flow end to end by opening `/dashboard` (documents, tickets, config, stats) and `/chat/<slug>` on the frontend, with real data from the Cloud Run backend.
 
 ---
 
-## 📚 Riferimenti
+## 📚 References
 
 - **Dockerfile**: [backend/Dockerfile](../backend/Dockerfile)
 - **Dockerignore**: [backend/.dockerignore](../backend/.dockerignore)
-- **Doc correlati**: [config.md](config.md), [repo_structure.md](repo_structure.md), [architecture.md](architecture.md)
-- **Risorse esterne**: [Cloud Run](https://cloud.google.com/run), [Secret Manager](https://cloud.google.com/secret-manager), [Vercel](https://vercel.com/docs)
+- **Related docs**: [config.md](config.md), [repo_structure.md](repo_structure.md), [architecture.md](architecture.md)
+- **External**: [Cloud Run](https://cloud.google.com/run), [Secret Manager](https://cloud.google.com/secret-manager), [Vercel](https://vercel.com/docs)

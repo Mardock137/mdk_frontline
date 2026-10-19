@@ -1,144 +1,144 @@
-# Database Supabase
+# Supabase database
 
-Guida operativa al database Supabase di MDK Frontline: come applicare le migration, struttura delle tabelle e regole di accesso.
+How to apply MDK Frontline's Supabase migrations, how the tables are structured, and who is allowed to read them.
 
 ---
 
-## 📋 Indice
+## 📋 Contents
 
-- [📄 Panoramica](#-panoramica)
-- [🚀 Avvio rapido: applicare le migration](#-avvio-rapido-applicare-le-migration)
-- [⚙️ Come funziona](#️-come-funziona)
-- [🔒 Sicurezza](#-sicurezza)
+- [📄 Overview](#-overview)
+- [🚀 Quick start: applying migrations](#-quick-start-applying-migrations)
+- [⚙️ How it works](#️-how-it-works)
+- [🔒 Security](#-security)
 - [🧪 Testing](#-testing)
 - [🔍 Troubleshooting](#-troubleshooting)
-- [📚 Riferimenti](#-riferimenti)
+- [📚 References](#-references)
 
 ---
 
-## 📄 Panoramica
+## 📄 Overview
 
-Il database è su **Supabase** (PostgreSQL gestito). Lo schema è definito come file SQL versionati in [backend/database/migrations/](../backend/database/migrations/). Nell'MVP le migration si applicano **manualmente** dal SQL Editor di Supabase.
+The database runs on **Supabase** (managed PostgreSQL). The schema is a set of versioned SQL files in [backend/database/migrations/](../backend/database/migrations/). In the MVP, migrations are applied **by hand** from the Supabase SQL Editor.
 
-Tutti gli oggetti di Frontline (tabelle, funzioni, view) vivono in uno **schema dedicato `frontline`**, così lo schema `public` resta libero per un futuro secondo prodotto. Il backend punta a questo schema tramite la variabile `SUPABASE_SCHEMA` (default `frontline`). L'estensione `vector` (pgvector) vive in un secondo schema dedicato, **`extensions`**: `public` è quindi completamente vuoto. Lo Storage dei file non è coinvolto: usa lo schema `storage`, separato.
+Every Frontline object (tables, functions, views) lives in a dedicated **`frontline`** schema, so the `public` schema stays free for a possible second product later. The backend selects this schema through the `SUPABASE_SCHEMA` variable (default `frontline`). The `vector` extension (pgvector) lives in a second dedicated schema, **`extensions`**, which leaves `public` completely empty. File storage is separate: it uses the `storage` schema.
 
-Il backend si connette con la **service role key** (chiave privata), che bypassa la Row Level Security. L'isolamento tra aziende clienti è garantito filtrando sempre per `company_id` a livello applicativo.
-
----
-
-## 🚀 Avvio rapido: applicare le migration
-
-La **prima volta** (o quando si aggiunge una nuova migration):
-
-1. Apri il progetto Supabase nel browser.
-2. Vai su **SQL Editor** → **New query**.
-3. Apri i file in [backend/database/migrations/](../backend/database/migrations/) **in ordine numerico** (001, 002, 003, ...).
-4. Per ogni file: copia tutto il contenuto, incollalo nel SQL Editor, clicca **Run**.
-5. Verifica che non ci siano errori prima di passare al file successivo.
-
-> ⚠️ L'ordine è importante: `002_companies.sql` deve esistere prima di `004_agent_configs.sql` (che ha una foreign key verso `companies`), e così via.
-
-Dopo l'esecuzione puoi controllare il risultato dalla sezione **Table Editor** (seleziona lo schema `frontline` dal menù a tendina in alto).
-
-> ⚠️ **Exposed schemas**: dopo aver creato lo schema `frontline`, vai su **Settings → API → Exposed schemas** e aggiungi `frontline` alla lista (accanto a `public`, `graphql_public`). Salva: PostgREST ricarica lo schema. Senza questo passo il backend non riesce a leggere/scrivere le tabelle.
+The backend connects with the **service role key** (a private key), which bypasses Row Level Security. Customer companies stay isolated because application code always filters on `company_id`.
 
 ---
 
-## ⚙️ Come funziona
+## 🚀 Quick start: applying migrations
+
+The **first time**, and again whenever a new migration is added:
+
+1. Open the Supabase project in the browser.
+2. Go to **SQL Editor** → **New query**.
+3. Open the files in [backend/database/migrations/](../backend/database/migrations/) **in numeric order** (001, 002, 003, ...).
+4. For each file: copy the whole contents, paste them into the SQL Editor, and click **Run**.
+5. Check that there are no errors before moving on to the next file.
+
+> ⚠️ Order matters: `002_companies.sql` has to exist before `004_agent_configs.sql` (which has a foreign key to `companies`), and so on.
+
+Afterward, check the result in **Table Editor** (select the `frontline` schema from the dropdown at the top).
+
+> ⚠️ **Exposed schemas**: after creating the `frontline` schema, go to **Settings → API → Exposed schemas** and add `frontline` to the list (next to `public` and `graphql_public`). Save. PostgREST reloads the schema. Without this step the backend cannot read or write the tables.
+
+---
+
+## ⚙️ How it works
 
 ### Schema
 
-Tutti gli oggetti di Frontline vivono nello schema **`frontline`**: le 8 tabelle, la funzione `match_document_chunks`, la funzione trigger `set_updated_at` e la view `documents_with_counts`. L'estensione `vector` vive nello schema **`extensions`**. Lo schema `public` resta completamente vuoto e pronto per un futuro secondo prodotto. Il backend sa a quale schema puntare grazie alla variabile `SUPABASE_SCHEMA` (vedi [config.md](config.md#-variabili-dambiente)); `extensions` non va aggiunto agli "Exposed schemas" perché il backend non lo interroga mai direttamente (l'operatore vettoriale è usato solo dentro `match_document_chunks`, che vive in `frontline`).
+Every Frontline object lives in the **`frontline`** schema: the tables, the `match_document_chunks` function, the `set_updated_at` trigger function, and the `documents_with_counts` view. The `vector` extension lives in the **`extensions`** schema. The `public` schema stays completely empty, ready for a possible second product later. The backend knows which schema to use through `SUPABASE_SCHEMA` (see [config.md](config.md#-environment-variables)). Do not add `extensions` to Exposed schemas: the backend never queries it directly. The vector operator is used only inside `match_document_chunks`, which lives in `frontline`.
 
-A differenza di `public`, uno schema custom come `frontline` non riceve permessi di default da Postgres: [020_grant_frontline_privileges.sql](../backend/database/migrations/020_grant_frontline_privileges.sql) concede esplicitamente a `service_role` i permessi su schema, tabelle, sequenze e funzioni (inclusi quelli per gli oggetti creati da migration future, tramite `alter default privileges`).
+Unlike `public`, a custom schema such as `frontline` gets no default Postgres privileges. [020_grant_frontline_privileges.sql](../backend/database/migrations/020_grant_frontline_privileges.sql) explicitly grants `service_role` privileges on the schema, tables, sequences, and functions, including objects created by later migrations, through `alter default privileges`.
 
-### Tabelle
+### Tables
 
-| Tabella           | Descrizione                                                                 |
-|-------------------|-----------------------------------------------------------------------------|
-| `companies`       | Aziende clienti (tenant). `slug` unico per l'URL della chat pubblica.       |
-| `agent_configs`   | Configurazione agente per azienda (nome, logo, colore, tono, lingua).       |
-| `documents`       | Metadata dei documenti + riferimento allo Storage.                          |
-| `document_chunks` | Chunk di testo con embedding `vector(1024)` per la ricerca semantica (RAG). |
-| `conversations`   | Conversazioni della live chat.                                              |
-| `messages`        | Messaggi delle conversazioni (`customer` / `agent` / `system`).             |
-| `tickets`         | Ticket aperti dall'agente per casi non risolvibili o escalation.            |
+| Table             | Description                                                              |
+|-------------------|--------------------------------------------------------------------------|
+| `companies`       | Customer companies (tenants). Unique `slug` for the public chat URL.     |
+| `agent_configs`   | Per-company agent configuration (name, logo, color, tone, language).     |
+| `documents`       | Document metadata, plus a reference to Storage.                          |
+| `document_chunks` | Text chunks with a `vector(1024)` embedding for semantic search (RAG).   |
+| `conversations`   | Live chat conversations.                                                 |
+| `messages`        | Conversation messages (`customer` / `agent` / `system`).                 |
+| `tickets`         | Tickets the agent opens for cases it cannot resolve, or for escalations. |
 
-### Estensioni
+### Extensions
 
-- `vector` (pgvector) — installato nello schema `extensions`, usato dalla tabella `document_chunks` per la ricerca semantica (indice HNSW, cosine distance).
-- `pgcrypto` — per `gen_random_uuid()` usato nelle primary key.
+- `vector` (pgvector) — installed in the `extensions` schema and used by `document_chunks` for semantic search (HNSW index, cosine distance).
+- `pgcrypto` — provides `gen_random_uuid()` for primary keys.
 
-### Funzioni SQL
+### SQL functions
 
-- `match_document_chunks(query_embedding, match_company_id, match_count)` — restituisce i top-K chunk più simili alla query per la company specificata (cosine similarity). Definita in [012_search_function.sql](../backend/database/migrations/012_search_function.sql).
+- `match_document_chunks(query_embedding, match_company_id, match_count)` — returns the top-K chunks most similar to the query for the given company (cosine similarity). Defined in [012_search_function.sql](../backend/database/migrations/012_search_function.sql).
 
 ### Storage
 
-Bucket **privato** `documents` creato da [009_storage.sql](../backend/database/migrations/009_storage.sql). I file vengono salvati in `<company_id>/<document_id>/<filename>` per separare i tenant e prevenire collisioni tra file con lo stesso nome.
+A **private** `documents` bucket, created by [009_storage.sql](../backend/database/migrations/009_storage.sql). Files are stored at `<company_id>/<document_id>/<filename>`, which separates tenants and avoids collisions between files that share a name.
 
-### Diagramma
+### Diagram
 
-Vedi il diagramma ER in [architecture.md](architecture.md#️-schema-del-database).
+See the ER diagram in [architecture.md](architecture.md#️-database-schema).
 
 ---
 
-## 🔒 Sicurezza
+## 🔒 Security
 
-- **Row Level Security** attivata su tutte le tabelle applicative.
-- **Nessuna policy per `anon` / `authenticated`** nell'MVP → il frontend **non** parla direttamente col DB: tutto passa dal backend.
-- **Service role key**: usata solo dal backend (`backend/.env`). Non va mai esposta al frontend, commitata su Git o condivisa via chat.
-- **Isolamento applicativo**: ogni query backend filtra per `company_id` (dal token di sessione; in locale da `DEV_COMPANY_ID` solo se `ALLOW_DEV_COMPANY_FALLBACK=true`).
+- **Row Level Security** is enabled on every application table.
+- **No policies for `anon` or `authenticated`** in the MVP, so the frontend does **not** talk to the database directly. Everything goes through the backend.
+- **Service role key**: used only by the backend (`backend/.env`). Never expose it to the frontend, commit it, or paste it into a chat.
+- **Application isolation**: every backend query filters on `company_id` (from the session token; locally, from `DEV_COMPANY_ID` only when `ALLOW_DEV_COMPANY_FALLBACK=true`).
 
 ---
 
 ## 🧪 Testing
 
-Test dei modelli Pydantic e del client Supabase:
+Tests for the Pydantic models and the Supabase client:
 
 ```bash
 cd backend
 pytest tests/database -v
 ```
 
-I test **non** toccano il database reale: i modelli sono validati in locale e il client è testato con `monkeypatch` sulle settings.
+The tests do **not** touch the real database. Models are validated locally, and the client is tested by patching settings with `monkeypatch`.
 
 ---
 
 ## 🔍 Troubleshooting
 
-### Problema: `extension "vector" is not available`
+### `extension "vector" is not available`
 
-**Causa**: l'estensione pgvector non è abilitata sul progetto Supabase.
-**Soluzione**: in Supabase, vai su **Database → Extensions** e abilita `vector`, oppure esegui `001_enable_extensions.sql` dal SQL Editor (il comando `create extension if not exists` dovrebbe bastare sui progetti moderni).
+**Cause**: the pgvector extension is not enabled on the Supabase project.
+**Fix**: in Supabase, go to **Database → Extensions** and enable `vector`, or run `001_enable_extensions.sql` from the SQL Editor. On current projects, `create extension if not exists` is enough.
 
-### Problema: `RuntimeError: Supabase is not configured`
+### `RuntimeError: Supabase is not configured`
 
-**Causa**: `SUPABASE_URL` o `SUPABASE_SERVICE_ROLE_KEY` non sono valorizzate in `backend/.env`.
-**Soluzione**: copia i valori dal dashboard Supabase (**Project Settings → API**) e incollali in `backend/.env`. Riavvia il processo.
+**Cause**: `SUPABASE_URL` or `SUPABASE_SERVICE_ROLE_KEY` is empty in `backend/.env`.
+**Fix**: copy the values from the Supabase dashboard (**Project Settings → API**) into `backend/.env`, then restart the process.
 
-### Problema: il backend non trova le tabelle (`relation ... does not exist` o `404` da PostgREST)
+### The backend cannot find the tables (`relation ... does not exist`, or a `404` from PostgREST)
 
-**Causa**: lo schema `frontline` non è tra gli "Exposed schemas" di Supabase, oppure `SUPABASE_SCHEMA` in `backend/.env` non è impostata su `frontline`.
-**Soluzione**: aggiungi `frontline` in **Settings → API → Exposed schemas** e verifica che `SUPABASE_SCHEMA=frontline` sia presente in `backend/.env`. Riavvia il backend.
+**Cause**: the `frontline` schema is not in Supabase's Exposed schemas, or `SUPABASE_SCHEMA` in `backend/.env` is not set to `frontline`.
+**Fix**: add `frontline` under **Settings → API → Exposed schemas**, and check that `backend/.env` contains `SUPABASE_SCHEMA=frontline`. Restart the backend.
 
-### Problema: `403 Forbidden` / `permission denied for schema frontline` (Postgres `42501`)
+### `403 Forbidden` / `permission denied for schema frontline` (Postgres `42501`)
 
-**Causa**: lo schema `frontline` non ha ricevuto i permessi di base per `service_role` (a differenza di `public`, un nuovo schema non li assegna automaticamente). `service_role` bypassa la Row Level Security, ma non i permessi su schema/tabelle/view/funzioni/sequenze.
-**Soluzione**: esegui [020_grant_frontline_privileges.sql](../backend/database/migrations/020_grant_frontline_privileges.sql) dal SQL Editor di Supabase, poi riavvia il backend e ricarica la dashboard.
+**Cause**: `frontline` never received the base privileges for `service_role`. Unlike `public`, a new schema does not grant them automatically. `service_role` bypasses Row Level Security, but not privileges on the schema, tables, views, functions, and sequences.
+**Fix**: run [020_grant_frontline_privileges.sql](../backend/database/migrations/020_grant_frontline_privileges.sql) from the Supabase SQL Editor, then restart the backend and reload the dashboard.
 
-### Problema: `foreign key violation` durante una migration
+### `foreign key violation` while running a migration
 
-**Causa**: le migration sono state eseguite fuori ordine.
-**Soluzione**: rieseguile in ordine numerico. I `create table if not exists` sono idempotenti, quindi ri-eseguire i file già applicati non crea problemi.
+**Cause**: the migrations were run out of order.
+**Fix**: run them again in numeric order. The `create table if not exists` statements are idempotent, so re-running a file that already applied is safe.
 
 ---
 
-## 📚 Riferimenti
+## 📚 References
 
-- **Migration SQL**: [backend/database/migrations/](../backend/database/migrations/)
-- **Client Supabase**: [backend/database/supabase_client.py](../backend/database/supabase_client.py)
-- **Modelli Pydantic**: [backend/database/models.py](../backend/database/models.py)
-- **Test**: [backend/tests/database/](../backend/tests/database/)
-- **Doc correlati**: [architecture.md](architecture.md), [config.md](config.md)
-- **Supabase Docs**: [supabase.com/docs](https://supabase.com/docs)
+- **SQL migrations**: [backend/database/migrations/](../backend/database/migrations/)
+- **Supabase client**: [backend/database/supabase_client.py](../backend/database/supabase_client.py)
+- **Pydantic models**: [backend/database/models.py](../backend/database/models.py)
+- **Tests**: [backend/tests/database/](../backend/tests/database/)
+- **Related docs**: [architecture.md](architecture.md), [config.md](config.md)
+- **Supabase docs**: [supabase.com/docs](https://supabase.com/docs)
