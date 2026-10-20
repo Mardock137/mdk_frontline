@@ -147,3 +147,7 @@ Run every command from the `frontend/` folder.
 - [RAG system](docs/rag.md)
 - [Frontend](docs/frontend.md)
 - [Deploy](docs/deploy.md)
+
+---
+
+Copyright (c) 2026 Mattia Colato. All rights reserved.
