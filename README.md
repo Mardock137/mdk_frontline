@@ -18,7 +18,7 @@
 
 ## 📄 Description
 
-MDK Frontline is a multi-tenant AI customer-support SaaS. It takes the place of a company's human support team and handles end-customer requests on its own, through a dedicated live chat.
+MDK Frontline is a multi-tenant AI customer-support SaaS. It handles first-line customer requests on its own, through a dedicated live chat.
 
 The customer company sets the system up from a dashboard, uploading its own documents (FAQs, policies, manuals, price lists). Those documents are the knowledge base the AI agent answers from.
 
